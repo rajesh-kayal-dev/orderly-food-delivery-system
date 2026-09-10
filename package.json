@@ -1,0 +1,19 @@
+{
+  "name": "orderly-monorepo",
+  "version": "1.0.0",
+  "scripts": {
+    "dev:gateway": "cd gateway && npm run dev",
+    "dev:identity": "cd identity-service && npm run dev",
+    "dev:restaurant": "cd restaurant-service && npm run dev",
+    "dev:order": "cd order-service && npm run dev",
+    "dev:notification": "cd notification-service && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:all": "concurrently \"npm run dev:gateway\" \"npm run dev:identity\" \"npm run dev:restaurant\" \"npm run dev:order\" \"npm run dev:notification\" \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "install:all": "npm install && cd gateway && npm install && cd ../identity-service && npm install && cd ../restaurant-service && npm install && cd ../order-service && npm install && cd ../notification-service && npm install && cd ../backend && npm install && cd ../frontend && npm install"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.1"
+  }
+}
+
