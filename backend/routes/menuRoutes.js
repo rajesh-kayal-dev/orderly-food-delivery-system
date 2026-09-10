@@ -1,16 +1,14 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const { 
-    getCategories, 
+import { getCategories, 
     getMenuItems, 
     getFullMenu, 
     getGlobalCategories,
     createMenuItem,
     updateMenuItem,
     deleteMenuItem,
-    toggleAvailability
-} = require('../controllers/menuController');
-const { protect } = require('../middleware/authMiddleware');
+    toggleAvailability } from '../controllers/menuController.js';
+import { protect } from '../middleware/authMiddleware.js';
 
 router.get('/global-categories', getGlobalCategories);
 router.get('/categories/:restaurantId', getCategories);
@@ -24,4 +22,4 @@ router.put('/:id', protect, updateMenuItem);
 router.patch('/:id/toggle-availability', protect, toggleAvailability);
 router.delete('/:id', protect, deleteMenuItem);
 
-module.exports = router;
+export default router;

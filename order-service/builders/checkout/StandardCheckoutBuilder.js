@@ -1,6 +1,6 @@
-const { Customer, Restaurant, Address, MenuItem, User } = require('../../models');
-const { Op } = require('sequelize');
-const CheckoutRequestBuilder = require('./CheckoutRequestBuilder');
+import { Customer, Restaurant, Address, MenuItem, User } from '../../models.js';
+import { Op } from 'sequelize';
+import CheckoutRequestBuilder from './CheckoutRequestBuilder.js';
 
 /**
  * Concrete implementation of the CheckoutRequestBuilder for a normal checkout.
@@ -110,4 +110,4 @@ class StandardCheckoutBuilder extends CheckoutRequestBuilder {
     }
 }
 
-module.exports = StandardCheckoutBuilder;
+export default StandardCheckoutBuilder;

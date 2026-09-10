@@ -10,4 +10,4 @@ class RestaurantCommand {
     }
 }
 
-module.exports = RestaurantCommand;
+export default RestaurantCommand;

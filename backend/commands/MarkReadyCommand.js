@@ -1,4 +1,4 @@
-const RestaurantCommand = require('./RestaurantCommand');
+import RestaurantCommand from './RestaurantCommand.js';
 
 class MarkReadyCommand extends RestaurantCommand {
     constructor(fulfillmentService, orderId, user, io) {
@@ -14,4 +14,4 @@ class MarkReadyCommand extends RestaurantCommand {
     }
 }
 
-module.exports = MarkReadyCommand;
+export default MarkReadyCommand;

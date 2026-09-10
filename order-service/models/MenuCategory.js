@@ -1,5 +1,5 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/db');
+import { DataTypes } from 'sequelize';
+import sequelize from '../config/db.js';
 
 const MenuCategory = sequelize.define('MenuCategory', {
     id: {
@@ -21,4 +21,4 @@ const MenuCategory = sequelize.define('MenuCategory', {
     updatedAt: false,
 });
 
-module.exports = MenuCategory;
+export default MenuCategory;

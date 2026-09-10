@@ -1,6 +1,6 @@
-const { Order, Customer, Restaurant, DeliveryPartner, User, Address } = require('../../models');
-const { Op } = require('sequelize');
-const { OrderStatusContext } = require('../../states/order/orderStatusState');
+import { Order, Customer, Restaurant, DeliveryPartner, User, Address } from '../../models.js';
+import { Op } from 'sequelize';
+import { OrderStatusContext } from '../../states/order/orderStatusState.js';
 
 /**
  * Interface: IDeliveryMgmtAPI
@@ -131,4 +131,4 @@ class DeliveryMgmtService {
     }
 }
 
-module.exports = new DeliveryMgmtService();
+export default new DeliveryMgmtService();

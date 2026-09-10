@@ -1,7 +1,7 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const { getRestaurantOrders, updateOrderStatus, getUserOrders, getMonthlyFavorite, createOrder, getAvailableDeliveries, acceptDelivery, getDriverDeliveries, getDriverHistory, cancelOrder, getRestaurantYearlySummary } = require('../controllers/orderController');
-const { protect } = require('../middleware/authMiddleware');
+import { getRestaurantOrders, updateOrderStatus, getUserOrders, getMonthlyFavorite, createOrder, getAvailableDeliveries, acceptDelivery, getDriverDeliveries, getDriverHistory, cancelOrder, getRestaurantYearlySummary } from '../controllers/orderController.js';
+import { protect } from '../middleware/authMiddleware.js';
 
 router.post('/', protect, createOrder);
 router.get('/deliveries/available', protect, getAvailableDeliveries);
@@ -15,4 +15,4 @@ router.get('/me/favorite', protect, getMonthlyFavorite);
 router.put('/:id/status', protect, updateOrderStatus);
 router.put('/:id/cancel', protect, cancelOrder);
 
-module.exports = router;
+export default router;

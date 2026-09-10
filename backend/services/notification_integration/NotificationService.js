@@ -1,5 +1,5 @@
-const NotificationMessage = require('./NotificationMessage');
-const OrderNotificationManager = require('./OrderNotificationManager');
+import NotificationMessage from './NotificationMessage.js';
+import OrderNotificationManager from './OrderNotificationManager.js';
 
 class NotificationService {
   constructor() {
@@ -50,4 +50,4 @@ class NotificationService {
   }
 }
 
-module.exports = new NotificationService();
+export default new NotificationService();

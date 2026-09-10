@@ -1,7 +1,7 @@
-const NotificationMessage = require('./NotificationMessage');
-const EmailNotificationFactory = require('./factories/EmailNotificationFactory');
-const SmsNotificationFactory = require('./factories/SmsNotificationFactory');
-const PushNotificationFactory = require('./factories/PushNotificationFactory');
+import NotificationMessage from './NotificationMessage.js';
+import EmailNotificationFactory from './factories/EmailNotificationFactory.js';
+import SmsNotificationFactory from './factories/SmsNotificationFactory.js';
+import PushNotificationFactory from './factories/PushNotificationFactory.js';
 
 class OrderNotificationManager {
   constructor() {
@@ -40,4 +40,4 @@ class OrderNotificationManager {
   }
 }
 
-module.exports = OrderNotificationManager;
+export default OrderNotificationManager;

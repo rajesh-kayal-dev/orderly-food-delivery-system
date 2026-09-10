@@ -1,13 +1,11 @@
-const { Order, Customer, Restaurant, DeliveryPartner, User, OrderItem, Address, Notification, MenuItem, MenuCategory, sequelize } = require('../../models');
-const { Op } = require('sequelize');
-const paymentService = require('../paymentService');
-const { sendDeliveredOrderEmail } = require('../mailService');
-const dispatchService = require('../dispatch/dispatchService');   
-const {
-    OrderStatusContext,
-    assertRoleCanUpdateStatus,
-} = require('../../states/order/orderStatusState');
-module.exports = require('../orderService');
+import { Order, Customer, Restaurant, DeliveryPartner, User, OrderItem, Address, Notification, MenuItem, MenuCategory, sequelize } from '../../models.js';
+import { Op } from 'sequelize';
+import paymentService from '../paymentService.js';
+import { sendDeliveredOrderEmail } from '../mailService.js';
+import dispatchService from '../dispatch/dispatchService.js';   
+import { OrderStatusContext,
+    assertRoleCanUpdateStatus, } from '../../states/order/orderStatusState.js';
+export default require('../orderService');
 
 
 /**
@@ -89,8 +87,8 @@ class FulfillmentService {
     }
 
     async createOrder(userId, orderData, io, req) {
-        const StandardCheckoutBuilder = require('../../builders/checkout/StandardCheckoutBuilder');
-        const CheckoutDirector = require('../../builders/checkout/CheckoutDirector');
+        import StandardCheckoutBuilder from '../../builders/checkout/StandardCheckoutBuilder.js';
+        import CheckoutDirector from '../../builders/checkout/CheckoutDirector.js';
 
         const builder = new StandardCheckoutBuilder(userId, orderData);
         const director = new CheckoutDirector(builder);
@@ -329,4 +327,4 @@ class FulfillmentService {
     }
 }
 
-module.exports = new FulfillmentService();
+export default new FulfillmentService();

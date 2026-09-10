@@ -1,8 +1,8 @@
-const { User, Restaurant, Customer, DeliveryPartner, Order, OrderItem, MenuItem, Address, sequelize } = require('../models');
-const { Op } = require('sequelize');
-const { sendPendingApprovalStatusEmail } = require('./mailService');
-const OrderFilterChain = require('../chains/order_filters/OrderFilterChain');
-const authService = require('./authService');
+import { User, Restaurant, Customer, DeliveryPartner, Order, OrderItem, MenuItem, Address, sequelize } from '../models.js';
+import { Op } from 'sequelize';
+import { sendPendingApprovalStatusEmail } from './mailService.js';
+import OrderFilterChain from '../chains/order_filters/OrderFilterChain.js';
+import authService from './authService.js';
 
 class AdminService {
   mapPendingApprovalItem(user) {
@@ -338,4 +338,4 @@ class AdminService {
   }
 }
 
-module.exports = new AdminService();
+export default new AdminService();

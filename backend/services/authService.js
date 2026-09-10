@@ -1,7 +1,7 @@
-const { User, Customer, Restaurant, DeliveryPartner, Admin, CustomerSupport, Address } = require('../models');
-const { Op } = require('sequelize');
-const jwt = require('jsonwebtoken');
-const UserAccount = require('../states/account/UserAccount');
+import { User, Customer, Restaurant, DeliveryPartner, Admin, CustomerSupport, Address } from '../models.js';
+import { Op } from 'sequelize';
+import jwt from 'jsonwebtoken';
+import UserAccount from '../states/account/UserAccount.js';
 
 class AuthService {
   generateToken(id) {
@@ -227,4 +227,4 @@ class AuthService {
   }
 }
 
-module.exports = new AuthService();
+export default new AuthService();

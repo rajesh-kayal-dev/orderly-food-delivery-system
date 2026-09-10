@@ -1,6 +1,6 @@
-const adminService = require('../services/adminService');
+import adminService from '../services/adminService.js';
 
-exports.getSystemStats = async (req, res) => {
+export const getSystemStats = async (req, res) => {
     try {
         const stats = await adminService.getSystemStats();
         res.json({ success: true, data: stats });
@@ -10,7 +10,7 @@ exports.getSystemStats = async (req, res) => {
     }
 };
 
-exports.getAllUsers = async (req, res) => {
+export const getAllUsers = async (req, res) => {
     try {
         const { status } = req.query;
         const users = await adminService.getAllUsers(status);
@@ -21,7 +21,7 @@ exports.getAllUsers = async (req, res) => {
     }
 };
 
-exports.getAllOrders = async (req, res) => {
+export const getAllOrders = async (req, res) => {
     try {
         const { restaurantId, status, page, limit, month, year } = req.query;
         const result = await adminService.getAllOrders(restaurantId, status, page, limit, month, year);
@@ -32,7 +32,7 @@ exports.getAllOrders = async (req, res) => {
     }
 };
 
-exports.updateUserStatus = async (req, res) => {
+export const updateUserStatus = async (req, res) => {
     try {
         const { is_active } = req.body;
         const updatedUser = await adminService.updateUserStatus(req.params.id, is_active, req.user.id);
@@ -45,7 +45,7 @@ exports.updateUserStatus = async (req, res) => {
     }
 };
 
-exports.getPendingApprovals = async (req, res) => {
+export const getPendingApprovals = async (req, res) => {
     try {
         const { type = 'all', search = '', sort = 'newest', page = 1, limit = 9 } = req.query;
         const result = await adminService.getPendingApprovals({ type, search, sort, page, limit });
@@ -57,7 +57,7 @@ exports.getPendingApprovals = async (req, res) => {
     }
 };
 
-exports.getPendingApprovalDetails = async (req, res) => {
+export const getPendingApprovalDetails = async (req, res) => {
     try {
         const result = await adminService.getPendingApprovalById(req.params.id);
         res.json({ success: true, data: result });
@@ -68,7 +68,7 @@ exports.getPendingApprovalDetails = async (req, res) => {
     }
 };
 
-exports.approvePendingApproval = async (req, res) => {
+export const approvePendingApproval = async (req, res) => {
     try {
         const result = await adminService.approvePendingRequest(req.params.id);
         res.json({ success: true, data: result, message: 'Request approved successfully' });
@@ -79,7 +79,7 @@ exports.approvePendingApproval = async (req, res) => {
     }
 };
 
-exports.rejectPendingApproval = async (req, res) => {
+export const rejectPendingApproval = async (req, res) => {
     try {
         const { reason = '' } = req.body;
         const result = await adminService.rejectPendingRequest(req.params.id, reason);

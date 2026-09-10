@@ -1,6 +1,6 @@
-const ActiveState = require('./ActiveState');
-const PendingState = require('./PendingState');
-const SuspendedState = require('./SuspendedState');
+import ActiveState from './ActiveState.js';
+import PendingState from './PendingState.js';
+import SuspendedState from './SuspendedState.js';
 
 class UserAccount {
   constructor(user) {
@@ -51,4 +51,4 @@ class UserAccount {
   }
 }
 
-module.exports = UserAccount;
+export default UserAccount;

@@ -1,4 +1,4 @@
-const RestaurantCommand = require('./RestaurantCommand');
+import RestaurantCommand from './RestaurantCommand.js';
 
 class UpdateMenuItemCommand extends RestaurantCommand {
     constructor(menuService, itemId, userId, itemData, io) {
@@ -15,4 +15,4 @@ class UpdateMenuItemCommand extends RestaurantCommand {
     }
 }
 
-module.exports = UpdateMenuItemCommand;
+export default UpdateMenuItemCommand;

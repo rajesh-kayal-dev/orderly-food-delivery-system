@@ -45,6 +45,6 @@ function getPublishedArticles(keyword = '') {
   });
 }
 
-module.exports = {
+export default {
   getPublishedArticles,
 };

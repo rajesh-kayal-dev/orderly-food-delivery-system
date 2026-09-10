@@ -1,4 +1,4 @@
-const catalogService = require('../services/catalog_content/CatalogService');
+import catalogService from '../services/catalog_content/CatalogService.js';
 
 /**
  * CatalogController
@@ -8,7 +8,7 @@ const catalogService = require('../services/catalog_content/CatalogService');
  * composite tree of MenuCategory (composite), MenuItem (leaf), and
  * ContentArticle (leaf).
  */
-exports.browseCatalog = async (req, res) => {
+export const browseCatalog = async (req, res) => {
   try {
     const result = await catalogService.browseCatalog(req.query);
 
@@ -26,7 +26,7 @@ exports.browseCatalog = async (req, res) => {
   }
 };
 
-exports.searchCatalog = async (req, res) => {
+export const searchCatalog = async (req, res) => {
   try {
     const keyword = String(req.query.keyword || '').trim();
 
@@ -53,7 +53,7 @@ exports.searchCatalog = async (req, res) => {
   }
 };
 
-exports.getProductDetail = async (req, res) => {
+export const getProductDetail = async (req, res) => {
   try {
     const item = await catalogService.getProductDetail(req.params.itemId);
 

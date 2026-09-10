@@ -1,12 +1,10 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 
-const { protect } = require('../middleware/authMiddleware');
-const {
-  createVNPayPayment,
+import { protect } from '../middleware/authMiddleware.js';
+import { createVNPayPayment,
   vnpayReturn,
-  vnpayIpn,
-} = require('../controllers/paymentController');
+  vnpayIpn, } from '../controllers/paymentController.js';
 
 // Create payment session for VNPay. Does NOT create order yet.
 router.post('/create-vnpay', protect, createVNPayPayment);
@@ -17,4 +15,4 @@ router.get('/vnpay/return', vnpayReturn);
 // VNPay server callback (IPN)
 router.get('/vnpay/ipn', vnpayIpn);
 
-module.exports = router;
+export default router;

@@ -9,4 +9,4 @@ class NotificationFactory {
   }
 }
 
-module.exports = NotificationFactory;
+export default NotificationFactory;

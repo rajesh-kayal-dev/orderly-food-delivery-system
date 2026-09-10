@@ -17,4 +17,4 @@ class CheckoutDirector {
     }
 }
 
-module.exports = CheckoutDirector;
+export default CheckoutDirector;

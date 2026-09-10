@@ -1,5 +1,5 @@
-const NotificationFactory = require('./NotificationFactory');
-const SmsSender = require('../senders/SmsSender');
+import NotificationFactory from './NotificationFactory.js';
+import SmsSender from '../senders/SmsSender.js';
 
 class SmsNotificationFactory extends NotificationFactory {
   createSender() {
@@ -7,4 +7,4 @@ class SmsNotificationFactory extends NotificationFactory {
   }
 }
 
-module.exports = SmsNotificationFactory;
+export default SmsNotificationFactory;

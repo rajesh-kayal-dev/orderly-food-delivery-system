@@ -1,9 +1,9 @@
-const { sequelize } = require('../../models');
-const paymentService = require('../paymentService');
-const orderColleagueService = require('./colleagues/OrderColleagueService');
-const restaurantDispatchService = require('./colleagues/RestaurantDispatchService');
-const deliveryService = require('./colleagues/DeliveryService');
-const notificationService = require('./colleagues/NotificationService');
+import { sequelize } from '../../models.js';
+import paymentService from '../paymentService.js';
+import orderColleagueService from './colleagues/OrderColleagueService.js';
+import restaurantDispatchService from './colleagues/RestaurantDispatchService.js';
+import deliveryService from './colleagues/DeliveryService.js';
+import notificationService from './colleagues/NotificationService.js';
 
 class OrderFulfillmentCoordinator {
   constructor({
@@ -233,4 +233,4 @@ class OrderFulfillmentCoordinator {
   }
 }
 
-module.exports = new OrderFulfillmentCoordinator();
+export default new OrderFulfillmentCoordinator();

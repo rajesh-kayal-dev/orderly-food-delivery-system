@@ -1,4 +1,4 @@
-const CheckoutRequest = require('./CheckoutRequest');
+import CheckoutRequest from './CheckoutRequest.js';
 
 /**
  * Base class for all CheckoutRequest builders.
@@ -41,4 +41,4 @@ class CheckoutRequestBuilder {
     }
 }
 
-module.exports = CheckoutRequestBuilder;
+export default CheckoutRequestBuilder;

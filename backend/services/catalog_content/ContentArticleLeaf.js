@@ -1,4 +1,4 @@
-const CatalogComponent = require('./CatalogComponent');
+import CatalogComponent from './CatalogComponent.js';
 
 class ContentArticleLeaf extends CatalogComponent {
   constructor(article) {
@@ -22,4 +22,4 @@ class ContentArticleLeaf extends CatalogComponent {
   }
 }
 
-module.exports = ContentArticleLeaf;
+export default ContentArticleLeaf;

@@ -1,9 +1,9 @@
-const { MenuItem, MenuCategory, Restaurant } = require('../../models');
-const { Op } = require('sequelize');
-const MenuCategoryComposite = require('./MenuCategoryComposite');
-const MenuItemLeaf = require('./MenuItemLeaf');
-const ContentArticleLeaf = require('./ContentArticleLeaf');
-const { getPublishedArticles } = require('./contentArticleProvider');
+import { MenuItem, MenuCategory, Restaurant } from '../../models.js';
+import { Op } from 'sequelize';
+import MenuCategoryComposite from './MenuCategoryComposite.js';
+import MenuItemLeaf from './MenuItemLeaf.js';
+import ContentArticleLeaf from './ContentArticleLeaf.js';
+import { getPublishedArticles } from './contentArticleProvider.js';
 
 class CatalogService {
   normalizeQuery(query = {}) {
@@ -184,4 +184,4 @@ class CatalogService {
   }
 }
 
-module.exports = new CatalogService();
+export default new CatalogService();

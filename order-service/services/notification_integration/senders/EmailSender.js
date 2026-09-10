@@ -1,5 +1,5 @@
-const NotificationSender = require('./NotificationSender');
-const notificationProxy = require('../../NotificationProxy');
+import NotificationSender from './NotificationSender.js';
+import notificationProxy from '../../NotificationProxy.js';
 
 class EmailSender extends NotificationSender {
   async send(message) {
@@ -49,4 +49,4 @@ class EmailSender extends NotificationSender {
   }
 }
 
-module.exports = EmailSender;
+export default EmailSender;

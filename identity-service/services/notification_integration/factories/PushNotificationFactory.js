@@ -1,5 +1,5 @@
-const NotificationFactory = require('./NotificationFactory');
-const PushSender = require('../senders/PushSender');
+import NotificationFactory from './NotificationFactory.js';
+import PushSender from '../senders/PushSender.js';
 
 class PushNotificationFactory extends NotificationFactory {
   createSender() {
@@ -7,4 +7,4 @@ class PushNotificationFactory extends NotificationFactory {
   }
 }
 
-module.exports = PushNotificationFactory;
+export default PushNotificationFactory;

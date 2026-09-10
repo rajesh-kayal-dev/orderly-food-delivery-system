@@ -4,4 +4,4 @@ class PaymentStrategy {
   }
 }
 
-module.exports = PaymentStrategy;
+export default PaymentStrategy;

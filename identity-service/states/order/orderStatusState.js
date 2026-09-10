@@ -160,7 +160,7 @@ function assertRoleCanUpdateStatus({ role, targetStatus }) {
   }
 }
 
-module.exports = {
+export default {
   createOrderState,
   OrderStatusContext,
   assertRoleCanUpdateStatus,

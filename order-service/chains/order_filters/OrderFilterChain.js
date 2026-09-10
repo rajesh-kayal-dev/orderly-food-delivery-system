@@ -1,7 +1,7 @@
-const RestaurantFilterHandler = require('./RestaurantFilterHandler');
-const StatusFilterHandler = require('./StatusFilterHandler');
-const DateFilterHandler = require('./DateFilterHandler');
-const PaginationFilterHandler = require('./PaginationFilterHandler');
+import RestaurantFilterHandler from './RestaurantFilterHandler.js';
+import StatusFilterHandler from './StatusFilterHandler.js';
+import DateFilterHandler from './DateFilterHandler.js';
+import PaginationFilterHandler from './PaginationFilterHandler.js';
 
 class OrderFilterChain {
     static buildContext(filters) {
@@ -26,4 +26,4 @@ class OrderFilterChain {
     }
 }
 
-module.exports = OrderFilterChain;
+export default OrderFilterChain;

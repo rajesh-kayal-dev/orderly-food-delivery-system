@@ -1,5 +1,5 @@
-const OrderFilterHandler = require('./OrderFilterHandler');
-const { Op } = require('sequelize');
+import OrderFilterHandler from './OrderFilterHandler.js';
+import { Op } from 'sequelize';
 
 class StatusFilterHandler extends OrderFilterHandler {
     handle(context) {
@@ -15,4 +15,4 @@ class StatusFilterHandler extends OrderFilterHandler {
     }
 }
 
-module.exports = StatusFilterHandler;
+export default StatusFilterHandler;

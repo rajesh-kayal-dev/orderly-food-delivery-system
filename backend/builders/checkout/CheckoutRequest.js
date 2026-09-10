@@ -29,4 +29,4 @@ class CheckoutRequest {
     }
 }
 
-module.exports = CheckoutRequest;
+export default CheckoutRequest;

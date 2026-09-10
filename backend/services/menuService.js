@@ -1,5 +1,5 @@
-const { MenuCategory, MenuItem, Restaurant, sequelize } = require('../models');
-const { Op } = require('sequelize');
+import { MenuCategory, MenuItem, Restaurant, sequelize } from '../models.js';
+import { Op } from 'sequelize';
 
 class MenuService {
     async getCategories(restaurantId) {
@@ -131,4 +131,4 @@ class MenuService {
     }
 }
 
-module.exports = new MenuService();
+export default new MenuService();

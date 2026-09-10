@@ -1,7 +1,7 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const { protect } = require('../middleware/authMiddleware');
-const customerViewController = require('../controllers/customerViewController');
+import { protect } from '../middleware/authMiddleware.js';
+import customerViewController from '../controllers/customerViewController.js';
 
 router.post('/login', customerViewController.login);
 router.get('/catalog', customerViewController.browseCatalog);
@@ -16,4 +16,4 @@ router.post('/checkout', protect, customerViewController.checkout);
 router.get('/orders', protect, customerViewController.trackOrders);
 router.get('/orders/favorite', protect, customerViewController.getMonthlyFavorite);
 
-module.exports = router;
+export default router;

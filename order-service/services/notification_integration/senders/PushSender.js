@@ -1,5 +1,5 @@
-const NotificationSender = require('./NotificationSender');
-const notificationProxy = require('../../NotificationProxy');
+import NotificationSender from './NotificationSender.js';
+import notificationProxy from '../../NotificationProxy.js';
 
 function getDefaultEventName(message) {
   if (message.pushEvent) return message.pushEvent;
@@ -46,4 +46,4 @@ class PushSender extends NotificationSender {
   }
 }
 
-module.exports = PushSender;
+export default PushSender;

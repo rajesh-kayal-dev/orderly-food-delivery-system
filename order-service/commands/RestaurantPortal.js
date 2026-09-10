@@ -9,4 +9,4 @@ class RestaurantPortal {
     }
 }
 
-module.exports = new RestaurantPortal();
+export default new RestaurantPortal();

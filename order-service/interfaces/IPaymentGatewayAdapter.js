@@ -28,4 +28,4 @@ class IPaymentGatewayAdapter {
   }
 }
 
-module.exports = IPaymentGatewayAdapter;
+export default IPaymentGatewayAdapter;

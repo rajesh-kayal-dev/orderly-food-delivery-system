@@ -1,4 +1,4 @@
-const OrderFilterHandler = require('./OrderFilterHandler');
+import OrderFilterHandler from './OrderFilterHandler.js';
 
 class PaginationFilterHandler extends OrderFilterHandler {
     handle(context) {
@@ -16,4 +16,4 @@ class PaginationFilterHandler extends OrderFilterHandler {
     }
 }
 
-module.exports = PaginationFilterHandler;
+export default PaginationFilterHandler;

@@ -1,4 +1,4 @@
-const nodemailer = require('nodemailer');
+import nodemailer from 'nodemailer';
 
 const transporter = nodemailer.createTransport({
   host: process.env.MAIL_HOST,
@@ -305,7 +305,7 @@ const sendPendingApprovalStatusEmail = async ({
   });
 };
 
-module.exports = {
+export default {
   sendDeliveredOrderEmail,
   sendRefundEmail,
   sendPendingApprovalStatusEmail,

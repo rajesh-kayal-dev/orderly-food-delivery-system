@@ -12,4 +12,4 @@ class CatalogComponent {
   }
 }
 
-module.exports = CatalogComponent;
+export default CatalogComponent;

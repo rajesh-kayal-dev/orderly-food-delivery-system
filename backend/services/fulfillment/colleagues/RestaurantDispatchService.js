@@ -1,4 +1,4 @@
-const { Restaurant, Notification } = require('../../../models');
+import { Restaurant, Notification } from '../../../models.js';
 
 class RestaurantDispatchService {
   async dispatchRestaurantOrder({ order, transaction, io }) {
@@ -37,4 +37,4 @@ class RestaurantDispatchService {
   }
 }
 
-module.exports = new RestaurantDispatchService();
+export default new RestaurantDispatchService();

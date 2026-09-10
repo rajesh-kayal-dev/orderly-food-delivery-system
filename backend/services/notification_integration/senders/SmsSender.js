@@ -1,4 +1,4 @@
-const NotificationSender = require('./NotificationSender');
+import NotificationSender from './NotificationSender.js';
 
 class SmsSender extends NotificationSender {
   async send(message) {
@@ -17,4 +17,4 @@ class SmsSender extends NotificationSender {
   }
 }
 
-module.exports = SmsSender;
+export default SmsSender;

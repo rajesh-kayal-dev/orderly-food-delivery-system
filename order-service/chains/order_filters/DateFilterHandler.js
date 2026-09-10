@@ -1,5 +1,5 @@
-const OrderFilterHandler = require('./OrderFilterHandler');
-const { Op } = require('sequelize');
+import OrderFilterHandler from './OrderFilterHandler.js';
+import { Op } from 'sequelize';
 
 class DateFilterHandler extends OrderFilterHandler {
     handle(context) {
@@ -21,4 +21,4 @@ class DateFilterHandler extends OrderFilterHandler {
     }
 }
 
-module.exports = DateFilterHandler;
+export default DateFilterHandler;

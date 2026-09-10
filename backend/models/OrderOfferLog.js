@@ -1,5 +1,5 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/db');
+import { DataTypes } from 'sequelize';
+import sequelize from '../config/db.js';
 
 const OrderOfferLog = sequelize.define('OrderOfferLog', {
   id: {
@@ -39,4 +39,4 @@ const OrderOfferLog = sequelize.define('OrderOfferLog', {
   updatedAt: 'updated_at',
 });
 
-module.exports = OrderOfferLog;
+export default OrderOfferLog;

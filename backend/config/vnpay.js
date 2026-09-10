@@ -1,4 +1,4 @@
-const { VNPay, ignoreLogger, ProductCode, VnpLocale, dateFormat } = require('vnpay');
+import { VNPay, ignoreLogger, ProductCode, VnpLocale, dateFormat } from 'vnpay';
 
 const vnpay = new VNPay({
   tmnCode: process.env.VNP_TMNCODE,
@@ -9,7 +9,7 @@ const vnpay = new VNPay({
   loggerFn: ignoreLogger,
 });
 
-module.exports = {
+export default {
   vnpay,
   ProductCode,
   VnpLocale,

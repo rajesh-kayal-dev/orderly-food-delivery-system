@@ -1,5 +1,5 @@
-const PaymentStrategy = require('./PaymentStrategy');
-const PaymentResult = require('../models/PaymentResult');
+import PaymentStrategy from './PaymentStrategy.js';
+import PaymentResult from '../models/PaymentResult.js';
 
 class WalletPaymentStrategy extends PaymentStrategy {
   async execute() {
@@ -12,4 +12,4 @@ class WalletPaymentStrategy extends PaymentStrategy {
   }
 }
 
-module.exports = WalletPaymentStrategy;
+export default WalletPaymentStrategy;

@@ -28,4 +28,4 @@ class PaymentRequest {
   }
 }
 
-module.exports = PaymentRequest;
+export default PaymentRequest;

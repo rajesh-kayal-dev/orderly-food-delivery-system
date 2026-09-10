@@ -1,5 +1,5 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/db');
+import { DataTypes } from 'sequelize';
+import sequelize from '../config/db.js';
 
 const Dispute = sequelize.define('Dispute', {
   id: {
@@ -39,4 +39,4 @@ const Dispute = sequelize.define('Dispute', {
   updatedAt: 'updated_at',
 });
 
-module.exports = Dispute;
+export default Dispute;

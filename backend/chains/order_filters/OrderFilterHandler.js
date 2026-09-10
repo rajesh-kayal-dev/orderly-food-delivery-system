@@ -19,4 +19,4 @@ class OrderFilterHandler {
     }
 }
 
-module.exports = OrderFilterHandler;
+export default OrderFilterHandler;

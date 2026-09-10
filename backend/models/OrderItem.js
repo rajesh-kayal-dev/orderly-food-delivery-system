@@ -1,5 +1,5 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/db');
+import { DataTypes } from 'sequelize';
+import sequelize from '../config/db.js';
 
 const OrderItem = sequelize.define('OrderItem', {
     id: {
@@ -36,4 +36,4 @@ const OrderItem = sequelize.define('OrderItem', {
     timestamps: false,
 });
 
-module.exports = OrderItem;
+export default OrderItem;

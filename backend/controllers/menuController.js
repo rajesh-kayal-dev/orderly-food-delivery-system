@@ -1,12 +1,12 @@
-const menuService = require('../services/menuService');
-const restaurantPortal = require('../commands/RestaurantPortal');
-const AddMenuItemCommand = require('../commands/AddMenuItemCommand');
-const UpdateMenuItemCommand = require('../commands/UpdateMenuItemCommand');
-const ToggleAvailabilityCommand = require('../commands/ToggleAvailabilityCommand');
+import menuService from '../services/menuService.js';
+import restaurantPortal from '../commands/RestaurantPortal.js';
+import AddMenuItemCommand from '../commands/AddMenuItemCommand.js';
+import UpdateMenuItemCommand from '../commands/UpdateMenuItemCommand.js';
+import ToggleAvailabilityCommand from '../commands/ToggleAvailabilityCommand.js';
 
 // @desc    Get categories for a restaurant
 // @route   GET /api/menu/categories/:restaurantId
-exports.getCategories = async (req, res) => {
+export const getCategories = async (req, res) => {
     try {
         const categories = await menuService.getCategories(req.params.restaurantId);
         res.json({ success: true, data: categories });
@@ -18,7 +18,7 @@ exports.getCategories = async (req, res) => {
 
 // @desc    Get menu items with pagination and filters
 // @route   GET /api/menu
-exports.getMenuItems = async (req, res) => {
+export const getMenuItems = async (req, res) => {
     try {
         const { restaurantId, categoryId, page, limit, search } = req.query;
         const result = await menuService.getMenuItems({ restaurantId, categoryId, page, limit, search });
@@ -31,7 +31,7 @@ exports.getMenuItems = async (req, res) => {
 
 // @desc    Get full menu for a restaurant
 // @route   GET /api/menu/full/:restaurantId
-exports.getFullMenu = async (req, res) => {
+export const getFullMenu = async (req, res) => {
     try {
         const menu = await menuService.getFullMenu(req.params.restaurantId);
         res.json({ success: true, data: menu });
@@ -43,7 +43,7 @@ exports.getFullMenu = async (req, res) => {
 
 // @desc    Create menu item
 // @route   POST /api/menu
-exports.createMenuItem = async (req, res) => {
+export const createMenuItem = async (req, res) => {
     try {
         const command = new AddMenuItemCommand(menuService, req.user.id, req.body);
         const item = await restaurantPortal.submitCommand(command);
@@ -56,7 +56,7 @@ exports.createMenuItem = async (req, res) => {
 
 // @desc    Update menu item
 // @route   PUT /api/menu/:id
-exports.updateMenuItem = async (req, res) => {
+export const updateMenuItem = async (req, res) => {
     try {
         const command = new UpdateMenuItemCommand(menuService, req.params.id, req.user.id, req.body, req.io);
         const item = await restaurantPortal.submitCommand(command);
@@ -69,7 +69,7 @@ exports.updateMenuItem = async (req, res) => {
 
 // @desc    Toggle menu item availability
 // @route   PATCH /api/menu/:id/toggle-availability
-exports.toggleAvailability = async (req, res) => {
+export const toggleAvailability = async (req, res) => {
     try {
         const command = new ToggleAvailabilityCommand(menuService, req.params.id, req.user.id, req.io);
         const item = await restaurantPortal.submitCommand(command);
@@ -82,7 +82,7 @@ exports.toggleAvailability = async (req, res) => {
 
 // @desc    Delete menu item
 // @route   DELETE /api/menu/:id
-exports.deleteMenuItem = async (req, res) => {
+export const deleteMenuItem = async (req, res) => {
     try {
         await menuService.deleteMenuItem(req.params.id, req.user.id);
         res.json({ success: true, message: 'Item deleted' });
@@ -94,7 +94,7 @@ exports.deleteMenuItem = async (req, res) => {
 
 // @desc    Get all unique category names
 // @route   GET /api/menu/global-categories
-exports.getGlobalCategories = async (req, res) => {
+export const getGlobalCategories = async (req, res) => {
     try {
         const categories = await menuService.getGlobalCategories();
         res.json({ success: true, data: categories });

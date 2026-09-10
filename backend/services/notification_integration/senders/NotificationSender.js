@@ -4,4 +4,4 @@ class NotificationSender {
   }
 }
 
-module.exports = NotificationSender;
+export default NotificationSender;

@@ -1,4 +1,4 @@
-const { Delivery } = require('../../../models');
+import { Delivery } from '../../../models.js';
 
 class DeliveryService {
   async createDeliveryAssignment({ order, transaction, io }) {
@@ -34,4 +34,4 @@ class DeliveryService {
   }
 }
 
-module.exports = new DeliveryService();
+export default new DeliveryService();

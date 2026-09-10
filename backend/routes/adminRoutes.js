@@ -1,16 +1,14 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const {
-	getSystemStats,
+import { getSystemStats,
 	getAllUsers,
 	getAllOrders,
 	updateUserStatus,
 	getPendingApprovals,
 	getPendingApprovalDetails,
 	approvePendingApproval,
-	rejectPendingApproval
-} = require('../controllers/adminController');
-const { protect, authorize } = require('../middleware/authMiddleware');
+	rejectPendingApproval } from '../controllers/adminController.js';
+import { protect, authorize } from '../middleware/authMiddleware.js';
 
 router.use(protect);
 router.use(authorize('admin'));
@@ -24,4 +22,4 @@ router.get('/pending-approvals/:id', getPendingApprovalDetails);
 router.patch('/pending-approvals/:id/approve', approvePendingApproval);
 router.patch('/pending-approvals/:id/reject', rejectPendingApproval);
 
-module.exports = router;
+export default router;

@@ -1,13 +1,13 @@
-const fulfillmentService = require('../services/fulfillment/fulfillmentService');
-const restaurantOpsService = require('../services/restaurant_ops/restaurantOpsService');
-const deliveryMgmtService = require('../services/delivery_mgmt/deliveryMgmtService');
-const paymentService = require('../services/paymentService');
-const restaurantPortal = require('../commands/RestaurantPortal');
-const AcceptOrderCommand = require('../commands/AcceptOrderCommand');
-const RejectOrderCommand = require('../commands/RejectOrderCommand');
-const MarkReadyCommand = require('../commands/MarkReadyCommand');
+import fulfillmentService from '../services/fulfillment/fulfillmentService.js';
+import restaurantOpsService from '../services/restaurant_ops/restaurantOpsService.js';
+import deliveryMgmtService from '../services/delivery_mgmt/deliveryMgmtService.js';
+import paymentService from '../services/paymentService.js';
+import restaurantPortal from '../commands/RestaurantPortal.js';
+import AcceptOrderCommand from '../commands/AcceptOrderCommand.js';
+import RejectOrderCommand from '../commands/RejectOrderCommand.js';
+import MarkReadyCommand from '../commands/MarkReadyCommand.js';
 
-exports.getRestaurantOrders = async (req, res) => {
+export const getRestaurantOrders = async (req, res) => {
     try {
         const { status, date } = req.query;
         const result = await restaurantOpsService.getRestaurantOrders(req.user.id, status, date);
@@ -19,7 +19,7 @@ exports.getRestaurantOrders = async (req, res) => {
     }
 };
 
-exports.updateOrderStatus = async (req, res) => {
+export const updateOrderStatus = async (req, res) => {
     try {
         const { status } = req.body;
         let order;
@@ -46,7 +46,7 @@ exports.updateOrderStatus = async (req, res) => {
     }
 };
 
-exports.getUserOrders = async (req, res) => {
+export const getUserOrders = async (req, res) => {
     try {
         const { date, limit, offset } = req.query;
         const result = await fulfillmentService.getUserOrders(req.user.id, { date, limit, offset });
@@ -58,7 +58,7 @@ exports.getUserOrders = async (req, res) => {
     }
 };
 
-exports.getMonthlyFavorite = async (req, res) => {
+export const getMonthlyFavorite = async (req, res) => {
     try {
         const result = await fulfillmentService.getMonthlyFavorite(req.user.id);
         res.json({ success: true, data: result });
@@ -69,7 +69,7 @@ exports.getMonthlyFavorite = async (req, res) => {
     }
 };
 
-exports.createOrder = async (req, res) => {
+export const createOrder = async (req, res) => {
   try {
     const result = await fulfillmentService.createOrder(req.user.id, req.body, req.io, req);
 
@@ -103,7 +103,7 @@ exports.createOrder = async (req, res) => {
   }
 };
 
-exports.getAvailableDeliveries = async (req, res) => {
+export const getAvailableDeliveries = async (req, res) => {
     try {
         const orders = await deliveryMgmtService.getAvailableDeliveries();
         res.json({ success: true, data: orders });
@@ -113,7 +113,7 @@ exports.getAvailableDeliveries = async (req, res) => {
     }
 };
 
-exports.acceptDelivery = async (req, res) => {
+export const acceptDelivery = async (req, res) => {
     try {
         const { driver_id } = req.body;
         const order = await deliveryMgmtService.acceptByDriver(req.params.id, driver_id, req.io);
@@ -125,7 +125,7 @@ exports.acceptDelivery = async (req, res) => {
     }
 };
 
-exports.getDriverDeliveries = async (req, res) => {
+export const getDriverDeliveries = async (req, res) => {
     try {
         const orders = await deliveryMgmtService.getDriverDeliveries(req.user.id);
         res.json({ success: true, data: orders });
@@ -136,7 +136,7 @@ exports.getDriverDeliveries = async (req, res) => {
     }
 };
 
-exports.getDriverHistory = async (req, res) => {
+export const getDriverHistory = async (req, res) => {
     try {
         const orders = await deliveryMgmtService.getDriverHistory(req.user.id);
         res.json({ success: true, data: orders });
@@ -147,7 +147,7 @@ exports.getDriverHistory = async (req, res) => {
     }
 };
 
-exports.getRestaurantYearlySummary = async (req, res) => {
+export const getRestaurantYearlySummary = async (req, res) => {
     try {
         const { year } = req.query;
         const data = await restaurantOpsService.getRestaurantYearlySummary(req.user.id, year);
@@ -159,7 +159,7 @@ exports.getRestaurantYearlySummary = async (req, res) => {
     }
 };
 
-exports.cancelOrder = async (req, res) => {
+export const cancelOrder = async (req, res) => {
     try {
         const result = await fulfillmentService.cancelOrder(req.params.id, req.user.id, req.io, req);
 

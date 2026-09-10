@@ -1,6 +1,6 @@
-const PaymentGatewayFactory = require('../../../factories/paymentGatewayFactory');
-const PaymentResult = require('../models/PaymentResult');
-const RefundResult = require('../models/RefundResult');
+import PaymentGatewayFactory from '../../../factories/paymentGatewayFactory.js';
+import PaymentResult from '../models/PaymentResult.js';
+import RefundResult from '../models/RefundResult.js';
 
 class PaymentGatewayStrategyAdapter {
   constructor(gatewayName = 'vnpay') {
@@ -56,4 +56,4 @@ class PaymentGatewayStrategyAdapter {
   }
 }
 
-module.exports = PaymentGatewayStrategyAdapter;
+export default PaymentGatewayStrategyAdapter;

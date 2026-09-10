@@ -1,26 +1,26 @@
-const sequelize = require('../config/db');
+import sequelize from '../config/db.js';
 
 // Import all models
-const User = require('./User');
-const Restaurant = require('./Restaurant');
-const Customer = require('./Customer');
-const DeliveryPartner = require('./DeliveryPartner');
-const Admin = require('./Admin');
-const CustomerSupport = require('./CustomerSupport');
+import User from './User.js';
+import Restaurant from './Restaurant.js';
+import Customer from './Customer.js';
+import DeliveryPartner from './DeliveryPartner.js';
+import Admin from './Admin.js';
+import CustomerSupport from './CustomerSupport.js';
 
-const Address = require('./Address');
-const MenuCategory = require('./MenuCategory');
-const MenuItem = require('./MenuItem');
-const Order = require('./Order');
-const OrderItem = require('./OrderItem');
-const Cart = require('./Cart');
-const CartItem = require('./CartItem');
-const Payment = require('./Payment');
-const Delivery = require('./Delivery');
-const Dispute = require('./Dispute');
-const Review = require('./Review');
-const Notification = require('./Notification');
-const OrderOfferLog = require('./OrderOfferLog');
+import Address from './Address.js';
+import MenuCategory from './MenuCategory.js';
+import MenuItem from './MenuItem.js';
+import Order from './Order.js';
+import OrderItem from './OrderItem.js';
+import Cart from './Cart.js';
+import CartItem from './CartItem.js';
+import Payment from './Payment.js';
+import Delivery from './Delivery.js';
+import Dispute from './Dispute.js';
+import Review from './Review.js';
+import Notification from './Notification.js';
+import OrderOfferLog from './OrderOfferLog.js';
 
 // ==========================================
 // Define Relationships Based on UML Diagram
@@ -120,7 +120,7 @@ Dispute.belongsTo(CustomerSupport, { foreignKey: 'handled_by' });
 User.hasMany(Notification, { foreignKey: 'user_id' });
 Notification.belongsTo(User, { foreignKey: 'user_id' });
 
-module.exports = {
+export default {
   sequelize,
   User,
   Restaurant,

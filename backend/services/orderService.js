@@ -1,12 +1,10 @@
-const { Order, Customer, Restaurant, DeliveryPartner, User, OrderItem, Address, Notification, MenuItem, MenuCategory, sequelize } = require('../models');
-const { Op } = require('sequelize');
-const paymentService = require('./paymentService');
-const { Payment } = require('../models');
-const notificationService = require('./notification_integration/NotificationService');
-const {
-    OrderStatusContext,
-    assertRoleCanUpdateStatus,
-} = require('../states/order/orderStatusState');
+import { Order, Customer, Restaurant, DeliveryPartner, User, OrderItem, Address, Notification, MenuItem, MenuCategory, sequelize } from '../models.js';
+import { Op } from 'sequelize';
+import paymentService from './paymentService.js';
+import { Payment } from '../models.js';
+import notificationService from './notification_integration/NotificationService.js';
+import { OrderStatusContext,
+    assertRoleCanUpdateStatus, } from '../states/order/orderStatusState.js';
 
 class OrderService {
     async getRestaurantOrders(userId, statusFilter, date) {
@@ -157,8 +155,8 @@ class OrderService {
     // Replace the existing createOrder method with this version.
     // Updated createOrder method using the Builder Pattern
     async createOrder(userId, orderData, io, req) {
-        const StandardCheckoutBuilder = require('../builders/checkout/StandardCheckoutBuilder');
-        const CheckoutDirector = require('../builders/checkout/CheckoutDirector');
+        import StandardCheckoutBuilder from '../builders/checkout/StandardCheckoutBuilder.js';
+        import CheckoutDirector from '../builders/checkout/CheckoutDirector.js';
 
         const builder = new StandardCheckoutBuilder(userId, orderData);
         const director = new CheckoutDirector(builder);
@@ -638,4 +636,4 @@ class OrderService {
     }
 }
 
-module.exports = new OrderService();
+export default new OrderService();

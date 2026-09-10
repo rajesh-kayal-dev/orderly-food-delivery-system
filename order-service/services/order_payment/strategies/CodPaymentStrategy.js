@@ -1,5 +1,5 @@
-const PaymentStrategy = require('./PaymentStrategy');
-const PaymentResult = require('../models/PaymentResult');
+import PaymentStrategy from './PaymentStrategy.js';
+import PaymentResult from '../models/PaymentResult.js';
 
 class CodPaymentStrategy extends PaymentStrategy {
   constructor({ sequelize, models }) {
@@ -74,4 +74,4 @@ class CodPaymentStrategy extends PaymentStrategy {
   }
 }
 
-module.exports = CodPaymentStrategy;
+export default CodPaymentStrategy;

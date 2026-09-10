@@ -1,4 +1,4 @@
-const OrderFilterHandler = require('./OrderFilterHandler');
+import OrderFilterHandler from './OrderFilterHandler.js';
 
 class RestaurantFilterHandler extends OrderFilterHandler {
     handle(context) {
@@ -10,4 +10,4 @@ class RestaurantFilterHandler extends OrderFilterHandler {
     }
 }
 
-module.exports = RestaurantFilterHandler;
+export default RestaurantFilterHandler;

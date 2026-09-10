@@ -1,5 +1,5 @@
-const { Order, Customer, Restaurant, DeliveryPartner, User, OrderItem, MenuItem, MenuCategory, sequelize } = require('../../models');
-const { Op } = require('sequelize');
+import { Order, Customer, Restaurant, DeliveryPartner, User, OrderItem, MenuItem, MenuCategory, sequelize } from '../../models.js';
+import { Op } from 'sequelize';
 
 /**
  * Interface: IRestaurantOpsAPI
@@ -167,4 +167,4 @@ class RestaurantOpsService {
     }
 }
 
-module.exports = new RestaurantOpsService();
+export default new RestaurantOpsService();

@@ -1,4 +1,4 @@
-const CatalogComponent = require('./CatalogComponent');
+import CatalogComponent from './CatalogComponent.js';
 
 class MenuItemLeaf extends CatalogComponent {
   constructor(item) {
@@ -41,4 +41,4 @@ class MenuItemLeaf extends CatalogComponent {
   }
 }
 
-module.exports = MenuItemLeaf;
+export default MenuItemLeaf;

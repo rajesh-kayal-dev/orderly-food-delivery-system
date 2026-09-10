@@ -1,5 +1,5 @@
-const { Restaurant, User, MenuCategory, MenuItem } = require('../models');
-const { Op } = require('sequelize');
+import { Restaurant, User, MenuCategory, MenuItem } from '../models.js';
+import { Op } from 'sequelize';
 
 class RestaurantService {
     async getAllRestaurants(query) {
@@ -65,4 +65,4 @@ class RestaurantService {
     }
 }
 
-module.exports = new RestaurantService();
+export default new RestaurantService();

@@ -1,4 +1,4 @@
-const axios = require('axios');
+import axios from 'axios';
 
 class NotificationProxy {
     constructor() {
@@ -28,4 +28,4 @@ class NotificationProxy {
     }
 }
 
-module.exports = new NotificationProxy();
+export default new NotificationProxy();

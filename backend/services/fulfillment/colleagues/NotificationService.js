@@ -1,4 +1,4 @@
-const { Notification } = require('../../../models');
+import { Notification } from '../../../models.js';
 
 class NotificationService {
   async notifyCustomer({ kind, userId, order, gatewayName, bankCode, transaction, io }) {
@@ -51,4 +51,4 @@ class NotificationService {
   }
 }
 
-module.exports = new NotificationService();
+export default new NotificationService();

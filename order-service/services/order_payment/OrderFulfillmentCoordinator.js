@@ -1,7 +1,7 @@
-const PaymentGatewayStrategyAdapter = require('./adapters/PaymentGatewayStrategyAdapter');
-const CodPaymentStrategy = require('./strategies/CodPaymentStrategy');
-const OnlinePaymentStrategy = require('./strategies/OnlinePaymentStrategy');
-const WalletPaymentStrategy = require('./strategies/WalletPaymentStrategy');
+import PaymentGatewayStrategyAdapter from './adapters/PaymentGatewayStrategyAdapter.js';
+import CodPaymentStrategy from './strategies/CodPaymentStrategy.js';
+import OnlinePaymentStrategy from './strategies/OnlinePaymentStrategy.js';
+import WalletPaymentStrategy from './strategies/WalletPaymentStrategy.js';
 
 class OrderFulfillmentCoordinator {
   constructor({ paymentService, sequelize, models }) {
@@ -63,4 +63,4 @@ class OrderFulfillmentCoordinator {
   }
 }
 
-module.exports = OrderFulfillmentCoordinator;
+export default OrderFulfillmentCoordinator;

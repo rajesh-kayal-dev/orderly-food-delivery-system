@@ -1,9 +1,9 @@
-const restaurantService = require('../services/restaurantService');
+import restaurantService from '../services/restaurantService.js';
 
 // @desc    Get all restaurants
 // @route   GET /api/restaurants
 // @access  Public
-exports.getRestaurants = async (req, res) => {
+export const getRestaurants = async (req, res) => {
     try {
         const restaurants = await restaurantService.getAllRestaurants(req.query);
         res.json({ success: true, data: restaurants });
@@ -16,7 +16,7 @@ exports.getRestaurants = async (req, res) => {
 // @desc    Get single restaurant
 // @route   GET /api/restaurants/:id
 // @access  Public
-exports.getRestaurantById = async (req, res) => {
+export const getRestaurantById = async (req, res) => {
     try {
         const restaurant = await restaurantService.getRestaurantById(req.params.id);
         res.json({ success: true, data: restaurant });

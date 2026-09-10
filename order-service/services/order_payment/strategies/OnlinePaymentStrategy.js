@@ -1,5 +1,5 @@
-const PaymentStrategy = require('./PaymentStrategy');
-const PaymentResult = require('../models/PaymentResult');
+import PaymentStrategy from './PaymentStrategy.js';
+import PaymentResult from '../models/PaymentResult.js';
 
 class OnlinePaymentStrategy extends PaymentStrategy {
   constructor({ paymentService, paymentGatewayAdapter, gatewayName = 'vnpay' }) {
@@ -42,4 +42,4 @@ class OnlinePaymentStrategy extends PaymentStrategy {
   }
 }
 
-module.exports = OnlinePaymentStrategy;
+export default OnlinePaymentStrategy;

@@ -1,7 +1,7 @@
-const paymentService = require('../services/paymentService');
-const orderFulfillmentCoordinator = require('../services/fulfillment/OrderFulfillmentCoordinator');
+import paymentService from '../services/paymentService.js';
+import orderFulfillmentCoordinator from '../services/fulfillment/OrderFulfillmentCoordinator.js';
 
-exports.createVNPayPayment = async (req, res) => {
+export const createVNPayPayment = async (req, res) => {
   try {
     const { restaurantId, addressId, notes, delivery_fee } = req.body;
 
@@ -22,7 +22,7 @@ exports.createVNPayPayment = async (req, res) => {
   }
 };
 
-exports.vnpayReturn = async (req, res) => {
+export const vnpayReturn = async (req, res) => {
   try {
     const finalized = await orderFulfillmentCoordinator.processPaymentResult({
       gatewayName: 'vnpay',
@@ -38,7 +38,7 @@ exports.vnpayReturn = async (req, res) => {
   }
 };
 
-exports.vnpayIpn = async (req, res) => {
+export const vnpayIpn = async (req, res) => {
   try {
     const finalized = await orderFulfillmentCoordinator.processPaymentResult({
       gatewayName: 'vnpay',

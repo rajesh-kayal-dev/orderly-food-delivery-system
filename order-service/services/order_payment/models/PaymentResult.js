@@ -26,4 +26,4 @@ class PaymentResult {
   }
 }
 
-module.exports = PaymentResult;
+export default PaymentResult;

@@ -1,5 +1,5 @@
-const { Order, DeliveryPartner, Restaurant, Address, Customer, User, OrderOfferLog, sequelize } = require('../../models');
-const { Op } = require('sequelize');
+import { Order, DeliveryPartner, Restaurant, Address, Customer, User, OrderOfferLog, sequelize } from '../../models.js';
+import { Op } from 'sequelize';
 
 /**
  * Order Dispatch Service
@@ -514,4 +514,4 @@ class DispatchService {
   }
 }
 
-module.exports = new DispatchService();
+export default new DispatchService();

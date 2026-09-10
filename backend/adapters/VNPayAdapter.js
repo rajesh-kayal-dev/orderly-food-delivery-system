@@ -1,7 +1,7 @@
-const IPaymentGatewayAdapter = require('../interfaces/IPaymentGatewayAdapter');
-const { vnpay, ProductCode, VnpLocale, dateFormat } = require('../config/vnpay');
-const axios = require('axios');
-const crypto = require('crypto');
+import IPaymentGatewayAdapter from '../interfaces/IPaymentGatewayAdapter.js';
+import { vnpay, ProductCode, VnpLocale, dateFormat } from '../config/vnpay.js';
+import axios from 'axios';
+import crypto from 'crypto';
 
 class VNPayAdapter extends IPaymentGatewayAdapter {
   getGatewayName() {
@@ -204,4 +204,4 @@ class VNPayAdapter extends IPaymentGatewayAdapter {
   }
 }
 
-module.exports = VNPayAdapter;
+export default VNPayAdapter;

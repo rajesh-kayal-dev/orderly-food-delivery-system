@@ -20,4 +20,4 @@ class AccountState {
   }
 }
 
-module.exports = AccountState;
+export default AccountState;

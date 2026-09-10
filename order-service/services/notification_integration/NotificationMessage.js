@@ -42,4 +42,4 @@ class NotificationMessage {
   }
 }
 
-module.exports = NotificationMessage;
+export default NotificationMessage;

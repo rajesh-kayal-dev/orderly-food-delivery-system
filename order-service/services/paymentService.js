@@ -1,5 +1,4 @@
-const {
-  sequelize,
+import { sequelize,
   Payment,
   Order,
   OrderItem,
@@ -10,10 +9,9 @@ const {
   CartItem,
   MenuItem,
   Restaurant,
-  User,
-} = require('../models');
-const PaymentGatewayFactory = require('../factories/paymentGatewayFactory');
-const notificationService = require('./notification_integration/NotificationService');
+  User, } from '../models.js';
+import PaymentGatewayFactory from '../factories/paymentGatewayFactory.js';
+import notificationService from './notification_integration/NotificationService.js';
 
 const FRONTEND_RETURN_URL =
   process.env.FRONTEND_VNPAY_RETURN_URL || 'http://localhost:5173/payment-result';
@@ -536,4 +534,4 @@ class PaymentService {
   }
 }
 
-module.exports = new PaymentService();
+export default new PaymentService();

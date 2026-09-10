@@ -1,17 +1,15 @@
-const {
-  Order,
+import { Order,
   OrderItem,
   Address,
   MenuItem,
   Restaurant,
   Customer,
-  User,
-} = require('../../../models');
+  User, } from '../../../models.js';
 
 class OrderColleagueService {
   async buildCheckoutRequest(userId, orderData) {
-    const StandardCheckoutBuilder = require('../../../builders/checkout/StandardCheckoutBuilder');
-    const CheckoutDirector = require('../../../builders/checkout/CheckoutDirector');
+    import StandardCheckoutBuilder from '../../../builders/checkout/StandardCheckoutBuilder.js';
+    import CheckoutDirector from '../../../builders/checkout/CheckoutDirector.js';
 
     const builder = new StandardCheckoutBuilder(userId, orderData);
     const director = new CheckoutDirector(builder);
@@ -108,4 +106,4 @@ class OrderColleagueService {
   }
 }
 
-module.exports = new OrderColleagueService();
+export default new OrderColleagueService();

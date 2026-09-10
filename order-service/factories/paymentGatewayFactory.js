@@ -1,4 +1,4 @@
-const VNPayAdapter = require('../adapters/VNPayAdapter');
+import VNPayAdapter from '../adapters/VNPayAdapter.js';
 
 class PaymentGatewayFactory {
   static create(gatewayName) {
@@ -13,4 +13,4 @@ class PaymentGatewayFactory {
   }
 }
 
-module.exports = PaymentGatewayFactory;
+export default PaymentGatewayFactory;

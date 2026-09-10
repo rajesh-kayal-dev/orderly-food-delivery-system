@@ -1,10 +1,10 @@
-const express = require('express');
-const cors = require('cors');
-const dotenv = require('dotenv');
-const http = require('http');
-const { Server } = require('socket.io');
-const { sequelize } = require('./models');
-const { VNPay, ignoreLogger, ProductCode, VnpLocale, dateFormat } = require("vnpay");
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import http from 'http';
+import { Server } from 'socket.io';
+import { sequelize } from './models.js';
+import { VNPay, ignoreLogger, ProductCode, VnpLocale, dateFormat } from "vnpay";
 
 // Load env vars
 dotenv.config();
@@ -38,13 +38,13 @@ app.use((req, res, next) => {
 });
 
 // Import routes
-// const authRoutes = require('./routes/authRoutes'); // MOVED TO IDENTITY-SERVICE
-// const restaurantRoutes = require('./routes/restaurantRoutes'); // MOVED TO RESTAURANT-SERVICE
-// const menuRoutes = require('./routes/menuRoutes'); // MOVED TO RESTAURANT-SERVICE
-// const orderRoutes = require('./routes/orderRoutes'); // MOVED TO ORDER-SERVICE
-const adminRoutes = require('./routes/adminRoutes');
-// const cartRoutes = require('./routes/cartRoutes'); // MOVED TO ORDER-SERVICE
-// const paymentRoutes = require('./routes/paymentRoutes'); // MOVED TO ORDER-SERVICE
+// import authRoutes from './routes/authRoutes.js'; // MOVED TO IDENTITY-SERVICE
+// import restaurantRoutes from './routes/restaurantRoutes.js'; // MOVED TO RESTAURANT-SERVICE
+// import menuRoutes from './routes/menuRoutes.js'; // MOVED TO RESTAURANT-SERVICE
+// import orderRoutes from './routes/orderRoutes.js'; // MOVED TO ORDER-SERVICE
+import adminRoutes from './routes/adminRoutes.js';
+// import cartRoutes from './routes/cartRoutes.js'; // MOVED TO ORDER-SERVICE
+// import paymentRoutes from './routes/paymentRoutes.js'; // MOVED TO ORDER-SERVICE
 
 // Mount routes
 // app.use('/api/auth', authRoutes); // HANDLED BY IDENTITY-SERVICE VIA GATEWAY
@@ -55,8 +55,8 @@ const adminRoutes = require('./routes/adminRoutes');
 // app.use('/api/admin', adminRoutes); // HANDLED BY IDENTITY & ORDER SERVICES VIA GATEWAY
 // app.use('/api/payments', paymentRoutes); // HANDLED BY ORDER-SERVICE VIA GATEWAY
 
-const dispatchService = require('./services/dispatch/dispatchService');
-const { DeliveryPartner } = require('./models');
+import dispatchService from './services/dispatch/dispatchService.js';
+import { DeliveryPartner } from './models.js';
 
 // Socket.io Connection Logic
 io.on('connection', (socket) => {

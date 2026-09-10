@@ -1,4 +1,4 @@
-const CatalogComponent = require('./CatalogComponent');
+import CatalogComponent from './CatalogComponent.js';
 
 class MenuCategoryComposite extends CatalogComponent {
   constructor({ id, name }) {
@@ -28,4 +28,4 @@ class MenuCategoryComposite extends CatalogComponent {
   }
 }
 
-module.exports = MenuCategoryComposite;
+export default MenuCategoryComposite;

@@ -1,7 +1,7 @@
-const authController = require('../controllers/authController');
-const catalogController = require('../controllers/catalogController');
-const cartController = require('../controllers/cartController');
-const orderController = require('../controllers/orderController');
+import authController from '../controllers/authController.js';
+import catalogController from '../controllers/catalogController.js';
+import cartController from '../controllers/cartController.js';
+import orderController from '../controllers/orderController.js';
 
 /**
  * CustomerAppFacade
@@ -59,4 +59,4 @@ class CustomerAppFacade {
   }
 }
 
-module.exports = new CustomerAppFacade();
+export default new CustomerAppFacade();

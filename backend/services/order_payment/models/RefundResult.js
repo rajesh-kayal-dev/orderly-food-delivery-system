@@ -18,4 +18,4 @@ class RefundResult {
   }
 }
 
-module.exports = RefundResult;
+export default RefundResult;

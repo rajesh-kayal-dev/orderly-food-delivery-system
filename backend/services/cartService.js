@@ -1,4 +1,4 @@
-const { Cart, CartItem, MenuItem, Customer, Restaurant } = require('../models');
+import { Cart, CartItem, MenuItem, Customer, Restaurant } from '../models.js';
 
 class CartService {
     async getCart(userId) {
@@ -121,4 +121,4 @@ class CartService {
     }
 }
 
-module.exports = new CartService();
+export default new CartService();

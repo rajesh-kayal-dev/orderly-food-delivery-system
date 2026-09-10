@@ -1,4 +1,4 @@
-const RestaurantCommand = require('./RestaurantCommand');
+import RestaurantCommand from './RestaurantCommand.js';
 
 class ToggleAvailabilityCommand extends RestaurantCommand {
     constructor(menuService, itemId, userId, io) {
@@ -14,4 +14,4 @@ class ToggleAvailabilityCommand extends RestaurantCommand {
     }
 }
 
-module.exports = ToggleAvailabilityCommand;
+export default ToggleAvailabilityCommand;

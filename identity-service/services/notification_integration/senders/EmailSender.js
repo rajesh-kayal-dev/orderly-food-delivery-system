@@ -1,9 +1,7 @@
-const nodemailer = require('nodemailer');
-const NotificationSender = require('./NotificationSender');
-const {
-  sendDeliveredOrderEmail,
-  sendRefundEmail,
-} = require('../../mailService');
+import nodemailer from 'nodemailer';
+import NotificationSender from './NotificationSender.js';
+import { sendDeliveredOrderEmail,
+  sendRefundEmail, } from '../../mailService.js';
 
 let transporter = null;
 
@@ -119,4 +117,4 @@ class EmailSender extends NotificationSender {
   }
 }
 
-module.exports = EmailSender;
+export default EmailSender;

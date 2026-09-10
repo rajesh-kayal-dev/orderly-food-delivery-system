@@ -18,4 +18,4 @@ class RefundRequest {
   }
 }
 
-module.exports = RefundRequest;
+export default RefundRequest;
