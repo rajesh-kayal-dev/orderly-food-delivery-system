@@ -9,8 +9,8 @@ export default class SuspendedState extends AccountState {
     throw new Error('Account has been deactivated. Please contact support.');
   }
 
-  activate(account) {
-    import ActiveState from './ActiveState.js';
+  async activate(account) {
+    const { default: ActiveState } = await import('./ActiveState.js');
     account.user.is_active = true;
     account.setState(new ActiveState());
     return account;

@@ -3,7 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import http from 'http';
 import { Server } from 'socket.io';
-import { sequelize } from './models.js';
+import { sequelize } from './models/index.js';
 import { VNPay, ignoreLogger, ProductCode, VnpLocale, dateFormat } from "vnpay";
 
 // Load env vars
@@ -38,22 +38,12 @@ app.use((req, res, next) => {
 });
 
 // Import routes
-// import authRoutes from './routes/authRoutes.js'; // MOVED TO IDENTITY-SERVICE
-// import restaurantRoutes from './routes/restaurantRoutes.js'; // MOVED TO RESTAURANT-SERVICE
-// import menuRoutes from './routes/menuRoutes.js'; // MOVED TO RESTAURANT-SERVICE
-// import orderRoutes from './routes/orderRoutes.js'; // MOVED TO ORDER-SERVICE
+import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
-// import cartRoutes from './routes/cartRoutes.js'; // MOVED TO ORDER-SERVICE
-// import paymentRoutes from './routes/paymentRoutes.js'; // MOVED TO ORDER-SERVICE
 
 // Mount routes
-// app.use('/api/auth', authRoutes); // HANDLED BY IDENTITY-SERVICE VIA GATEWAY
-// app.use('/api/restaurants', restaurantRoutes); // HANDLED BY RESTAURANT-SERVICE VIA GATEWAY
-// app.use('/api/menu', menuRoutes); // HANDLED BY RESTAURANT-SERVICE VIA GATEWAY
-// app.use('/api/orders', orderRoutes); // HANDLED BY ORDER-SERVICE VIA GATEWAY
-// app.use('/api/cart', cartRoutes); // HANDLED BY ORDER-SERVICE VIA GATEWAY
-// app.use('/api/admin', adminRoutes); // HANDLED BY IDENTITY & ORDER SERVICES VIA GATEWAY
-// app.use('/api/payments', paymentRoutes); // HANDLED BY ORDER-SERVICE VIA GATEWAY
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
 
 import dispatchService from './services/dispatch/dispatchService.js';
 import { DeliveryPartner } from './models.js';
@@ -131,14 +121,14 @@ io.on('connection', (socket) => {
 // Database Sync & Recovery Startup
 const PORT = process.env.PORT || 5000;
 
-sequelize.sync({ force: false }).then(() => {
-    console.log('Database synced successfully');
-    server.listen(PORT, async () => {
-        console.log(`Server running on port ${PORT}`);
-        // Run startup recovery job to resume orphaned dispatches
+server.listen(PORT, async () => {
+    console.log(`Server running on port ${PORT}`);
+    try {
+        await sequelize.authenticate();
+        console.log('Sequelize connected to Neon Postgres DB');
         await dispatchService.recoverOrphanedDispatches(io);
-    });
-}).catch(err => {
-    console.error('Failed to sync database:', err);
+    } catch (err) {
+        console.error('Database connection warning:', err.message);
+    }
 });
 

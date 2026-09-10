@@ -14,8 +14,8 @@ export default class ActiveState extends AccountState {
     return account;
   }
 
-  suspend(account) {
-    import SuspendedState from './SuspendedState.js';
+  async suspend(account) {
+    const { default: SuspendedState } = await import('./SuspendedState.js');
     account.user.is_active = false;
     account.setState(new SuspendedState());
     return account;

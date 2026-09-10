@@ -305,6 +305,12 @@ const sendPendingApprovalStatusEmail = async ({
   });
 };
 
+export {
+  sendDeliveredOrderEmail,
+  sendRefundEmail,
+  sendPendingApprovalStatusEmail,
+};
+
 export default {
   sendDeliveredOrderEmail,
   sendRefundEmail,

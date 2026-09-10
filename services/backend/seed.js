@@ -1,4 +1,4 @@
-﻿import dotenv from 'dotenv';
+import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
@@ -23,13 +23,14 @@ async function seed() {
   await prisma.notification.deleteMany();
   await prisma.user.deleteMany();
 
+  const adminPasswordHash = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'password123', 10);
   const defaultPassword = await bcrypt.hash('password123', 10);
 
   // 1. Admin
   const adminUser = await prisma.user.create({
     data: {
-      email: 'admin@ofds.com',
-      password_hash: defaultPassword,
+      email: process.env.ADMIN_EMAIL || 'admin@ofds.com',
+      password_hash: adminPasswordHash,
       full_name: 'System Admin',
       phone_number: '1234567890',
       role: 'admin',
@@ -130,27 +131,38 @@ async function seed() {
   });
   console.log('Restaurant user and menu created:', restaurantUser.email);
 
-  // 4. Delivery Partner
-  const driverUser = await prisma.user.create({
-    data: {
-      email: 'driver@ofds.com',
-      password_hash: defaultPassword,
-      full_name: 'Alex Express',
-      phone_number: '1234567893',
-      role: 'delivery_partner',
-      deliveryPartner: {
-        create: {
-          vehicle_type: 'Motorcycle',
-          vehicle_number: 'OD-01-EV-9999',
-          is_available: true,
-          current_lat: 28.6139,
-          current_lng: 77.2090,
-          rating: 4.9
+  // 4. Delivery Partners (Admin Approved)
+  const driversToSeed = [
+    { email: 'driver@ofds.com', name: 'Alex Express', phone: '9830111111', vehicle: 'Ather 450X EV (WB-01-EV-9999)', zone: 'Salt Lake' },
+    { email: 'amit@ofds.com', name: 'Amit Sharma', phone: '9830123456', vehicle: 'Honda Activa 6G (WB-02-AK-9821)', zone: 'Salt Lake' },
+    { email: 'rahul@ofds.com', name: 'Rahul Das', phone: '9831287654', vehicle: 'TVS Jupiter (WB-04-BF-4412)', zone: 'New Town' },
+    { email: 'sanjay@ofds.com', name: 'Sanjay Kumar', phone: '9832211223', vehicle: 'Hero Splendor+ (WB-06-EH-1029)', zone: 'Rajarhat' },
+    { email: 'rohit@ofds.com', name: 'Rohit Yadav', phone: '9835566778', vehicle: 'Yamaha FZ-S (WB-10-YZ-8812)', zone: 'Tollygunge' }
+  ];
+
+  for (const drv of driversToSeed) {
+    await prisma.user.create({
+      data: {
+        email: drv.email,
+        password_hash: defaultPassword,
+        full_name: drv.name,
+        phone_number: drv.phone,
+        role: 'delivery_partner',
+        is_active: true,
+        deliveryPartner: {
+          create: {
+            vehicle_type: drv.vehicle.split(' ')[0],
+            vehicle_number: drv.vehicle.split('(')[1]?.replace(')', '') || 'WB-01-EV-9999',
+            is_available: true,
+            current_lat: 22.5726,
+            current_lng: 88.3639,
+            rating: 4.9
+          }
         }
       }
-    }
-  });
-  console.log('Delivery partner user created:', driverUser.email);
+    });
+  }
+  console.log('Seeded 5 approved delivery partners into database');
 
   // 5. Customer
   const customerUser = await prisma.user.create({

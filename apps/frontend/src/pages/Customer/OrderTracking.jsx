@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import axios from '../../api/axios';
 import socket from '../../socket';
+import EmptyState from '../../components/common/EmptyState';
 import { 
   CheckCircleFilled, 
   ClockCircleOutlined, 
@@ -9,19 +10,20 @@ import {
   ShopOutlined, 
   CheckOutlined,
   CloseCircleOutlined,
-  PhoneOutlined
+  PhoneOutlined,
+  RadarChartOutlined
 } from '@ant-design/icons';
 import { message, Modal } from 'antd';
 
 const ORDER_STEPS = [
   { id: 'pending', label: 'Order Placed', icon: <ClockCircleOutlined /> },
-  { id: 'accepted', label: 'Restaurant Accepted', icon: <ShopOutlined /> },
-  { id: 'preparing', label: 'Preparing Order', icon: <ClockCircleOutlined /> },
+  { id: 'accepted', label: 'Accepted', icon: <ShopOutlined /> },
+  { id: 'preparing', label: 'Preparing', icon: <ClockCircleOutlined /> },
   { id: 'picked_up', label: 'On the Way', icon: <CarOutlined /> },
   { id: 'delivered', label: 'Delivered', icon: <CheckOutlined /> }
 ];
 
-const OrderTracking = () => {
+export default function OrderTracking() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const { user, token } = useSelector((state) => state.auth);
@@ -47,12 +49,11 @@ const OrderTracking = () => {
       if (data.status === 'cancelled') {
         message.warning(`Order #${data.orderId.slice(0, 8)} has been cancelled.`);
       } else if (data.status === 'delivered') {
-        message.success(`Great! Order #${data.orderId.slice(0, 8)} has arrived!`);
+        message.success(`Order #${data.orderId.slice(0, 8)} has arrived!`);
       } else if (data.status === 'completed') {
-        // When completed, we might want to refresh to move it to history
         fetchOrders();
       } else {
-        message.success(`Order #${data.orderId.slice(0, 8)} status updated to ${data.status.replace('_', ' ')}`);
+        message.info(`Order status updated to ${data.status.replace('_', ' ')}`);
       }
     });
 
@@ -61,16 +62,6 @@ const OrderTracking = () => {
     };
   }, [user?.id, token]);
 
-  const handleAcknowledge = async (orderId) => {
-    try {
-      await axios.put(`/orders/${orderId}/status`, { status: 'completed' });
-      message.success('Tracking closed. You can view this order in history.');
-      fetchOrders();
-    } catch (error) {
-      message.error('Failed to close tracking');
-    }
-  };
-
   const fetchOrders = async () => {
     if (!token) return;
     
@@ -78,16 +69,25 @@ const OrderTracking = () => {
       setLoading(true);
       const response = await axios.get('/orders/me');
       if (response.data.success) {
-        setOrders(response.data.data);
+        setOrders(response.data.data || []);
       }
     } catch (error) {
       console.error('Error fetching orders:', error);
-      // Only show error message if we still have a token (meaning it's a real API failure, not just a logout)
       if (token) {
         message.error('Failed to load orders');
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAcknowledge = async (orderId) => {
+    try {
+      await axios.put(`/orders/${orderId}/status`, { status: 'completed' });
+      message.success('Order tracking completed.');
+      fetchOrders();
+    } catch (error) {
+      message.error('Failed to close tracking');
     }
   };
 
@@ -129,7 +129,12 @@ const OrderTracking = () => {
   };
 
   if (loading) {
-    return <div className="flex justify-center items-center h-64">Loading tracking info...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center py-32 space-y-4 animate-pulse">
+        <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-neutral-500 font-semibold text-sm">Loading active orders...</p>
+      </div>
+    );
   }
 
   const activeOrders = orders.filter(o => 
@@ -137,162 +142,191 @@ const OrderTracking = () => {
   );
 
   return (
-    <div className="max-w-4xl mx-auto p-4 animate-fade-in">
-      <h1 className="text-3xl font-bold mb-8 text-gray-800">Track Your Orders</h1>
+    <div className="pb-16 animate-fade-in -mt-16">
 
-      {activeOrders.length === 0 && (
-        <div className="text-center py-20 bg-white rounded-2xl shadow-soft">
-          <ClockCircleOutlined className="text-6xl text-gray-300 mb-4" />
-          <p className="text-gray-500 text-lg">You have no active orders to track right now.</p>
-        </div>
-      )}
+      {/* ── FULL-BLEED HERO BANNER (same style as Restaurants & Menu) ── */}
+      <div className="relative bg-neutral-900 text-white pt-24 pb-16 border-b border-neutral-800 overflow-hidden">
+        <img
+          src="/food_banners/spices-banner.jpg"
+          alt="Order Tracking Banner"
+          className="absolute inset-0 w-full h-full object-cover object-center opacity-70"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-neutral-950/90 via-neutral-900/60 to-neutral-950/30" />
 
-      {/* Active Orders Section */}
-      <div className="space-y-8 mb-12">
-        {activeOrders.map(order => (
-          <div key={order.id} className="bg-white rounded-2xl shadow-soft overflow-hidden border border-gray-100">
-            {/* Header info */}
-            <div className="p-6 bg-gray-50 flex justify-between items-center border-b border-gray-100">
-              <div>
-                <h3 className="text-lg font-bold text-gray-800">{order.Restaurant?.name}</h3>
-                <p className="text-sm text-gray-500">Order ID: #{order.id.slice(0, 8)}</p>
-              </div>
-              <div className="text-right">
-                <span className={`badge badge-${order.status === 'pending' ? 'pending' : (order.status === 'preparing' ? 'preparing' : (['picked_up', 'delivering'].includes(order.status) ? 'delivering' : 'completed'))}`}>
-                  {['picked_up', 'delivering'].includes(order.status) ? 'ON THE WAY' : (order.status === 'delivered' ? 'ARRIVED!' : order.status.replace('_', ' ').toUpperCase())}
-                </span>
-              </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/20 text-orange-400 text-xs font-bold uppercase tracking-wider mb-2 border border-orange-500/30">
+              ⚡ Live Real-time Tracking
             </div>
+            <h1 className="text-3xl md:text-5xl font-black tracking-tight text-white">Order Tracking</h1>
+            <p className="text-neutral-300 mt-2 max-w-2xl text-sm md:text-base leading-relaxed">
+              Stay up to date with every step of your delivery in real time.
+            </p>
+          </div>
 
-            {/* Timeline or Cancelled Status */}
-            <div className="p-8">
-              {order.status === 'cancelled' ? (
-                <div className="flex flex-col items-center py-4 bg-red-50 rounded-xl border border-red-100">
-                  <CloseCircleOutlined className="text-4xl text-red-500 mb-2" />
-                  <h3 className="text-xl font-bold text-red-700 uppercase">Order Cancelled</h3>
-                  <p className="text-red-500 text-sm">This order has been cancelled and is now read-only.</p>
-                </div>
-              ) : (
-                <div className="relative flex justify-between">
-                  {/* Connecting lines */}
-                  <div className="absolute top-5 left-0 w-full h-0.5 bg-gray-200 -z-0">
-                    <div 
-                      className="h-full bg-primary transition-all duration-1000" 
-                      style={{ 
-                        width: `${(ORDER_STEPS.findIndex(s => s.id === order.status) / (ORDER_STEPS.length - 1)) * 100}%` 
-                      }}
-                    />
+          <div className="hidden lg:block text-right bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10 max-w-xs shadow-xl">
+            <p className="text-xs font-serif italic text-amber-300 leading-snug">
+              "Good food is like music you can taste, color you can smell."
+            </p>
+            <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-widest mt-1">
+              — Gordon Ramsay
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── ORDERS CONTENT ── */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+
+        {activeOrders.length === 0 ? (
+          <div className="py-16 max-w-xl mx-auto">
+            <EmptyState
+              icon={<RadarChartOutlined className="text-orange-500" />}
+              title="No Active Orders"
+              description="You do not have any active orders currently being prepared or delivered."
+            />
+          </div>
+        ) : (
+          <div className="space-y-8">
+            {activeOrders.map((order) => {
+              const currentStepIdx = ORDER_STEPS.findIndex(s => s.id === order.status);
+              const progressPercent = currentStepIdx >= 0 ? (currentStepIdx / (ORDER_STEPS.length - 1)) * 100 : 0;
+
+              return (
+                <div
+                  key={order.id}
+                  className="bg-white rounded-3xl border border-neutral-200/80 overflow-hidden shadow-sm"
+                >
+                  {/* Order Header */}
+                  <div className="p-6 bg-neutral-50 flex flex-wrap justify-between items-center border-b border-neutral-100 gap-4">
+                    <div>
+                      <h3 className="text-lg font-extrabold text-neutral-900">{order.Restaurant?.name || 'Restaurant'}</h3>
+                      <p className="text-xs font-semibold text-neutral-400">Order ID: #{order.id.slice(0, 8)}</p>
+                    </div>
+                    <span className="px-4 py-1.5 rounded-full text-xs font-extrabold bg-orange-100 text-orange-700 uppercase tracking-wider">
+                      {order.status === 'picked_up' ? 'ON THE WAY' : order.status === 'delivered' ? 'ARRIVED!' : order.status.replace('_', ' ')}
+                    </span>
                   </div>
 
-                  {ORDER_STEPS.map((step, idx) => {
-                    const status = getStepStatus(order.status, step.id);
-                    return (
-                      <div key={step.id} className="relative z-10 flex flex-col items-center w-1/6">
-                        <div className={`
-                          w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300
-                          ${status === 'completed' ? 'bg-primary border-primary text-white' : 
-                            status === 'current' ? 'bg-white border-primary text-primary scale-110 shadow-lg ring-4 ring-orange-50' : 
-                            'bg-white border-gray-200 text-gray-400'}
-                        `}>
-                          {status === 'completed' ? <CheckOutlined /> : step.icon}
-                        </div>
-                        <span className={`mt-3 text-[10px] md:text-sm font-medium text-center leading-tight
-                          ${status === 'completed' || status === 'current' ? 'text-gray-800' : 'text-gray-400'}
-                        `}>
-                          {step.label}
+                  {/* Status Progress Timeline */}
+                  <div className="px-6 sm:px-12 py-8">
+                    <div className="relative flex justify-between items-center">
+                      {/* Track line */}
+                      <div className="absolute top-5 left-0 w-full h-1 bg-neutral-100 rounded-full">
+                        <div
+                          className="h-full bg-orange-500 rounded-full transition-all duration-700"
+                          style={{ width: `${progressPercent}%` }}
+                        />
+                      </div>
+
+                      {ORDER_STEPS.map((step) => {
+                        const status = getStepStatus(order.status, step.id);
+                        return (
+                          <div key={step.id} className="relative z-10 flex flex-col items-center">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 text-sm font-bold
+                              ${status === 'completed'
+                                ? 'bg-orange-500 border-orange-500 text-white shadow-md'
+                                : status === 'current'
+                                ? 'bg-white border-orange-500 text-orange-500 scale-110 shadow-lg ring-4 ring-orange-100'
+                                : 'bg-white border-neutral-200 text-neutral-400'}`}
+                            >
+                              {status === 'completed' ? <CheckOutlined /> : step.icon}
+                            </div>
+                            <span className={`mt-3 text-[10px] sm:text-xs font-bold text-center leading-tight ${
+                              status === 'completed' || status === 'current' ? 'text-neutral-900' : 'text-neutral-400'
+                            }`}>
+                              {step.label}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Order Details & Driver */}
+                  <div className="p-6 bg-neutral-50/50 border-t border-neutral-100 grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    {/* Items breakdown */}
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-extrabold uppercase tracking-wider text-neutral-400">Order Items</h4>
+                      <ul className="text-xs text-neutral-700 space-y-2 border-b border-neutral-200/60 pb-3">
+                        {order.OrderItems?.map((item) => (
+                          <li key={item.id} className="flex justify-between font-medium">
+                            <span>{item.quantity}x {item.MenuItem?.name}</span>
+                            <span className="font-bold">${Number(item.subtotal || 0).toFixed(2)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="flex justify-between items-center text-sm pt-1">
+                        <span className="font-extrabold text-neutral-900">Total Paid</span>
+                        <span className="font-black text-lg text-orange-600">
+                          ${Number(order.total_amount || 0).toFixed(2)}
                         </span>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Order Content & Driver Info */}
-            <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h4 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Order Items</h4>
-                <ul className="text-sm text-gray-600 space-y-2 border-b border-gray-100 pb-3 mb-3">
-                  {order.OrderItems?.map(item => (
-                    <li key={item.id} className="flex justify-between">
-                      <span>{item.quantity}x {item.MenuItem?.name}</span>
-                      <span className="font-medium text-gray-800">{parseFloat(item.subtotal).toLocaleString()}đ</span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="space-y-1 text-sm bg-gray-100/50 p-2 rounded-lg">
-                  <div className="flex justify-between text-gray-500">
-                    <span>Subtotal</span>
-                    <span>{parseFloat(order.subtotal || 0).toLocaleString()}đ</span>
-                  </div>
-                  <div className="flex justify-between text-gray-500">
-                    <span>Delivery Fee</span>
-                    <span>{parseFloat(order.delivery_fee || 0).toLocaleString()}đ</span>
-                  </div>
-                  <div className="flex justify-between font-bold text-gray-800 text-base pt-1 border-t border-gray-200 mt-1">
-                    <span>Total Amount</span>
-                    <span className="text-primary">{parseFloat(order.total_amount).toLocaleString()}đ</span>
-                  </div>
-                </div>
-              </div>
-
-              {order.delivery_partner_id && (
-                <div className="bg-orange-50 p-4 rounded-xl border border-orange-100 h-fit">
-                  <h4 className="text-sm font-bold text-orange-800 uppercase tracking-wider mb-2 flex items-center gap-2">
-                    <CarOutlined /> Driver Information
-                  </h4>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-orange-200 rounded-full flex items-center justify-center text-orange-700 font-bold">
-                      {order.DeliveryPartner?.User?.full_name?.charAt(0) || 'D'}
                     </div>
-                    <div>
-                      <p className="font-bold text-gray-800">{order.DeliveryPartner?.User?.full_name || 'Assigned Driver'}</p>
-                      <p className="text-sm text-gray-600 flex items-center gap-1">
-                        <PhoneOutlined /> {order.DeliveryPartner?.User?.phone_number || 'N/A'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-3 text-xs text-orange-700 font-medium">
-                    Status: <span className="capitalize">{['picked_up', 'delivering'].includes(order.status) ? 'On the Way' : (order.status === 'delivered' ? 'Delivered (Waiting for your confirmation)' : order.status)}</span>
-                  </div>
-                  
-                  {/* Customer Confirmation Button - Only shown when order is actually delivered */}
-                  {order.status === 'delivered' && (
-                    <button 
-                      onClick={() => {
-                        Modal.confirm({
-                          title: 'Confirm Receipt',
-                          content: 'Have you received your order correctly? This will close the tracking and move it to history.',
-                          okText: 'Yes, Received',
-                          cancelText: 'Not Yet',
-                          onOk: () => handleAcknowledge(order.id)
-                        });
-                      }}
-                      className="w-full mt-4 bg-primary text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:bg-orange-600 transition-all flex items-center justify-center gap-2"
-                    >
-                      <CheckOutlined /> Confirm I Received Order
-                    </button>
-                  )}
-                </div>
-              )}
 
-              {/* Cancel Button */}
-              {['pending', 'accepted'].includes(order.status) && (
-                <div className="md:col-span-2 mt-2">
-                  <button 
-                    onClick={() => handleCancelOrder(order.id)}
-                    className="text-red-500 hover:text-red-700 font-bold text-sm flex items-center gap-1 transition-colors"
-                  >
-                    <CloseCircleOutlined /> Cancel Order
-                  </button>
+                    {/* Driver / Actions */}
+                    <div className="space-y-4">
+                      {order.DeliveryPartner ? (
+                        <div className="bg-orange-50/80 rounded-2xl p-4 border border-orange-100 space-y-3">
+                          <h4 className="text-xs font-extrabold text-orange-800 uppercase tracking-wider flex items-center gap-1.5">
+                            <CarOutlined /> Delivery Driver
+                          </h4>
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-orange-200 text-orange-800 font-bold flex items-center justify-center">
+                              {order.DeliveryPartner?.User?.full_name?.charAt(0) || 'D'}
+                            </div>
+                            <div>
+                              <p className="font-extrabold text-neutral-900 text-xs">
+                                {order.DeliveryPartner?.User?.full_name || 'Assigned Driver'}
+                              </p>
+                              <p className="text-xs text-neutral-600 flex items-center gap-1 mt-0.5">
+                                <PhoneOutlined /> {order.DeliveryPartner?.User?.phone_number || 'Contact via Orderly'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="bg-neutral-100 rounded-2xl p-4 text-xs text-neutral-500 font-semibold">
+                          ⏳ Finding nearby delivery partner...
+                        </div>
+                      )}
+
+                      {order.status === 'delivered' && (
+                        <button
+                          onClick={() => {
+                            Modal.confirm({
+                              title: 'Confirm Delivery',
+                              content: 'Have you received your food order in good condition?',
+                              okText: 'Yes, Received!',
+                              cancelText: 'Not yet',
+                              onOk: () => handleAcknowledge(order.id)
+                            });
+                          }}
+                          className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
+                        >
+                          <CheckCircleFilled /> Confirm Receipt & Close
+                        </button>
+                      )}
+
+                      {['pending', 'accepted'].includes(order.status) && (
+                        <button
+                          onClick={() => handleCancelOrder(order.id)}
+                          className="text-xs font-bold text-red-600 hover:underline flex items-center gap-1"
+                        >
+                          <CloseCircleOutlined /> Cancel Order
+                        </button>
+                      )}
+                    </div>
+
+                  </div>
                 </div>
-              )}
-            </div>
+              );
+            })}
           </div>
-        ))}
+        )}
+
       </div>
     </div>
   );
-};
-
-export default OrderTracking;
+}

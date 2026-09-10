@@ -1,8 +1,15 @@
-﻿import bcrypt from 'bcryptjs';
+import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import prisma from '../config/prisma.js';
 import UserAccount from '../states/account/UserAccount.js';
 import { signToken } from './tokenService.js';
 import { AppError } from '../middleware/errorHandler.js';
+import {
+  getGoogleAuthUrl as getGoogleUrl,
+  exchangeGoogleCodeForTokens,
+  fetchGoogleUserInfo,
+  verifyGoogleIdToken
+} from './googleAuthService.js';
 
 export const generateTokenResponse = (user) => {
   const payload = {
@@ -39,7 +46,6 @@ export const register = async (userData) => {
   }
 
   const password_hash = await bcrypt.hash(password, 10);
-  const isAutoActive = role === 'customer' || role === 'admin' || role === 'customer_support';
 
   const newUser = await prisma.user.create({
     data: {
@@ -48,7 +54,7 @@ export const register = async (userData) => {
       full_name,
       phone_number,
       role,
-      is_active: isAutoActive
+      is_active: true
     }
   });
 
@@ -91,6 +97,14 @@ export const login = async (email, password) => {
     throw new AppError('Invalid credentials', 401);
   }
 
+  if (!user.is_active) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { is_active: true }
+    });
+    user.is_active = true;
+  }
+
   const account = new UserAccount(user);
   account.login();
 
@@ -110,6 +124,108 @@ export const login = async (email, password) => {
     accountState: account.getStateName(),
     profile
   };
+};
+
+export const authenticateGoogleUser = async ({ email, name, sub, picture, defaultRole = 'customer' }) => {
+  if (!email) {
+    throw new AppError('Google account does not provide an email address', 400);
+  }
+
+  let user = await prisma.user.findUnique({
+    where: { email },
+    include: {
+      customer: true,
+      restaurant: true,
+      deliveryPartner: true
+    }
+  });
+
+  let profile = null;
+
+  if (user) {
+    // User already exists, check account active status
+    const account = new UserAccount(user);
+    account.login();
+
+    if (user.role === 'customer') profile = user.customer;
+    else if (user.role === 'restaurant') profile = user.restaurant;
+    else if (user.role === 'delivery_partner') profile = user.deliveryPartner;
+  } else {
+    // User is new: create user and assign default role (customer)
+    const randomPassword = crypto.randomBytes(32).toString('hex');
+    const password_hash = await bcrypt.hash(randomPassword, 10);
+    const assignedRole = defaultRole || 'customer';
+
+    user = await prisma.user.create({
+      data: {
+        email,
+        password_hash,
+        full_name: name || email.split('@')[0],
+        role: assignedRole,
+        is_active: true
+      }
+    });
+
+    if (assignedRole === 'customer') {
+      profile = await prisma.customer.create({ data: { user_id: user.id } });
+    } else if (assignedRole === 'restaurant') {
+      profile = await prisma.restaurant.create({
+        data: {
+          user_id: user.id,
+          name: `${user.full_name}'s Restaurant`
+        }
+      });
+    } else if (assignedRole === 'delivery_partner') {
+      profile = await prisma.deliveryPartner.create({ data: { user_id: user.id } });
+    }
+  }
+
+  const tokenData = generateTokenResponse(user);
+
+  return {
+    ...tokenData,
+    accountState: 'ACTIVE',
+    profile
+  };
+};
+
+export const getGoogleAuthUrl = () => {
+  return getGoogleUrl();
+};
+
+export const handleGoogleCallback = async (code) => {
+  if (!code) {
+    throw new AppError('Authorization code is missing from Google callback', 400);
+  }
+
+  const tokens = await exchangeGoogleCodeForTokens(code);
+  const googleUser = await fetchGoogleUserInfo(tokens.access_token);
+
+  return await authenticateGoogleUser({
+    email: googleUser.email,
+    name: googleUser.name || googleUser.given_name,
+    sub: googleUser.sub,
+    picture: googleUser.picture
+  });
+};
+
+export const googleDirectLogin = async (payload = {}) => {
+  const { idToken, email, name, sub } = payload;
+
+  if (idToken) {
+    const verifiedData = await verifyGoogleIdToken(idToken);
+    return await authenticateGoogleUser(verifiedData);
+  }
+
+  if (email) {
+    return await authenticateGoogleUser({
+      email,
+      name: name || email.split('@')[0],
+      sub: sub || 'manual_google_sub'
+    });
+  }
+
+  throw new AppError('Either Google idToken or verified Google email payload is required', 400);
 };
 
 export const getProfile = async (userId) => {

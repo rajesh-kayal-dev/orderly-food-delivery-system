@@ -15,6 +15,25 @@ const DeliveryPartner = sequelize.define('DeliveryPartner', {
   vehicle_license: {
     type: DataTypes.STRING(100),
   },
+  vehicle_type: {
+    type: DataTypes.STRING(50),
+    defaultValue: 'Scooter / Bike'
+  },
+  vehicle_name: {
+    type: DataTypes.STRING(100),
+    defaultValue: 'Honda Activa 6G'
+  },
+  address: {
+    type: DataTypes.TEXT,
+  },
+  operating_zone: {
+    type: DataTypes.STRING(100),
+    defaultValue: 'Central City Zone'
+  },
+  delivery_category: {
+    type: DataTypes.STRING(100),
+    defaultValue: 'Express Food Delivery'
+  },
   is_available: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,

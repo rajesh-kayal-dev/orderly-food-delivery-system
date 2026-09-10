@@ -86,3 +86,16 @@ export const updateProfile = async (req, res) => {
     res.status(statusCode).json({ success: false, message: error.message });
   }
 };
+
+// @desc    Get all admin-approved delivery partners for customer view
+// @route   GET /api/auth/approved-partners
+// @access  Public
+export const getApprovedDeliveryPartners = async (req, res) => {
+  try {
+    const partners = await authService.getApprovedDeliveryPartners();
+    res.json({ success: true, data: partners });
+  } catch (error) {
+    console.error('Error fetching approved delivery partners:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

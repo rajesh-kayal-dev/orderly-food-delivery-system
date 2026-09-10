@@ -43,17 +43,24 @@ export default function MenuManagement() {
     const [form] = Form.useForm();
 
     const fetchCategories = async () => {
+        if (!profile?.id) return;
         try {
             const response = await axios.get(`/menu/categories/${profile.id}`);
             if (response.data.success) {
-                setCategories(response.data.data);
+                setCategories(response.data.data || []);
             }
         } catch (error) {
             console.error('Error fetching categories:', error);
+            setCategories([]);
         }
     };
 
     const fetchMenu = async (currentPage = page, currentSearch = search, currentCategory = selectedCategory) => {
+        if (!profile?.id) {
+            setLoading(false);
+            setItems([]);
+            return;
+        }
         setLoading(true);
         try {
             let url = `/menu?restaurantId=${profile.id}&page=${currentPage}&limit=9`;
@@ -62,12 +69,14 @@ export default function MenuManagement() {
 
             const response = await axios.get(url);
             if (response.data.success) {
-                setItems(response.data.items);
-                setTotal(response.data.totalItems);
+                setItems(response.data.items || []);
+                setTotal(response.data.totalItems || 0);
+            } else {
+                setItems([]);
             }
         } catch (error) {
             console.error('Error fetching menu:', error);
-            notification.error({ message: 'Failed to load menu items' });
+            setItems([]);
         } finally {
             setLoading(false);
         }
@@ -187,8 +196,8 @@ export default function MenuManagement() {
             </div>
 
             {loading ? (
-                <div className="py-20 text-center">Loading menu items...</div>
-            ) : items.length > 0 ? (
+                <div className="py-20 text-center text-slate-400 font-medium">Loading menu items...</div>
+            ) : (items && items.length > 0) ? (
                 <>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {items.map(item => (
@@ -220,10 +229,11 @@ export default function MenuManagement() {
                                     </div>
                                 }
                                 actions={[
-                                    <Tooltip title="Edit Dish">
-                                        <EditOutlined key="edit" onClick={() => showModal(item)} className="hover:text-primary transition-colors" />
+                                    <Tooltip title="Edit Dish" key="edit">
+                                        <EditOutlined onClick={() => showModal(item)} className="hover:text-primary transition-colors" />
                                     </Tooltip>,
                                     <Popconfirm
+                                        key="delete"
                                         title="Delete Dish"
                                         description="Are you sure you want to delete this menu item?"
                                         onConfirm={() => handleDelete(item.id)}
@@ -231,13 +241,13 @@ export default function MenuManagement() {
                                         cancelText="No"
                                         okButtonProps={{ danger: true }}
                                     >
-                                        <DeleteOutlined key="delete" className="hover:text-red-500 transition-colors" />
+                                        <DeleteOutlined className="hover:text-red-500 transition-colors" />
                                     </Popconfirm>
                                 ]}
                             >
                                 <div className="flex justify-between items-start mb-2">
                                     <h3 className="text-xl font-bold text-gray-800 line-clamp-1">{item.name}</h3>
-                                    <span className="text-primary font-black text-lg">{(parseFloat(item.price)).toLocaleString()}đ</span>
+                                    <span className="text-primary font-black text-lg">{(parseFloat(item.price || 0)).toLocaleString()}đ</span>
                                 </div>
                                 <Tag className="mb-3 rounded-full border-none bg-orange-50 text-orange-500 font-bold px-3">
                                     {item.category?.name || 'Uncategorized'}
@@ -271,7 +281,7 @@ export default function MenuManagement() {
                 onOk={handleOk}
                 onCancel={() => setIsModalVisible(false)}
                 okText={editingItem ? 'Update Item' : 'Create Item'}
-                destroyOnClose
+                destroyOnHidden
                 className="rounded-2xl overflow-hidden"
                 width={600}
             >

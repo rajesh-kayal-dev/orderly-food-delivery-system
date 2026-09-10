@@ -11,10 +11,12 @@ import {
   PhoneOutlined,
   CarOutlined,
   ArrowRightOutlined,
-  UserOutlined
+  UserOutlined,
+  ShoppingOutlined,
+  DollarOutlined,
+  ClockCircleOutlined
 } from '@ant-design/icons';
 import socket from '../../socket';
-import { Outlet } from 'react-router-dom';
 import AppMap from '../../pages/Map/Map';
 
 export default function DeliveryOrders() {
@@ -25,16 +27,17 @@ export default function DeliveryOrders() {
 
   const fetchDeliveries = async () => {
     try {
+      setLoading(true);
       const [availableRes, activeRes] = await Promise.all([
         axios.get('/orders/deliveries/available'),
         axios.get('/orders/driver/me')
       ]);
       
       if (availableRes.data.success) {
-        setAvailableRequests(availableRes.data.data);
+        setAvailableRequests(availableRes.data.data || []);
       }
       if (activeRes.data.success) {
-        setActiveDelivery(activeRes.data.data[0] || null);
+        setActiveDelivery(activeRes.data.data?.[0] || null);
       }
     } catch (error) {
       console.error('Error fetching deliveries:', error);
@@ -52,8 +55,8 @@ export default function DeliveryOrders() {
 
       const handleAvailableDelivery = (data) => {
         notification.info({
-          message: 'New Delivery Available!',
-          description: `A new order from ${data.restaurantName} is ready for pickup.`,
+          title: 'New Delivery Available!',
+          description: `A new order from ${data.restaurantName || 'Restaurant'} is ready for pickup.`,
           placement: 'topRight'
         });
         fetchDeliveries();
@@ -70,6 +73,8 @@ export default function DeliveryOrders() {
         socket.off('AVAILABLE_DELIVERY', handleAvailableDelivery);
         socket.off('ORDER_ACCEPTED', handleOrderAccepted);
       };
+    } else {
+      setLoading(false);
     }
   }, [profile, token]);
 
@@ -77,11 +82,11 @@ export default function DeliveryOrders() {
     try {
       const { data } = await axios.put(`/orders/${orderId}/accept-delivery`, { driver_id: profile.id });
       if (data.success) {
-        notification.success({ message: 'Delivery Accepted!' });
+        notification.success({ title: 'Delivery Accepted!', description: 'Drive safely to the restaurant for pickup.' });
         fetchDeliveries();
       }
     } catch (error) {
-      notification.error({ message: error.response?.data?.message || 'Error accepting delivery' });
+      notification.error({ title: 'Error', description: error.response?.data?.message || 'Error accepting delivery' });
       console.error('Error accepting delivery:', error);
     }
   };
@@ -90,129 +95,168 @@ export default function DeliveryOrders() {
     try {
       const { data } = await axios.put(`/orders/${orderId}/status`, { status: newStatus });
       if (data.success) {
-        notification.success({ message: `Order marked as ${newStatus}!` });
+        notification.success({ title: 'Status Updated!', description: `Order marked as ${newStatus}!` });
         fetchDeliveries();
       }
     } catch (error) {
-      notification.error({ message: 'Error updating status' });
+      notification.error({ title: 'Update Failed', description: 'Error updating delivery status' });
       console.error('Error updating status:', error);
     }
   };
 
   if (loading) return (
     <div className="py-20 text-center flex flex-col items-center">
-      <ReloadOutlined spin className="text-3xl text-primary mb-4" />
-      <p className="text-gray-400 font-medium">Syncing delivery operations...</p>
+      <ReloadOutlined spin className="text-2xl text-[#FF521C] mb-3 opacity-60" />
+      <p className="text-slate-400 font-bold text-xs">Syncing delivery tasks...</p>
     </div>
   );
 
   return (
-    <div className="animate-fade-in max-w-6xl mx-auto space-y-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="animate-fade-in max-w-[1400px] mx-auto space-y-4 text-slate-800">
+      {/* Top Header Card */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800 tracking-tight">Delivery Operations</h1>
-          <p className="text-gray-500 font-medium">Manage your active deliveries and find new opportunities</p>
+          <h1 className="text-lg font-black text-slate-900 tracking-tight leading-tight">
+            Available Deliveries & Tasks
+          </h1>
+          <p className="text-xs text-slate-500 font-medium">
+            Accept orders nearby and track your ongoing delivery route
+          </p>
         </div>
-        <button onClick={fetchDeliveries} className="flex items-center gap-2 bg-white border border-gray-100 px-6 py-3 rounded-2xl text-sm font-bold shadow-soft hover:bg-gray-50 transition-colors">
-          <ReloadOutlined className={loading ? 'animate-spin' : ''} /> 
-          Refresh Orders
+
+        <button 
+          onClick={fetchDeliveries} 
+          className="flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200/80 px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 transition-colors shadow-2xs"
+        >
+          <ReloadOutlined className={`text-xs ${loading ? 'animate-spin' : ''}`} /> 
+          <span>Refresh Orders</span>
         </button>
       </div>
 
+      {/* Active Delivery Highlight Banner / Map View */}
       {activeDelivery ? (
-        <div className="bg-white p-10 rounded-[2.5rem] shadow-soft border-2 border-primary relative overflow-hidden">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 mb-10 relative z-10">
-            <div>
-              <div className="flex items-center gap-3 mb-3">
-                <span className="bg-primary text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg shadow-primary/20">Active Task</span>
-              </div>
-              <h2 className="text-3xl font-black text-gray-800 tracking-tighter">Order #{activeDelivery.id.slice(0, 8).toUpperCase()}</h2>
+        <div className="bg-white p-5 rounded-2xl shadow-xs border-2 border-[#FF521C]/20 relative overflow-hidden space-y-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2.5">
+              <span className="bg-[#FF521C] text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-2xs">
+                ● ACTIVE TASK
+              </span>
+              <h2 className="text-base font-mono font-black text-slate-900">
+                Order #{activeDelivery.id.slice(0, 8).toUpperCase()}
+              </h2>
             </div>
             
             <button 
               onClick={() => {
                 Modal.confirm({
                   title: 'Confirm Delivery',
-                  icon: <CheckCircleOutlined className="text-green-500" />,
-                  content: 'Have you safely handed over the order to the customer?',
-                  okText: 'Yes, Delivered',
+                  icon: <CheckCircleOutlined className="text-emerald-500" />,
+                  content: 'Have you safely handed over the food order to the customer?',
+                  okText: 'Yes, Mark Delivered',
                   cancelText: 'Cancel',
-                  okButtonProps: { className: 'bg-green-500 border-none' },
+                  okButtonProps: { className: 'bg-emerald-500 hover:bg-emerald-600 border-none font-bold' },
                   onOk: () => updateStatus(activeDelivery.id, 'delivered')
                 });
               }}
-              className="bg-green-500 hover:bg-green-600 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl transition-all"
+              className="bg-emerald-500 hover:bg-emerald-600 active:scale-98 text-white px-5 py-2 rounded-xl font-bold text-xs uppercase tracking-wider shadow-md shadow-emerald-500/20 transition-all"
             >
-              Finish Delivery
+              Finish Delivery ✓
             </button>
           </div>
 
-          <div className="w-full flex justify-center items-center my-8">
-            <div className="w-full max-w-5xl h-[500px] rounded-3xl overflow-hidden border border-gray-100 shadow-sm">
-              <AppMap destinationLat={activeDelivery.Address?.latitude} destinationLng={activeDelivery.Address?.longitude} />
-            </div>
+          {/* Integrated Live Delivery Route Map */}
+          <div className="w-full h-80 rounded-xl overflow-hidden border border-slate-100 shadow-2xs">
+            <AppMap 
+              destinationLat={activeDelivery.Address?.latitude} 
+              destinationLng={activeDelivery.Address?.longitude} 
+            />
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-gray-50 rounded-3xl p-8 border border-gray-100">
-              <h3 className="font-black text-gray-400 uppercase text-[10px] tracking-widest mb-4">Pickup</h3>
-              <p className="font-black text-xl text-gray-900 mb-2">{activeDelivery.Restaurant?.name}</p>
-              <p className="text-sm text-gray-500 line-clamp-2">📍 {activeDelivery.Restaurant?.location || 'Restaurant Address Unknown'}</p>
+          {/* Pickup and Dropoff Details */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            <div className="bg-orange-50/50 rounded-xl p-3.5 border border-orange-100/60">
+              <span className="font-black text-orange-600 uppercase text-[10px] tracking-wider mb-1 block">
+                1. PICKUP RESTAURANT
+              </span>
+              <p className="font-extrabold text-sm text-slate-900 mb-0.5">
+                {activeDelivery.Restaurant?.name || 'Restaurant'}
+              </p>
+              <p className="text-xs text-slate-600">
+                📍 {activeDelivery.Restaurant?.location || activeDelivery.Restaurant?.address || 'Restaurant Location'}
+              </p>
             </div>
 
-            <div className="bg-gray-50 rounded-3xl p-8 border border-gray-100">
-              <h3 className="font-black text-gray-400 uppercase text-[10px] tracking-widest mb-4">Dropoff</h3>
-              <p className="font-black text-xl text-gray-900 mb-2">{activeDelivery.Customer?.User?.full_name || 'Customer'}</p>
-              <p className="text-sm text-gray-500 mb-4">📍 {activeDelivery.Address?.street}, {activeDelivery.Address?.city}</p>
-              <div className="flex items-center gap-2 text-primary font-bold bg-white w-fit px-3 py-1 rounded-lg border border-gray-100 text-sm">
+            <div className="bg-emerald-50/50 rounded-xl p-3.5 border border-emerald-100/60">
+              <span className="font-black text-emerald-600 uppercase text-[10px] tracking-wider mb-1 block">
+                2. DROPOFF CUSTOMER
+              </span>
+              <p className="font-extrabold text-sm text-slate-900 mb-0.5">
+                {activeDelivery.Customer?.User?.full_name || 'Customer'}
+              </p>
+              <p className="text-xs text-slate-600 mb-2">
+                📍 {activeDelivery.Address?.street || 'Customer Address'}, {activeDelivery.Address?.city || ''}
+              </p>
+              <div className="flex items-center gap-1.5 text-emerald-700 font-bold bg-white w-fit px-2.5 py-1 rounded-lg border border-emerald-200 text-xs shadow-2xs">
                 <PhoneOutlined /> {activeDelivery.Customer?.User?.phone_number || 'N/A'}
               </div>
             </div>
           </div>
         </div>
       ) : (
-        <div className="bg-white p-10 rounded-[2.5rem] shadow-soft border border-gray-100">
-          <div className="flex items-center gap-3 mb-8">
-            <RocketOutlined className="text-primary text-xl" />
-            <h2 className="text-xl font-bold text-gray-800 tracking-tight">Available Orders</h2>
+        /* Available Orders Section */
+        <div className="bg-white p-4 rounded-2xl shadow-xs border border-slate-100 space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-orange-100 text-[#FF521C] flex items-center justify-center text-xs font-bold">
+                <RocketOutlined />
+              </div>
+              <h2 className="text-sm font-black text-slate-900 uppercase tracking-wider">
+                Available Nearby Requests ({availableRequests.length})
+              </h2>
+            </div>
+            <span className="text-[11px] font-semibold text-slate-400">
+              Live updates via Socket.io
+            </span>
           </div>
 
           {availableRequests.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
               {availableRequests.map(req => (
-                <div key={req.id} className="group bg-white border border-gray-100 hover:border-primary/30 rounded-[2rem] p-8 shadow-sm hover:shadow-xl transition-all flex flex-col justify-between h-full relative overflow-hidden">
+                <div 
+                  key={req.id} 
+                  className="bg-slate-50/70 border border-slate-200/80 hover:border-orange-200 rounded-xl p-4 transition-all flex flex-col justify-between space-y-3 group"
+                >
                   <div>
-                    <div className="flex justify-between items-center mb-6">
-                      <div className="flex flex-col">
-                        <span className="text-[10px] text-gray-400 font-black uppercase mb-1">Order Ref</span>
-                        <code className="text-xs font-mono text-gray-500 bg-gray-50 px-2 py-1 rounded-lg">#{req.id.slice(0, 8).toUpperCase()}</code>
-                      </div>
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-[11px] font-mono font-bold text-slate-700 bg-white px-2 py-0.5 rounded-md border border-slate-200/60 shadow-2xs">
+                        #{req.id.slice(0, 8).toUpperCase()}
+                      </span>
                       <div className="text-right">
-                        <span className="text-[10px] text-gray-400 font-black uppercase mb-1 block">Earning</span>
-                        <div className="text-2xl font-black text-primary tracking-tighter">
-                          {(req.delivery_fee || 15000).toLocaleString()}đ
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Estimated Payout</span>
+                        <div className="text-base font-black text-[#FF521C]">
+                          ₹{(parseFloat(req.delivery_fee) || 150).toLocaleString()}
                         </div>
                       </div>
                     </div>
                     
-                    <div className="space-y-4 mb-8">
-                      <div className="flex items-start gap-4">
-                        <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center text-orange-500 shrink-0">
+                    <div className="space-y-2.5">
+                      <div className="flex items-start gap-2.5">
+                        <div className="w-6 h-6 rounded-md bg-orange-100 text-[#FF521C] flex items-center justify-center text-xs shrink-0 mt-0.5">
                           <ShopOutlined />
                         </div>
                         <div>
-                          <p className="text-[10px] font-black text-gray-400 uppercase mb-0.5">Pickup</p>
-                          <p className="font-bold text-gray-800 text-sm">{req.Restaurant?.name}</p>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase">Pickup</p>
+                          <p className="font-bold text-slate-900 text-xs">{req.Restaurant?.name || 'Restaurant'}</p>
                         </div>
                       </div>
                       
-                      <div className="flex items-start gap-4">
-                        <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center text-green-500 shrink-0">
+                      <div className="flex items-start gap-2.5">
+                        <div className="w-6 h-6 rounded-md bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs shrink-0 mt-0.5">
                           <EnvironmentOutlined />
                         </div>
                         <div>
-                          <p className="text-[10px] font-black text-gray-400 uppercase mb-0.5">Dropoff</p>
-                          <p className="font-bold text-gray-800 text-sm">{req.Address?.street || 'N/A'}</p>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase">Dropoff</p>
+                          <p className="font-bold text-slate-900 text-xs">{req.Address?.street || 'Customer Address'}</p>
                         </div>
                       </div>
                     </div>
@@ -220,18 +264,27 @@ export default function DeliveryOrders() {
                   
                   <button 
                     onClick={() => acceptRequest(req.id)}
-                    className="w-full bg-slate-900 hover:bg-primary text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg transition-all flex items-center justify-center gap-2"
+                    className="w-full bg-[#FF521C] hover:bg-[#E04310] active:scale-98 text-white py-2 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 shadow-md shadow-orange-500/20 mt-1"
                   >
-                    Accept Delivery <ArrowRightOutlined />
+                    <span>Accept Delivery</span>
+                    <ArrowRightOutlined className="text-[10px]" />
                   </button>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-20 bg-gray-50/50 rounded-[2.5rem] border-2 border-dashed border-gray-200">
-              <CarOutlined className="text-4xl text-gray-300 mb-4" />
-              <h3 className="text-lg font-bold text-gray-700">No active orders</h3>
-              <p className="text-gray-500 mt-2 text-sm">New orders will appear here automatically.</p>
+            <div className="py-10 flex flex-col items-center text-center">
+              <img
+                src="/empty-clipboard.jpg"
+                alt="No available orders"
+                className="w-16 h-16 object-contain mb-2 filter drop-shadow-2xs"
+              />
+              <h4 className="text-slate-900 font-bold text-xs mb-0.5">
+                No available delivery requests nearby
+              </h4>
+              <p className="text-slate-400 text-[11px]">
+                New customer orders will automatically appear here in real time.
+              </p>
             </div>
           )}
         </div>

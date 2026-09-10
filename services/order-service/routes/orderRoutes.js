@@ -1,4 +1,4 @@
-﻿import express from 'express';
+import express from 'express';
 import {
     createOrder,
     getCustomerOrders,
@@ -17,6 +17,7 @@ const router = express.Router();
 
 router.post('/', protect, authorize('customer'), createOrder);
 router.get('/customer', protect, authorize('customer'), getCustomerOrders);
+router.get('/me', protect, authorize('customer'), getCustomerOrders);
 router.get('/restaurant', protect, authorize('restaurant'), getRestaurantOrders);
 router.get('/available-deliveries', protect, authorize('delivery_partner'), getAvailableDeliveries);
 router.post('/:id/accept', protect, authorize('delivery_partner'), acceptDeliveryByDriver);

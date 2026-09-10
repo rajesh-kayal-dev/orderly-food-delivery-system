@@ -120,6 +120,29 @@ Dispute.belongsTo(CustomerSupport, { foreignKey: 'handled_by' });
 User.hasMany(Notification, { foreignKey: 'user_id' });
 Notification.belongsTo(User, { foreignKey: 'user_id' });
 
+export {
+  sequelize,
+  User,
+  Restaurant,
+  Customer,
+  DeliveryPartner,
+  Admin,
+  CustomerSupport,
+  Address,
+  MenuCategory,
+  MenuItem,
+  Order,
+  OrderItem,
+  Cart,
+  CartItem,
+  Payment,
+  Delivery,
+  Dispute,
+  Review,
+  Notification,
+  OrderOfferLog
+};
+
 export default {
   sequelize,
   User,
@@ -142,3 +165,4 @@ export default {
   Notification,
   OrderOfferLog
 };
+

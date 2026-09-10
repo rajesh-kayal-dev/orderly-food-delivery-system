@@ -16,26 +16,40 @@ import AdminLayout from './components/layouts/AdminLayout';
 // Mock Pages
 import CustomerDashboard from './pages/Customer/Dashboard';
 import RestaurantList from './pages/Customer/RestaurantList';
+import MenuList from './pages/Customer/MenuList';
 import RestaurantMenu from './pages/Customer/RestaurantMenu';
 import CartPage from './pages/Customer/CartPage';
 import CheckoutPage from './pages/Customer/CheckoutPage';
 import OrderTracking from './pages/Customer/OrderTracking';
+import MyOrders from './pages/Customer/MyOrders';
+import Partners from './pages/Customer/Partners';
 
 import RestaurantDashboard from './pages/Restaurant/Dashboard';
 import RestaurantOrders from './pages/Restaurant/Orders';
 import MenuManagement from './pages/Restaurant/MenuManagement';
 import RestaurantSummary from './pages/Restaurant/Summary';
+import RestaurantReviews from './pages/Restaurant/Reviews';
+import RestaurantPayouts from './pages/Restaurant/Payouts';
+import RestaurantSettings from './pages/Restaurant/Settings';
 import DeliveryDashboard from './pages/Delivery/Dashboard';
 import DeliveryOrders from './pages/Delivery/Orders';
 import DriverSummary from './pages/Delivery/Summary';
+import DeliverySettings from './pages/Delivery/Settings';
 import AdminDashboard from './pages/Admin/Dashboard';
 import AdminUsers from './pages/Admin/AdminUsers';
 import AdminOrders from './pages/Admin/AdminOrders';
+import AdminDrivers from './pages/Admin/AdminDrivers';
+import AdminMenuCatalog from './pages/Admin/AdminMenuCatalog';
+import AdminPayouts from './pages/Admin/AdminPayouts';
+import AdminAnalytics from './pages/Admin/AdminAnalytics';
+import AdminSettings from './pages/Admin/AdminSettings';
 import PendingApprovals from './pages/Admin/PendingApprovals';
 
 import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
 import Profile from './pages/Auth/Profile';
+import AuthCallback from './pages/Auth/AuthCallback';
+import AdminLogin from './pages/Auth/AdminLogin';
 
 function App() {
 
@@ -145,24 +159,7 @@ function App() {
     };
   }, []);
 
-  // Fetch initial active count when authenticated
-  useEffect(() => {
-    const fetchActiveCount = async () => {
-      if (isAuthenticated && (user.role === 'restaurant' || user.role === 'delivery_partner')) {
-        try {
-          const response = await axios.get('/orders/active-count');
-          console.log(`📊 Active Count for ${user.role}:`, response.data.count);
-          if (response.data.success) {
-            dispatch(setActiveCount(response.data.count));
-          }
-        } catch (error) {
-          console.error('Error fetching active count:', error);
-        }
-      }
-    };
 
-    fetchActiveCount();
-  }, [isAuthenticated, user?.role, dispatch]);
 
   // Global Order Socket Listeners
   useEffect(() => {
@@ -226,9 +223,11 @@ function App() {
     let title = 'Orderly';
 
     if (path === '/login') title = 'Login';
+    else if (path === '/admin/login' || path === '/admin-login') title = 'Admin Portal Login';
     else if (path === '/register') title = 'Create Account';
     else if (path === '/customer') title = 'Customer Dashboard';
     else if (path === '/customer/restaurants') title = 'Browse Restaurants';
+    else if (path === '/customer/partners') title = 'Meet Our Delivery Partners';
     else if (path.startsWith('/customer/restaurant/')) title = 'Restaurant Menu';
     else if (path === '/customer/cart') title = 'Your Cart';
     else if (path === '/customer/checkout') title = 'Checkout';
@@ -263,16 +262,23 @@ function App() {
     <div className="font-sans bg-background min-h-screen text-textMain">
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin-login" element={<AdminLogin />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/partners" element={<Navigate to="/customer/partners" replace />} />
 
         {/* Customer Routes */}
         <Route path="/customer" element={<CustomerLayout />}>
           <Route index element={<CustomerDashboard />} />
+          <Route path="menu" element={<MenuList />} />
           <Route path="restaurants" element={<RestaurantList />} />
           <Route path="restaurant/:restaurantId" element={<RestaurantMenu />} />
+          <Route path="partners" element={<Partners />} />
           <Route path="cart" element={<CartPage />} />
           <Route path="checkout" element={<CheckoutPage />} />
           <Route path="tracking" element={<OrderTracking />} />
+          <Route path="orders" element={<MyOrders />} />
           <Route path="profile" element={<Profile />} />
         </Route>
 
@@ -282,6 +288,9 @@ function App() {
           <Route path="menu" element={<MenuManagement />} />
           <Route path="orders" element={<RestaurantOrders />} />
           <Route path="summary" element={<RestaurantSummary />} />
+          <Route path="reviews" element={<RestaurantReviews />} />
+          <Route path="payouts" element={<RestaurantPayouts />} />
+          <Route path="settings" element={<RestaurantSettings />} />
           <Route path="profile" element={<Profile />} />
         </Route>
 
@@ -291,6 +300,7 @@ function App() {
           <Route path="orders" element={<DeliveryOrders />} />
           <Route path="summary" element={<DriverSummary />} />
           <Route path="map" element={<div>Google Maps Tracking</div>} />
+          <Route path="settings" element={<DeliverySettings />} />
           <Route path="profile" element={<Profile />} />
         </Route>
 
@@ -299,6 +309,11 @@ function App() {
           <Route index element={<AdminDashboard />} />
           <Route path="orders" element={<AdminOrders />} />
           <Route path="users" element={<AdminUsers />} />
+          <Route path="drivers" element={<AdminDrivers />} />
+          <Route path="menu" element={<AdminMenuCatalog />} />
+          <Route path="payouts" element={<AdminPayouts />} />
+          <Route path="analytics" element={<AdminAnalytics />} />
+          <Route path="settings" element={<AdminSettings />} />
           <Route path="pending-approvals" element={<PendingApprovals />} />
           <Route path="profile" element={<Profile />} />
         </Route>

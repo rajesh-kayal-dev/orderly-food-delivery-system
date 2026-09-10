@@ -4,6 +4,7 @@ import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../redux/slices/authSlice';
 import { resetCartState } from '../../redux/slices/cartSlice';
+import BrandLogo from '../common/BrandLogo';
 import { 
   AppstoreOutlined, 
   ShoppingOutlined, 
@@ -34,8 +35,7 @@ export default function GenericLayout({ roleTitle, rolePath }) {
       <aside className="w-64 bg-slate-900 shadow-xl fixed h-full z-20 transition-all duration-300">
         <div className="p-6">
           <div className="flex items-center gap-3 mb-10">
-            <img src="/orderly-logo.png" alt="Orderly" className="w-10 h-10 rounded-xl object-contain shadow-lg shadow-primary/20 bg-white p-0.5" />
-            <span className="text-xl font-black text-white tracking-tight">Orderly</span>
+            <BrandLogo variant="light" size="md" to={rolePath} />
           </div>
 
           <nav className="space-y-2">

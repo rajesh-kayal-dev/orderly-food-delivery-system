@@ -9,15 +9,15 @@ export default class PendingState extends AccountState {
     throw new Error('Account is pending admin approval. Please wait for confirmation.');
   }
 
-  activate(account) {
-    import ActiveState from './ActiveState.js';
+  async activate(account) {
+    const { default: ActiveState } = await import('./ActiveState.js');
     account.user.is_active = true;
     account.setState(new ActiveState());
     return account;
   }
 
-  suspend(account) {
-    import SuspendedState from './SuspendedState.js';
+  async suspend(account) {
+    const { default: SuspendedState } = await import('./SuspendedState.js');
     account.user.is_active = false;
     account.setState(new SuspendedState());
     return account;
