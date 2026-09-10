@@ -355,7 +355,7 @@ Documentation:
 
 ```text
 CHECKPOINT 05
-A fresh developer can understand every required environment variable
+A fresh developer can understand every required environment variable without seeing any secret. Created .env.example templates for all microservices and configured local .env files. [COMPLETED]
 without seeing any secret.
 ```
 
@@ -1932,7 +1932,7 @@ If you can answer these naturally, **you own the project rather than merely havi
 [x] New GitHub repo (https://github.com/rajesh-kayal-dev/orderly-food-delivery-system.git)
 [x] Rename to Orderly
 [x] Clean branding (Orderly PNG Logo & Dynamic Browser Titles)
-[ ] Environment setup
+[x] Environment setup (.env.example templates & local .env files created)
 [ ] Docker Compose
 [ ] Auth
 [ ] Menu
