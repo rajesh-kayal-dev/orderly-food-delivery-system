@@ -1,0 +1,231 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  customer
+  restaurant
+  delivery_partner
+  admin
+  customer_support
+}
+
+enum OrderStatus {
+  placed
+  accepted
+  preparing
+  ready
+  assigned
+  picked_up
+  delivered
+  cancelled
+}
+
+model User {
+  id              String           @id @default(uuid())
+  email           String           @unique
+  password_hash   String
+  full_name       String
+  phone_number    String?
+  role            Role             @default(customer)
+  is_active       Boolean          @default(true)
+  created_at      DateTime         @default(now())
+  updated_at      DateTime         @updatedAt
+
+  customer        Customer?
+  deliveryPartner DeliveryPartner?
+  admin           Admin?
+  customerSupport CustomerSupport?
+  restaurant      Restaurant?
+  addresses       Address[]
+  notifications   Notification[]
+}
+
+model Customer {
+  id                 String   @id @default(uuid())
+  user_id            String   @unique
+  default_address_id String?
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
+
+  user   User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  carts  Cart[]
+  orders Order[]
+}
+
+model DeliveryPartner {
+  id             String   @id @default(uuid())
+  user_id        String   @unique
+  vehicle_type   String?
+  vehicle_number String?
+  is_available   Boolean  @default(true)
+  current_lat    Float?
+  current_lng    Float?
+  rating         Float    @default(5.0)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  user   User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  orders Order[]
+}
+
+model Admin {
+  id         String   @id @default(uuid())
+  user_id    String   @unique
+  department String?
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model CustomerSupport {
+  id            String   @id @default(uuid())
+  user_id       String   @unique
+  support_level String?
+  created_at    DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model Address {
+  id            String   @id @default(uuid())
+  user_id       String
+  address_line1 String
+  address_line2 String?
+  city          String
+  state         String
+  postal_code   String
+  latitude      Float?
+  longitude     Float?
+  is_default    Boolean  @default(false)
+  created_at    DateTime @default(now())
+
+  user   User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  orders Order[]
+}
+
+model Restaurant {
+  id          String   @id @default(uuid())
+  user_id     String   @unique
+  name        String
+  description String?
+  address     String?
+  image_url   String?
+  rating      Float    @default(5.0)
+  is_active   Boolean  @default(true)
+  opens_at    String?
+  closes_at   String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  user       User           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  categories MenuCategory[]
+  menuItems  MenuItem[]
+  carts      Cart[]
+  orders     Order[]
+}
+
+model MenuCategory {
+  id            String   @id @default(uuid())
+  restaurant_id String
+  name          String
+  sort_order    Int      @default(0)
+  created_at    DateTime @default(now())
+
+  restaurant Restaurant @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
+  menuItems  MenuItem[]
+}
+
+model MenuItem {
+  id            String   @id @default(uuid())
+  restaurant_id String
+  category_id   String?
+  name          String
+  description   String?
+  price         Float
+  image_url     String?
+  is_available  Boolean  @default(true)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  restaurant Restaurant    @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
+  category   MenuCategory? @relation(fields: [category_id], references: [id], onDelete: SetNull)
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+}
+
+model Cart {
+  id            String   @id @default(uuid())
+  customer_id   String   @unique
+  restaurant_id String?
+  total_amount  Float    @default(0.0)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  customer   Customer   @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  restaurant Restaurant? @relation(fields: [restaurant_id], references: [id], onDelete: SetNull)
+  items      CartItem[]
+}
+
+model CartItem {
+  id           String   @id @default(uuid())
+  cart_id      String
+  menu_item_id String
+  quantity     Int      @default(1)
+  price        Float
+  created_at   DateTime @default(now())
+
+  cart     Cart     @relation(fields: [cart_id], references: [id], onDelete: Cascade)
+  menuItem MenuItem @relation(fields: [menu_item_id], references: [id], onDelete: Cascade)
+}
+
+model Order {
+  id                  String      @id @default(uuid())
+  customer_id         String
+  restaurant_id       String
+  delivery_partner_id String?
+  delivery_address_id String?
+  total_amount        Float
+  status              OrderStatus @default(placed)
+  payment_status      String      @default("pending")
+  payment_method      String      @default("cod")
+  notes               String?
+  created_at          DateTime    @default(now())
+  updated_at          DateTime    @updatedAt
+
+  customer        Customer         @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  restaurant      Restaurant       @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
+  deliveryPartner DeliveryPartner? @relation(fields: [delivery_partner_id], references: [id], onDelete: SetNull)
+  deliveryAddress Address?         @relation(fields: [delivery_address_id], references: [id], onDelete: SetNull)
+  items           OrderItem[]
+}
+
+model OrderItem {
+  id           String   @id @default(uuid())
+  order_id     String
+  menu_item_id String
+  quantity     Int
+  unit_price   Float
+  total_price  Float
+  created_at   DateTime @default(now())
+
+  order    Order    @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  menuItem MenuItem @relation(fields: [menu_item_id], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id         String   @id @default(uuid())
+  user_id    String
+  title      String
+  message    String
+  type       String   @default("info")
+  is_read    Boolean  @default(false)
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}

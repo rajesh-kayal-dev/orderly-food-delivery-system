@@ -1,4 +1,4 @@
-const ActiveState = require('./ActiveState');
+﻿const ActiveState = require('./ActiveState');
 const PendingState = require('./PendingState');
 const SuspendedState = require('./SuspendedState');
 
@@ -45,8 +45,15 @@ class UserAccount {
     }
   }
 
-  async persist() {
-    await this.user.save();
+  async persist(prismaClient) {
+    if (prismaClient) {
+      this.user = await prismaClient.user.update({
+        where: { id: this.user.id },
+        data: { is_active: this.user.is_active }
+      });
+    } else if (typeof this.user.save === 'function') {
+      await this.user.save();
+    }
     return this.user;
   }
 }

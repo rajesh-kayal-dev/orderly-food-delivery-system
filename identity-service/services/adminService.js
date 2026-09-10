@@ -1,5 +1,4 @@
-const { User, Restaurant, DeliveryPartner, Order, sequelize } = require('../models');
-const { Op } = require('sequelize');
+const prisma = require('../config/prisma');
 const authService = require('./authService');
 
 class AdminService {
@@ -47,29 +46,19 @@ class AdminService {
   }
 
   async getSystemStats() {
-    const [userCount, restaurantCount, driverCount, orderStats] = await Promise.all([
-      User.count({ where: { is_active: true } }),
-      Restaurant.count({
-        include: [{
-          model: User,
-          required: true,
-          where: { is_active: true }
-        }]
+    const [userCount, restaurantCount, driverCount, orderAggregate] = await Promise.all([
+      prisma.user.count({ where: { is_active: true } }),
+      prisma.restaurant.count({
+        where: { user: { is_active: true } }
       }),
-      DeliveryPartner.count({
-        include: [{
-          model: User,
-          required: true,
-          where: { is_active: true }
-        }]
+      prisma.deliveryPartner.count({
+        where: { user: { is_active: true } }
       }),
-      Order.findAll({
-        attributes: [
-          [sequelize.fn('SUM', sequelize.col('total_amount')), 'totalRevenue'],
-          [sequelize.fn('COUNT', sequelize.col('id')), 'totalOrders']
-        ],
+      prisma.order.aggregate({
+        _sum: { total_amount: true },
+        _count: { id: true },
         where: {
-          status: { [Op.in]: ['delivered', 'completed'] }
+          status: { in: ['delivered', 'completed'] }
         }
       })
     ]);
@@ -78,8 +67,8 @@ class AdminService {
       totalUsers: userCount,
       activeRestaurants: restaurantCount,
       deliveryPartners: driverCount,
-      totalRevenue: orderStats[0]?.dataValues.totalRevenue || 0,
-      totalOrders: orderStats[0]?.dataValues.totalOrders || 0
+      totalRevenue: Number(orderAggregate._sum.total_amount) || 0,
+      totalOrders: orderAggregate._count.id || 0
     };
   }
 
@@ -89,19 +78,22 @@ class AdminService {
     if (status === 'active') {
       where.is_active = true;
     } else if (status === 'inactive') {
-      where = {
-        [Op.or]: [
-          { is_active: false },
-          { deleted_at: { [Op.ne]: null } }
-        ]
-      };
+      where.is_active = false;
     }
 
-    return await User.findAll({
+    return await prisma.user.findMany({
       where,
-      attributes: ['id', 'email', 'full_name', 'phone_number', 'role', 'is_active', 'created_at', 'deleted_at'],
-      order: [['created_at', 'DESC']],
-      paranoid: false
+      select: {
+        id: true,
+        email: true,
+        full_name: true,
+        phone_number: true,
+        role: true,
+        is_active: true,
+        created_at: true,
+        deleted_at: true
+      },
+      orderBy: { created_at: 'desc' }
     });
   }
 
@@ -122,25 +114,48 @@ class AdminService {
     const parsedLimit = Math.max(parseInt(limit, 10) || 9, 1);
 
     const where = {
-      role: { [Op.in]: ['restaurant', 'delivery_partner'] },
+      role: { in: ['restaurant', 'delivery_partner'] },
       is_active: false
     };
 
     if (search) {
-      where[Op.or] = [
-        { email: { [Op.like]: `%${search}%` } },
-        { full_name: { [Op.like]: `%${search}%` } }
+      where.OR = [
+        { email: { contains: search, mode: 'insensitive' } },
+        { full_name: { contains: search, mode: 'insensitive' } }
       ];
     }
 
-    const users = await User.findAll({
+    const users = await prisma.user.findMany({
       where,
-      attributes: ['id', 'email', 'full_name', 'phone_number', 'role', 'created_at'],
-      include: [
-        { model: Restaurant, attributes: ['id', 'name', 'location', 'cuisine_type', 'opening_hours', 'is_open', 'rating', 'delivery_radius'] },
-        { model: DeliveryPartner, attributes: ['id', 'vehicle_license', 'is_available', 'rating'] }
-      ],
-      order: [['created_at', sort === 'oldest' ? 'ASC' : 'DESC']]
+      select: {
+        id: true,
+        email: true,
+        full_name: true,
+        phone_number: true,
+        role: true,
+        created_at: true,
+        Restaurant: {
+          select: {
+            id: true,
+            name: true,
+            location: true,
+            cuisine_type: true,
+            opening_hours: true,
+            is_open: true,
+            rating: true,
+            delivery_radius: true
+          }
+        },
+        DeliveryPartner: {
+          select: {
+            id: true,
+            vehicle_license: true,
+            is_available: true,
+            rating: true
+          }
+        }
+      },
+      orderBy: { created_at: sort === 'oldest' ? 'asc' : 'desc' }
     });
 
     let items = users.map((user) => this.mapPendingApprovalItem(user));
@@ -173,17 +188,40 @@ class AdminService {
   }
 
   async getPendingApprovalById(userId) {
-    const user = await User.findOne({
+    const user = await prisma.user.findFirst({
       where: {
         id: userId,
-        role: { [Op.in]: ['restaurant', 'delivery_partner'] },
+        role: { in: ['restaurant', 'delivery_partner'] },
         is_active: false
       },
-      attributes: ['id', 'email', 'full_name', 'phone_number', 'role', 'created_at'],
-      include: [
-        { model: Restaurant, attributes: ['id', 'name', 'location', 'cuisine_type', 'opening_hours', 'is_open', 'rating', 'delivery_radius'] },
-        { model: DeliveryPartner, attributes: ['id', 'vehicle_license', 'is_available', 'rating'] }
-      ]
+      select: {
+        id: true,
+        email: true,
+        full_name: true,
+        phone_number: true,
+        role: true,
+        created_at: true,
+        Restaurant: {
+          select: {
+            id: true,
+            name: true,
+            location: true,
+            cuisine_type: true,
+            opening_hours: true,
+            is_open: true,
+            rating: true,
+            delivery_radius: true
+          }
+        },
+        DeliveryPartner: {
+          select: {
+            id: true,
+            vehicle_license: true,
+            is_available: true,
+            rating: true
+          }
+        }
+      }
     });
 
     if (!user) {
@@ -194,10 +232,10 @@ class AdminService {
   }
 
   async approvePendingRequest(userId) {
-    const user = await User.findOne({
+    const user = await prisma.user.findFirst({
       where: {
         id: userId,
-        role: { [Op.in]: ['restaurant', 'delivery_partner'] }
+        role: { in: ['restaurant', 'delivery_partner'] }
       }
     });
 
@@ -208,7 +246,6 @@ class AdminService {
     const updated = await authService.activateAccount(userId);
 
     try {
-      // Call Notification Service to send email
       const axios = require('axios');
       await axios.post('http://localhost:5005/api/notifications/mail/send-approval-status', {
         to: user.email,
@@ -224,12 +261,15 @@ class AdminService {
   }
 
   async rejectPendingRequest(userId, reason = '') {
-    const user = await User.findOne({
+    const user = await prisma.user.findFirst({
       where: {
         id: userId,
-        role: { [Op.in]: ['restaurant', 'delivery_partner'] }
+        role: { in: ['restaurant', 'delivery_partner'] }
       },
-      include: [Restaurant, DeliveryPartner]
+      include: {
+        Restaurant: true,
+        DeliveryPartner: true
+      }
     });
 
     if (!user) {
@@ -241,15 +281,14 @@ class AdminService {
     const accountType = user.role === 'restaurant' ? 'restaurant' : 'delivery_partner';
 
     if (user.Restaurant) {
-      await user.Restaurant.destroy();
+      await prisma.restaurant.delete({ where: { id: user.Restaurant.id } });
     } else if (user.DeliveryPartner) {
-      await user.DeliveryPartner.destroy();
+      await prisma.deliveryPartner.delete({ where: { id: user.DeliveryPartner.id } });
     }
 
-    await user.destroy();
+    await prisma.user.delete({ where: { id: user.id } });
 
     try {
-      // Call Notification Service to send email
       const axios = require('axios');
       await axios.post('http://localhost:5005/api/notifications/mail/send-approval-status', {
         to: email,

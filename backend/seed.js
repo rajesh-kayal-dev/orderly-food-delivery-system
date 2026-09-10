@@ -1,179 +1,202 @@
-require('dotenv').config();
-const { sequelize, User, Customer, Restaurant, DeliveryPartner, Admin, CustomerSupport, Address, MenuCategory, MenuItem } = require('./models');
+﻿require('dotenv').config();
+const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
 
-const SEED_EMAILS = [
-    'admin@ofds.com',
-    'support@ofds.com',
-    'restaurant@ofds.com',
-    'driver@ofds.com',
-    'customer@ofds.com',
-];
+const prisma = new PrismaClient();
 
 async function seed() {
-    try {
-        await sequelize.authenticate();
-        console.log('✅ Connected to database');
+  console.log('Seeding Neon database with Orderly initial data...');
 
-        // Cleanup old seed data
-        console.log('🗑️  Cleaning up old seed data...');
-        for (const email of SEED_EMAILS) {
-            const user = await User.findOne({ where: { email } });
-            if (user) {
-                // Cascade: delete profile then user
-                await Customer.destroy({ where: { user_id: user.id }, force: true });
-                await Restaurant.destroy({ where: { user_id: user.id }, force: true });
-                await DeliveryPartner.destroy({ where: { user_id: user.id }, force: true });
-                await Admin.destroy({ where: { user_id: user.id }, force: true });
-                await CustomerSupport.destroy({ where: { user_id: user.id }, force: true });
-                await user.destroy({ force: true });
-            }
-        }
-        console.log('✅ Old seed data cleaned');
+  await prisma.orderItem.deleteMany();
+  await prisma.order.deleteMany();
+  await prisma.cartItem.deleteMany();
+  await prisma.cart.deleteMany();
+  await prisma.menuItem.deleteMany();
+  await prisma.menuCategory.deleteMany();
+  await prisma.restaurant.deleteMany();
+  await prisma.deliveryPartner.deleteMany();
+  await prisma.customerSupport.deleteMany();
+  await prisma.admin.deleteMany();
+  await prisma.address.deleteMany();
+  await prisma.customer.deleteMany();
+  await prisma.notification.deleteMany();
+  await prisma.user.deleteMany();
 
-        // NOTE: We pass PLAIN password to password_hash. 
-        // The User model's beforeCreate hook in models/User.js will hash it automatically.
-        // DO NOT pre-hash here, otherwise it will be double-hashed!
+  const defaultPassword = await bcrypt.hash('password123', 10);
 
-        // ============================================================
-        // 1. ADMIN
-        // ============================================================
-        const adminUser = await User.create({
-            email: 'admin@ofds.com',
-            password_hash: 'Admin@123',
-            role: 'admin',
-            full_name: 'System Administrator',
-            phone_number: '+84900000001',
-            is_active: true,
-        });
-        await Admin.create({
-            user_id: adminUser.id,
-            department: 'Operations',
-        });
-        console.log('✅ Admin created: admin@ofds.com / Admin@123');
-
-        // ============================================================
-        // 2. CUSTOMER SUPPORT
-        // ============================================================
-        const supportUser = await User.create({
-            email: 'support@ofds.com',
-            password_hash: 'Support@123',
-            role: 'customer_support',
-            full_name: 'Support Team',
-            phone_number: '+84900000002',
-            is_active: true,
-        });
-        await CustomerSupport.create({
-            user_id: supportUser.id,
-            contact_number: '+84900000002',
-        });
-        console.log('✅ Customer Support created: support@ofds.com / Support@123');
-
-        // ============================================================
-        // 3. RESTAURANT OWNER
-        // ============================================================
-        const restaurantUser = await User.create({
-            email: 'restaurant@ofds.com',
-            password_hash: 'Restaurant@123',
-            role: 'restaurant',
-            full_name: 'Nguyen Van Chu',
-            phone_number: '+84900000003',
-            is_active: true,
-        });
-        const restaurant = await Restaurant.create({
-            user_id: restaurantUser.id,
-            name: 'Pho Saigon Kitchen',
-            location: '123 Nguyen Hue, District 1, Ho Chi Minh City',
-            cuisine_type: 'Vietnamese',
-            opening_hours: JSON.stringify({ mon: '08:00-22:00', tue: '08:00-22:00', wed: '08:00-22:00', thu: '08:00-22:00', fri: '08:00-23:00', sat: '09:00-23:00', sun: '09:00-21:00' }),
-            is_open: true,
-            rating: 4.7,
-            min_order_amount: 50000,
-            delivery_radius: 5.0,
-        });
-        console.log('✅ Restaurant created: restaurant@ofds.com / Restaurant@123');
-
-        // Add menu categories & items
-        const cat1 = await MenuCategory.create({ restaurant_id: restaurant.id, name: 'Pho & Noodles' });
-        const cat2 = await MenuCategory.create({ restaurant_id: restaurant.id, name: 'Banh Mi' });
-        const cat3 = await MenuCategory.create({ restaurant_id: restaurant.id, name: 'Drinks' });
-
-        await MenuItem.create({ restaurant_id: restaurant.id, category_id: cat1.id, name: 'Pho Bo (Beef Noodle Soup)', price: 75000, description: 'Traditional Vietnamese beef noodle soup with herbs', image_url: 'https://images.unsplash.com/photo-1555126634-323283e090fa?w=400', is_available: true });
-        await MenuItem.create({ restaurant_id: restaurant.id, category_id: cat1.id, name: 'Bun Bo Hue', price: 65000, description: 'Spicy beef noodle soup from Hue city', image_url: 'https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?w=400', is_available: true });
-        await MenuItem.create({ restaurant_id: restaurant.id, category_id: cat2.id, name: 'Banh Mi Thit Nuong', price: 35000, description: 'Grilled pork baguette sandwich', image_url: 'https://images.unsplash.com/photo-1509722747041-619f3830c448?w=400', is_available: true });
-        await MenuItem.create({ restaurant_id: restaurant.id, category_id: cat3.id, name: 'Tra Da (Iced Tea)', price: 15000, description: 'Classic Vietnamese iced green tea', image_url: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400', is_available: true });
-        await MenuItem.create({ restaurant_id: restaurant.id, category_id: cat3.id, name: 'Ca Phe Sua Da', price: 25000, description: 'Vietnamese iced milk coffee', image_url: 'https://images.unsplash.com/photo-1534778101976-62847782c213?w=400', is_available: true });
-        console.log('✅ Menu categories & items created for restaurant');
-
-        // ============================================================
-        // 4. DELIVERY PARTNER
-        // ============================================================
-        const deliveryUser = await User.create({
-            email: 'driver@ofds.com',
-            password_hash: 'Driver@123',
-            role: 'delivery_partner',
-            full_name: 'Tran Van Xe',
-            phone_number: '+84900000004',
-            is_active: true,
-        });
-        await DeliveryPartner.create({
-            user_id: deliveryUser.id,
-            vehicle_license: '51F-12345',
-            is_available: true,
-            rating: 4.9,
-        });
-        console.log('✅ Delivery Partner created: driver@ofds.com / Driver@123');
-
-        // ============================================================
-        // 5. CUSTOMER
-        // ============================================================
-        const customerUser = await User.create({
-            email: 'customer@ofds.com',
-            password_hash: 'Customer@123',
-            role: 'customer',
-            full_name: 'Le Thi Khach',
-            phone_number: '+84900000005',
-            is_active: true,
-        });
-        const customer = await Customer.create({
-            user_id: customerUser.id,
-        });
-
-        // Add address for customer
-        const address = await Address.create({
-            customer_id: customer.id,
-            label: 'Home',
-            street: '456 Le Loi Street, District 1',
-            city: 'Ho Chi Minh City',
-            latitude: 10.7769,
-            longitude: 106.7009,
-            is_default: true,
-        });
-
-        // Update customer default address
-        await Customer.update({ default_address_id: address.id }, { where: { id: customer.id } });
-        console.log('✅ Customer created: customer@ofds.com / Customer@123');
-
-        // ============================================================
-        // SUMMARY
-        // ============================================================
-        console.log('\n========================================');
-        console.log('  🎉 SEED DATA CREATED SUCCESSFULLY!');
-        console.log('========================================');
-        console.log('  Role               | Email                 | Password');
-        console.log('  ------------------|----------------------|-------------');
-        console.log('  Admin             | admin@ofds.com        | Admin@123');
-        console.log('  Customer Support  | support@ofds.com      | Support@123');
-        console.log('  Restaurant Owner  | restaurant@ofds.com   | Restaurant@123');
-        console.log('  Delivery Partner  | driver@ofds.com       | Driver@123');
-        console.log('  Customer          | customer@ofds.com     | Customer@123');
-        console.log('========================================\n');
-
-    } catch (error) {
-        console.error('❌ Seed error:', error.parent ? error.parent.message : error.message);
-        if (error.sql) console.error('SQL:', error.sql);
-    } finally {
-        await sequelize.close();
+  // 1. Admin
+  const adminUser = await prisma.user.create({
+    data: {
+      email: 'admin@ofds.com',
+      password_hash: defaultPassword,
+      full_name: 'System Admin',
+      phone_number: '1234567890',
+      role: 'admin',
+      admin: {
+        create: { department: 'Operations' }
+      }
     }
+  });
+  console.log('Admin user created:', adminUser.email);
+
+  // 2. Customer Support
+  const supportUser = await prisma.user.create({
+    data: {
+      email: 'support@ofds.com',
+      password_hash: defaultPassword,
+      full_name: 'Customer Support',
+      phone_number: '1234567891',
+      role: 'customer_support',
+      customerSupport: {
+        create: { support_level: 'Tier 1' }
+      }
+    }
+  });
+  console.log('Support user created:', supportUser.email);
+
+  // 3. Restaurant User & Restaurant
+  const restaurantUser = await prisma.user.create({
+    data: {
+      email: 'restaurant@ofds.com',
+      password_hash: defaultPassword,
+      full_name: 'Mario Rossi',
+      phone_number: '1234567892',
+      role: 'restaurant'
+    }
+  });
+
+  const restaurant = await prisma.restaurant.create({
+    data: {
+      user_id: restaurantUser.id,
+      name: 'Orderly Gourmet Hub',
+      description: 'Delicious artisan meals delivered fast and fresh.',
+      address: '123 Flavor Street, Foodie City',
+      rating: 4.8,
+      opens_at: '09:00',
+      closes_at: '22:00'
+    }
+  });
+
+  const cat1 = await prisma.menuCategory.create({
+    data: {
+      restaurant_id: restaurant.id,
+      name: 'Popular Items',
+      sort_order: 1
+    }
+  });
+
+  await prisma.menuItem.createMany({
+    data: [
+      {
+        restaurant_id: restaurant.id,
+        category_id: cat1.id,
+        name: 'Orderly Classic Burger',
+        description: 'Juicy beef patty with sharp cheddar, crisp lettuce, and signature sauce.',
+        price: 12.99,
+        image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500',
+        is_available: true
+      },
+      {
+        restaurant_id: restaurant.id,
+        category_id: cat1.id,
+        name: 'Truffle Fries',
+        description: 'Crispy golden fries tossed in truffle oil and parmesan cheese.',
+        price: 6.50,
+        image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500',
+        is_available: true
+      }
+    ]
+  });
+
+  const cat2 = await prisma.menuCategory.create({
+    data: {
+      restaurant_id: restaurant.id,
+      name: 'Beverages & Desserts',
+      sort_order: 2
+    }
+  });
+
+  await prisma.menuItem.create({
+    data: {
+      restaurant_id: restaurant.id,
+      category_id: cat2.id,
+      name: 'Fresh Berry Lemonade',
+      description: 'Hand-squeezed lemonade with fresh organic raspberries.',
+      price: 4.50,
+      image_url: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=500',
+      is_available: true
+    }
+  });
+  console.log('Restaurant user and menu created:', restaurantUser.email);
+
+  // 4. Delivery Partner
+  const driverUser = await prisma.user.create({
+    data: {
+      email: 'driver@ofds.com',
+      password_hash: defaultPassword,
+      full_name: 'Alex Express',
+      phone_number: '1234567893',
+      role: 'delivery_partner',
+      deliveryPartner: {
+        create: {
+          vehicle_type: 'Motorcycle',
+          vehicle_number: 'OD-01-EV-9999',
+          is_available: true,
+          current_lat: 28.6139,
+          current_lng: 77.2090,
+          rating: 4.9
+        }
+      }
+    }
+  });
+  console.log('Delivery partner user created:', driverUser.email);
+
+  // 5. Customer
+  const customerUser = await prisma.user.create({
+    data: {
+      email: 'customer@ofds.com',
+      password_hash: defaultPassword,
+      full_name: 'John Orderly',
+      phone_number: '1234567894',
+      role: 'customer'
+    }
+  });
+
+  const customer = await prisma.customer.create({
+    data: {
+      user_id: customerUser.id
+    }
+  });
+
+  await prisma.cart.create({
+    data: {
+      customer_id: customer.id,
+      total_amount: 0.0
+    }
+  });
+
+  await prisma.address.create({
+    data: {
+      user_id: customerUser.id,
+      address_line1: '742 Evergreen Terrace',
+      city: 'Springfield',
+      state: 'IL',
+      postal_code: '62701',
+      latitude: 28.6150,
+      longitude: 77.2100,
+      is_default: true
+    }
+  });
+  console.log('Customer user created:', customerUser.email);
+
+  console.log('Database seeding completed successfully!');
 }
 
-seed();
+seed()
+  .catch((e) => {
+    console.error('Seeding error:', e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

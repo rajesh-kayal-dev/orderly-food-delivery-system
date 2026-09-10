@@ -1,45 +1,61 @@
-const { Restaurant, Customer, Order, OrderItem, MenuItem, Address, User, sequelize } = require('../models');
-const OrderFilterChain = require('../chains/order_filters/OrderFilterChain');
+﻿const prisma = require('../config/prisma');
 
 class AdminService {
   async getAllOrders(restaurantId, statusFilter, page = 1, limit = 20, month, year) {
-    const context = OrderFilterChain.buildContext({
-      restaurantId, statusFilter, page, limit, month, year
-    });
+    const pageNum = parseInt(page, 10) || 1;
+    const limitNum = parseInt(limit, 10) || 20;
+    const offset = (pageNum - 1) * limitNum;
 
-    const { where, countWhere, pagination } = context;
+    const where = {};
+    if (restaurantId) where.restaurant_id = restaurantId;
+    if (statusFilter && statusFilter !== 'all') {
+      if (statusFilter === 'delivered') {
+        where.status = { in: ['delivered', 'completed'] };
+      } else {
+        where.status = statusFilter;
+      }
+    }
 
-    const { count: total, rows: orders } = await Order.findAndCountAll({
-      where,
-      include: [
-        {
-          model: Restaurant,
-          attributes: ['name', 'location'],
-          include: [{ model: User, attributes: ['phone_number'] }]
-        },
-        {
-          model: Customer,
-          include: [{ model: User, attributes: ['full_name', 'phone_number'] }]
-        },
-        {
-          model: OrderItem,
-          include: [{ model: MenuItem, attributes: ['name', 'price', 'image_url'] }]
-        },
-        {
-          model: Address,
-          attributes: ['street', 'city', 'label']
-        }
-      ],
-      limit: pagination.limit,
-      offset: pagination.offset,
-      order: [['created_at', 'DESC']]
-    });
+    if (year) {
+      const y = parseInt(year, 10);
+      let startDate, endDate;
+      if (month && month !== 'all') {
+        const m = parseInt(month, 10) - 1;
+        startDate = new Date(y, m, 1, 0, 0, 0, 0);
+        endDate = new Date(y, m + 1, 0, 23, 59, 59, 999);
+      } else {
+        startDate = new Date(y, 0, 1, 0, 0, 0, 0);
+        endDate = new Date(y, 11, 31, 23, 59, 59, 999);
+      }
+      where.created_at = { gte: startDate, lte: endDate };
+    }
 
-    const statusCounts = await Order.findAll({
-      attributes: ['status', [sequelize.fn('COUNT', sequelize.col('status')), 'count']],
-      where: countWhere,
-      group: ['status'],
-      raw: true
+    const [total, orders] = await Promise.all([
+      prisma.order.count({ where }),
+      prisma.order.findMany({
+        where,
+        include: {
+          restaurant: {
+            include: { user: { select: { phone_number: true } } }
+          },
+          customer: {
+            include: { user: { select: { full_name: true, phone_number: true } } }
+          },
+          items: {
+            include: { menuItem: { select: { name: true, price: true, image_url: true } } }
+          },
+          deliveryAddress: true
+        },
+        skip: offset,
+        take: limitNum,
+        orderBy: { created_at: 'desc' }
+      })
+    ]);
+
+    const statusCounts = await prisma.order.groupBy({
+      by: ['status'],
+      where: restaurantId ? { restaurant_id: restaurantId } : {},
+      _count: { status: true }
     });
 
     const counts = {
@@ -53,10 +69,11 @@ class AdminService {
     };
 
     statusCounts.forEach((sc) => {
+      const cnt = sc._count.status;
       if (sc.status === 'completed') {
-        counts.delivered += parseInt(sc.count, 10);
+        counts.delivered += cnt;
       } else if (Object.prototype.hasOwnProperty.call(counts, sc.status)) {
-        counts[sc.status] += parseInt(sc.count, 10);
+        counts[sc.status] += cnt;
       }
     });
 
@@ -65,9 +82,9 @@ class AdminService {
       counts,
       pagination: {
         total,
-        page: pagination.page,
-        limit: pagination.limit,
-        totalPages: Math.max(Math.ceil(total / pagination.limit), 1)
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.max(Math.ceil(total / limitNum), 1)
       }
     };
   }

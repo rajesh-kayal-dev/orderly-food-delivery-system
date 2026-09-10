@@ -1,22 +1,18 @@
-const sequelize = require('../config/db');
-const Restaurant = require('./Restaurant');
-const MenuCategory = require('./MenuCategory');
-const MenuItem = require('./MenuItem');
-
-// Restaurant relationships
-Restaurant.hasMany(MenuCategory, { foreignKey: 'restaurant_id', as: 'categories' });
-MenuCategory.belongsTo(Restaurant, { foreignKey: 'restaurant_id' });
-
-Restaurant.hasMany(MenuItem, { foreignKey: 'restaurant_id', as: 'menu_items' });
-MenuItem.belongsTo(Restaurant, { foreignKey: 'restaurant_id' });
-
-// Menu Category relationships
-MenuCategory.hasMany(MenuItem, { foreignKey: 'category_id', as: 'items' });
-MenuItem.belongsTo(MenuCategory, { foreignKey: 'category_id', as: 'category' });
+﻿const prisma = require('../config/prisma');
 
 module.exports = {
-  sequelize,
-  Restaurant,
-  MenuCategory,
-  MenuItem
+  prisma,
+  sequelize: prisma,
+  User: prisma.user,
+  Customer: prisma.customer,
+  Restaurant: prisma.restaurant,
+  DeliveryPartner: prisma.deliveryPartner,
+  Address: prisma.address,
+  MenuItem: prisma.menuItem,
+  MenuCategory: prisma.menuCategory,
+  Cart: prisma.cart,
+  CartItem: prisma.cartItem,
+  Order: prisma.order,
+  OrderItem: prisma.orderItem,
+  Notification: prisma.notification
 };

@@ -1,44 +1,36 @@
-require('dotenv').config();
-const express = require('express');
+﻿const express = require('express');
 const cors = require('cors');
-const { sequelize } = require('./models');
-const restaurantRoutes = require('./routes/restaurantRoutes');
-const menuRoutes = require('./routes/menuRoutes');
+const dotenv = require('dotenv');
+const http = require('http');
+const prisma = require('./config/prisma');
+
+dotenv.config();
 
 const app = express();
+const server = http.createServer(app);
 
-// Middleware
-app.use(cors());
+app.use(cors({
+    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    credentials: true
+}));
+
 app.use(express.json());
 
-// Routes
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK', service: 'restaurant-service' });
-});
+const restaurantRoutes = require('./routes/restaurantRoutes');
+const menuRoutes = require('./routes/menuRoutes');
 
 app.use('/api/restaurants', restaurantRoutes);
 app.use('/api/menu', menuRoutes);
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
-    success: false,
-    message: 'Internal server error',
-    error: process.env.NODE_ENV === 'development' ? err.message : undefined
-  });
-});
+const PORT = process.env.PORT || 5002;
 
-const PORT = process.env.PORT || 5004;
-
-// Database Connection and Server Start
-sequelize.authenticate()
-  .then(() => {
-    console.log('Database connected successfully.');
-    app.listen(PORT, () => {
-      console.log(`Restaurant Service running on port ${PORT}`);
+prisma.$connect().then(() => {
+    console.log('Orderly Restaurant Service Database connected (Neon PostgreSQL)');
+    server.listen(PORT, () => {
+        console.log(`Orderly Restaurant Microservice running on port ${PORT}`);
     });
-  })
-  .catch((err) => {
-    console.error('Unable to connect to the database:', err);
-  });
+}).catch(err => {
+    console.error('Failed to connect database in Restaurant Service:', err);
+});

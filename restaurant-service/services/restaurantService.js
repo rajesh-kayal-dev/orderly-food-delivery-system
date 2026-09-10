@@ -1,29 +1,34 @@
-const { Restaurant } = require('../models');
-const { Op } = require('sequelize');
+const prisma = require('../config/prisma');
 
 class RestaurantService {
     async getAllRestaurants(query) {
         const { search, category } = query;
         const where = {};
-        let include = [];
 
         if (search) {
-            where[Op.or] = [
-                { name: { [Op.like]: `%${search}%` } },
-                { cuisine_type: { [Op.like]: `%${search}%` } }
+            where.OR = [
+                { name: { contains: search, mode: 'insensitive' } },
+                { cuisine_type: { contains: search, mode: 'insensitive' } }
             ];
-            // Simplifying the search compared to the monolith for now
         }
 
-        return await Restaurant.findAll({
+        return await prisma.restaurant.findMany({
             where,
-            include
+            include: {
+                MenuCategories: {
+                    include: {
+                        items: true
+                    }
+                }
+            }
         });
     }
 
     async getRestaurantById(id, options = {}) {
         const { allowClosed = false } = options;
-        const restaurant = await Restaurant.findByPk(id);
+        const restaurant = await prisma.restaurant.findUnique({
+            where: { id }
+        });
         if (!restaurant) {
             throw new Error('Restaurant not found');
         }
@@ -38,7 +43,7 @@ class RestaurantService {
     }
 
     async getRestaurantByUserId(userId) {
-        const restaurant = await Restaurant.findOne({ where: { user_id: userId } });
+        const restaurant = await prisma.restaurant.findUnique({ where: { user_id: userId } });
         if (!restaurant) {
             throw new Error('Restaurant profile not found');
         }
@@ -46,7 +51,9 @@ class RestaurantService {
     }
 
     async createRestaurant(restaurantData) {
-        return await Restaurant.create(restaurantData);
+        return await prisma.restaurant.create({
+            data: restaurantData
+        });
     }
 }
 

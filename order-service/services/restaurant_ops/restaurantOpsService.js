@@ -1,58 +1,68 @@
-const { Order, Customer, Restaurant, DeliveryPartner, User, OrderItem, MenuItem, MenuCategory, sequelize } = require('../../models');
-const { Op } = require('sequelize');
+﻿const prisma = require('../../config/prisma');
 
-/**
- * Interface: IRestaurantOpsAPI
- */
 class RestaurantOpsService {
     async getRestaurantOrders(userId, statusFilter, date) {
-        const restaurant = await Restaurant.findOne({ where: { user_id: userId } });
+        const restaurant = await prisma.restaurant.findUnique({
+            where: { user_id: userId }
+        });
         if (!restaurant) throw new Error('Restaurant not found for this user');
 
         const where = { restaurant_id: restaurant.id };
+
         if (date) {
             const startOfDay = new Date(date);
             startOfDay.setHours(0, 0, 0, 0);
             const endOfDay = new Date(date);
             endOfDay.setHours(23, 59, 59, 999);
-            where.created_at = { [Op.between]: [startOfDay, endOfDay] };
+            where.created_at = {
+                gte: startOfDay,
+                lte: endOfDay
+            };
         }
+
         if (statusFilter && statusFilter !== 'all') {
             if (statusFilter === 'delivered') {
-                where.status = { [Op.in]: ['delivered', 'completed'] };
+                where.status = { in: ['delivered', 'completed'] };
             } else {
                 where.status = statusFilter;
             }
         }
 
-        const orders = await Order.findAll({
+        const orders = await prisma.order.findMany({
             where,
-            include: [
-                {
-                    model: Customer,
-                    include: [{ model: User, attributes: ['email', 'full_name', 'phone_number'] }]
+            include: {
+                customer: {
+                    include: {
+                        user: {
+                            select: { email: true, full_name: true, phone_number: true }
+                        }
+                    }
                 },
-                {
-                    model: DeliveryPartner,
-                    include: [{ model: User, attributes: ['full_name', 'phone_number'] }]
+                deliveryPartner: {
+                    include: {
+                        user: {
+                            select: { full_name: true, phone_number: true }
+                        }
+                    }
                 },
-                {
-                    model: OrderItem,
-                    include: [{ model: MenuItem }]
+                items: {
+                    include: {
+                        menuItem: true
+                    }
                 }
-            ],
-            order: [['created_at', 'DESC']]
+            },
+            orderBy: { created_at: 'desc' }
         });
 
-        // Get counts for each status
-        const statusCounts = await Order.findAll({
-            attributes: ['status', [sequelize.fn('COUNT', sequelize.col('status')), 'count']],
+        const allStatusOrders = await prisma.order.groupBy({
+            by: ['status'],
             where: {
                 restaurant_id: restaurant.id,
                 ...(date && { created_at: where.created_at })
             },
-            group: ['status'],
-            raw: true
+            _count: {
+                status: true
+            }
         });
 
         const counts = {
@@ -65,11 +75,12 @@ class RestaurantOpsService {
             refunded: 0
         };
 
-        statusCounts.forEach(sc => {
+        allStatusOrders.forEach(sc => {
+            const countVal = sc._count.status;
             if (sc.status === 'completed') {
-                counts.delivered += parseInt(sc.count);
+                counts.delivered += countVal;
             } else if (counts.hasOwnProperty(sc.status)) {
-                counts[sc.status] += parseInt(sc.count);
+                counts[sc.status] += countVal;
             }
         });
 
@@ -77,34 +88,40 @@ class RestaurantOpsService {
     }
 
     async getRestaurantYearlySummary(userId, year) {
-        const restaurant = await Restaurant.findOne({ where: { user_id: userId } });
+        const restaurant = await prisma.restaurant.findUnique({
+            where: { user_id: userId }
+        });
         if (!restaurant) throw new Error('Restaurant not found for this user');
 
         const targetYear = parseInt(year) || new Date().getFullYear();
         const startOfYear = new Date(targetYear, 0, 1, 0, 0, 0, 0);
         const endOfYear = new Date(targetYear, 11, 31, 23, 59, 59, 999);
 
-        // All delivered/completed orders for the target year
-        const deliveredOrders = await Order.findAll({
+        const deliveredOrders = await prisma.order.findMany({
             where: {
                 restaurant_id: restaurant.id,
-                status: { [Op.in]: ['delivered', 'completed'] },
-                created_at: { [Op.between]: [startOfYear, endOfYear] }
-            },
-            include: [
-                {
-                    model: OrderItem,
-                    include: [{ model: MenuItem, include: [{ model: MenuCategory, as: 'category' }] }]
+                status: { in: ['delivered', 'completed'] },
+                created_at: {
+                    gte: startOfYear,
+                    lte: endOfYear
                 }
-            ]
+            },
+            include: {
+                items: {
+                    include: {
+                        menuItem: {
+                            include: { category: true }
+                        }
+                    }
+                }
+            }
         });
 
-        // Monthly revenue (12 months)
         const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
         const monthlyRevenue = MONTHS.map(month => ({ month, revenue: 0 }));
         deliveredOrders.forEach(order => {
             const m = new Date(order.created_at).getMonth();
-            const subtotal = Number(order.subtotal) || Math.max(Number(order.total_amount || 0) - Number(order.delivery_fee || 0), 0);
+            const subtotal = Number(order.total_amount || 0);
             monthlyRevenue[m].revenue += subtotal;
         });
 
@@ -112,25 +129,24 @@ class RestaurantOpsService {
         const totalOrders = deliveredOrders.length;
         const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
-        // Top 5 best-selling dishes by quantity
         const dishMap = {};
         deliveredOrders.forEach(order => {
-            (order.OrderItems || []).forEach(item => {
+            (order.items || []).forEach(item => {
                 const id = item.menu_item_id;
-                if (!dishMap[id]) dishMap[id] = { name: item.menu_item_name, quantity: 0, revenue: 0 };
+                const name = item.menuItem?.name || 'Item';
+                if (!dishMap[id]) dishMap[id] = { name, quantity: 0, revenue: 0 };
                 dishMap[id].quantity += Number(item.quantity);
-                dishMap[id].revenue += Number(item.subtotal || 0);
+                dishMap[id].revenue += Number(item.total_price || 0);
             });
         });
         const topDishes = Object.values(dishMap)
             .sort((a, b) => b.quantity - a.quantity)
             .slice(0, 5);
 
-        // Category distribution by quantity sold
         const catMap = {};
         deliveredOrders.forEach(order => {
-            (order.OrderItems || []).forEach(item => {
-                const catName = item.MenuItem?.category?.name || 'Other';
+            (order.items || []).forEach(item => {
+                const catName = item.menuItem?.category?.name || 'Other';
                 if (!catMap[catName]) catMap[catName] = 0;
                 catMap[catName] += Number(item.quantity);
             });
@@ -139,16 +155,20 @@ class RestaurantOpsService {
             .map(([name, value]) => ({ name, value }))
             .sort((a, b) => b.value - a.value);
 
-        // All recent orders across all statuses for the selected year
-        const recentOrders = await Order.findAll({
+        const recentOrders = await prisma.order.findMany({
             where: {
                 restaurant_id: restaurant.id,
-                created_at: { [Op.between]: [startOfYear, endOfYear] }
+                created_at: {
+                    gte: startOfYear,
+                    lte: endOfYear
+                }
             },
-            include: [
-                { model: Customer, include: [{ model: User, attributes: ['full_name'] }] }
-            ],
-            order: [['created_at', 'DESC']]
+            include: {
+                customer: {
+                    include: { user: { select: { full_name: true } } }
+                }
+            },
+            orderBy: { created_at: 'desc' }
         });
 
         return {
@@ -158,8 +178,8 @@ class RestaurantOpsService {
             categoryDistribution,
             recentOrders: recentOrders.map(o => ({
                 id: o.id,
-                customerName: o.Customer?.User?.full_name || 'Unknown',
-                subtotal: Number(o.subtotal) || Math.max(Number(o.total_amount || 0) - Number(o.delivery_fee || 0), 0),
+                customerName: o.customer?.user?.full_name || 'Unknown',
+                subtotal: Number(o.total_amount || 0),
                 createdAt: o.created_at,
                 status: o.status
             }))

@@ -1,5 +1,5 @@
-const { User, Customer, DeliveryPartner, Admin, CustomerSupport, Address } = require('../models');
-const { Op } = require('sequelize');
+const prisma = require('../config/prisma');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const UserAccount = require('../states/account/UserAccount');
 
@@ -37,7 +37,10 @@ class AuthService {
   }
 
   async getManagedUser(userId, options = {}) {
-    const user = await User.findByPk(userId, options);
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      ...options
+    });
     if (!user) {
       throw new Error('User not found');
     }
@@ -47,40 +50,41 @@ class AuthService {
   async register(userData) {
     const { email, password, role, full_name, phone_number, name, department, contact_number, vehicle_license } = userData;
 
-    const userExists = await User.findOne({ where: { email } });
+    const userExists = await prisma.user.findUnique({ where: { email } });
     if (userExists) {
       throw new Error('User already exists');
     }
 
     const requiresApproval = role === 'restaurant' || role === 'delivery_partner';
+    const password_hash = await bcrypt.hash(password, 10);
 
-    const user = await User.create({
-      email,
-      password_hash: password,
-      role,
-      full_name,
-      phone_number,
-      is_active: !requiresApproval
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password_hash,
+        role,
+        full_name,
+        phone_number,
+        is_active: !requiresApproval
+      }
     });
 
     let profile = null;
     switch (role) {
       case 'customer':
-        profile = await Customer.create({ user_id: user.id });
+        profile = await prisma.customer.create({ data: { user_id: user.id } });
         break;
       case 'restaurant':
-        // Microservices: Restaurant profile creation should be handled by restaurant-service
-        // Either via an event or direct API call. For now we set profile to null.
         profile = null;
         break;
       case 'delivery_partner':
-        profile = await DeliveryPartner.create({ user_id: user.id, vehicle_license });
+        profile = await prisma.deliveryPartner.create({ data: { user_id: user.id, vehicle_license } });
         break;
       case 'admin':
-        profile = await Admin.create({ user_id: user.id, department });
+        profile = await prisma.admin.create({ data: { user_id: user.id, department } });
         break;
       case 'customer_support':
-        profile = await CustomerSupport.create({ user_id: user.id, contact_number: phone_number || contact_number });
+        profile = await prisma.customerSupport.create({ data: { user_id: user.id, contact_number: phone_number || contact_number } });
         break;
     }
 
@@ -95,17 +99,17 @@ class AuthService {
   }
 
   async login(email, password) {
-    const user = await User.findOne({
+    const user = await prisma.user.findUnique({
       where: { email },
-      include: [
-        { model: Customer, include: [Address] },
-        { model: DeliveryPartner },
-        { model: Admin },
-        { model: CustomerSupport }
-      ]
+      include: {
+        Customer: { include: { addresses: true } },
+        DeliveryPartner: true,
+        Admin: true,
+        CustomerSupport: true
+      }
     });
 
-    if (!user || !(await user.matchPassword(password))) {
+    if (!user || !(await bcrypt.compare(password, user.password_hash))) {
       throw new Error('Invalid email or password');
     }
 
@@ -124,7 +128,7 @@ class AuthService {
     const user = await this.getManagedUser(userId);
     const account = this.toUserAccount(user);
     account.changeState('activate');
-    await account.persist();
+    await account.persist(prisma);
 
     return {
       id: user.id,
@@ -141,7 +145,7 @@ class AuthService {
     const user = await this.getManagedUser(userId);
     const account = this.toUserAccount(user);
     account.changeState('suspend');
-    await account.persist();
+    await account.persist(prisma);
 
     return {
       id: user.id,
@@ -151,71 +155,78 @@ class AuthService {
   }
 
   async getProfile(userId) {
-    const user = await User.findByPk(userId, {
-      attributes: { exclude: ['password_hash'] },
-      include: [
-        { model: Customer, include: [Address] },
-        { model: DeliveryPartner },
-        { model: Admin },
-        { model: CustomerSupport }
-      ]
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        Customer: { include: { addresses: true } },
+        DeliveryPartner: true,
+        Admin: true,
+        CustomerSupport: true
+      }
     });
 
     if (!user) {
       throw new Error('User not found');
     }
 
+    delete user.password_hash;
     return user;
   }
 
   async updateProfile(userId, updateData, io) {
-    const { full_name, phone_number, password, restaurant_name, location, cuisine_type, vehicle_license, address, is_open } = updateData;
+    const { full_name, phone_number, password, vehicle_license, address } = updateData;
 
-    const user = await User.findByPk(userId);
+    const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
       throw new Error('User not found');
     }
 
-    if (full_name) user.full_name = full_name;
-    if (phone_number) user.phone_number = phone_number;
-    if (password) user.password_hash = password;
+    const updateFields = {};
+    if (full_name) updateFields.full_name = full_name;
+    if (phone_number) updateFields.phone_number = phone_number;
+    if (password) updateFields.password_hash = await bcrypt.hash(password, 10);
 
-    await user.save();
+    if (Object.keys(updateFields).length > 0) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: updateFields
+      });
+    }
 
-    if (user.role === 'restaurant') {
-      // Microservices: Restaurant profile updates should be sent directly to restaurant-service by the client
-      // identity-service no longer manages restaurant profiles
-    } else if (user.role === 'delivery_partner') {
-      const driver = await DeliveryPartner.findOne({ where: { user_id: user.id } });
-      if (driver) {
-        if (vehicle_license) driver.vehicle_license = vehicle_license;
-        await driver.save();
+    if (user.role === 'delivery_partner') {
+      const driver = await prisma.deliveryPartner.findUnique({ where: { user_id: user.id } });
+      if (driver && vehicle_license) {
+        await prisma.deliveryPartner.update({
+          where: { id: driver.id },
+          data: { vehicle_license }
+        });
       }
     } else if (user.role === 'customer' && address) {
-      const customer = await Customer.findOne({ where: { user_id: user.id } });
+      const customer = await prisma.customer.findUnique({ where: { user_id: user.id } });
       if (customer) {
-        let customerAddress = await Address.findOne({
+        const customerAddress = await prisma.address.findFirst({
           where: { customer_id: customer.id },
-          order: [['is_default', 'DESC'], ['created_at', 'DESC']]
+          orderBy: [{ is_default: 'desc' }, { created_at: 'desc' }]
         });
 
         if (customerAddress) {
-          customerAddress.street = address;
-          customerAddress.is_default = true;
-          await customerAddress.save();
+          await prisma.address.updateMany({
+            where: { customer_id: customer.id },
+            data: { is_default: false }
+          });
 
-          await Address.update({ is_default: false }, {
-            where: {
-              customer_id: customer.id,
-              id: { [Op.ne]: customerAddress.id }
-            }
+          await prisma.address.update({
+            where: { id: customerAddress.id },
+            data: { street: address, is_default: true }
           });
         } else {
-          await Address.create({
-            customer_id: customer.id,
-            street: address,
-            city: 'Food City',
-            is_default: true
+          await prisma.address.create({
+            data: {
+              customer_id: customer.id,
+              street: address,
+              city: 'Food City',
+              is_default: true
+            }
           });
         }
       }

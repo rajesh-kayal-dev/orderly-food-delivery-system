@@ -1,640 +1,225 @@
-const { Order, Customer, Restaurant, DeliveryPartner, User, OrderItem, Address, Notification, MenuItem, MenuCategory, sequelize } = require('../models');
-const { Op } = require('sequelize');
-const paymentService = require('./paymentService');
-const { Payment } = require('../models');
-const notificationService = require('./notification_integration/NotificationService');
-const {
-    OrderStatusContext,
-    assertRoleCanUpdateStatus,
-} = require('../states/order/orderStatusState');
+﻿const prisma = require('../config/prisma');
 
 class OrderService {
-    async getRestaurantOrders(userId, statusFilter, date) {
-        const restaurant = await Restaurant.findOne({ where: { user_id: userId } });
-        if (!restaurant) throw new Error('Restaurant not found for this user');
+    async createOrder({ userId, delivery_address_id, payment_method = 'cod', notes = '', io }) {
+        const customer = await prisma.customer.findUnique({
+            where: { user_id: userId }
+        });
+        if (!customer) throw new Error('Customer profile not found');
 
-        const where = { restaurant_id: restaurant.id };
-        if (date) {
-            const startOfDay = new Date(date);
-            startOfDay.setHours(0, 0, 0, 0);
-            const endOfDay = new Date(date);
-            endOfDay.setHours(23, 59, 59, 999);
-            where.created_at = { [Op.between]: [startOfDay, endOfDay] };
-        }
-        if (statusFilter && statusFilter !== 'all') {
-            if (statusFilter === 'delivered') {
-                where.status = { [Op.in]: ['delivered', 'completed'] };
-            } else {
-                where.status = statusFilter;
-            }
-        }
-
-        const orders = await Order.findAll({
-            where,
-            include: [
-                {
-                    model: Customer,
-                    include: [{ model: User, attributes: ['email', 'full_name', 'phone_number'] }]
-                },
-                {
-                    model: DeliveryPartner,
-                    include: [{ model: User, attributes: ['full_name', 'phone_number'] }]
-                },
-                {
-                    model: OrderItem,
-                    include: [{ model: MenuItem }]
+        const cart = await prisma.cart.findUnique({
+            where: { customer_id: customer.id },
+            include: {
+                items: {
+                    include: { menuItem: true }
                 }
-            ],
-            order: [['created_at', 'DESC']]
-        });
-
-        // Get counts for each status
-        const statusCounts = await Order.findAll({
-            attributes: ['status', [sequelize.fn('COUNT', sequelize.col('status')), 'count']],
-            where: {
-                restaurant_id: restaurant.id,
-                ...(date && { created_at: where.created_at })
-            },
-            group: ['status'],
-            raw: true
-        });
-
-        const counts = {
-            pending: 0,
-            accepted: 0,
-            preparing: 0,
-            picked_up: 0,
-            delivered: 0,
-            cancelled: 0,
-            refunded: 0
-        };
-
-        statusCounts.forEach(sc => {
-            if (sc.status === 'completed') {
-                counts.delivered += parseInt(sc.count);
-            } else if (counts.hasOwnProperty(sc.status)) {
-                counts[sc.status] += parseInt(sc.count);
             }
         });
 
-        return { orders, counts };
-    }
-
-    async getUserOrders(userId, { date, limit = 5, offset = 0 } = {}) {
-        const customer = await Customer.findOne({ where: { user_id: userId } });
-        if (!customer) throw new Error('Customer not found');
-
-        const where = { customer_id: customer.id };
-        if (date) {
-            const startOfDay = new Date(date);
-            startOfDay.setHours(0, 0, 0, 0);
-            const endOfDay = new Date(date);
-            endOfDay.setHours(23, 59, 59, 999);
-            where.created_at = { [Op.between]: [startOfDay, endOfDay] };
+        if (!cart || !cart.items || cart.items.length === 0) {
+            throw new Error('Cart is empty');
         }
 
-        const { count, rows } = await Order.findAndCountAll({
-            where,
-            include: [
-                { model: Restaurant, attributes: ['name'] },
-                { model: OrderItem, include: [{ model: MenuItem }] },
-                { 
-                    model: DeliveryPartner, 
-                    include: [{ model: User, attributes: ['full_name', 'phone_number'] }] 
+        if (!cart.restaurant_id) {
+            throw new Error('Cart does not have an associated restaurant');
+        }
+
+        const address = await prisma.address.findFirst({
+            where: { id: delivery_address_id, user_id: userId }
+        });
+        if (!address) throw new Error('Delivery address not found or unauthorized');
+
+        const total_amount = cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+        const order = await prisma.order.create({
+            data: {
+                customer_id: customer.id,
+                restaurant_id: cart.restaurant_id,
+                delivery_address_id: address.id,
+                total_amount,
+                payment_method,
+                payment_status: payment_method === 'cod' ? 'pending' : 'paid',
+                status: 'placed',
+                notes,
+                items: {
+                    create: cart.items.map(item => ({
+                        menu_item_id: item.menu_item_id,
+                        quantity: item.quantity,
+                        unit_price: item.price,
+                        total_price: item.price * item.quantity
+                    }))
                 }
-            ],
-            order: [['created_at', 'DESC']],
-            limit: parseInt(limit),
-            offset: parseInt(offset)
-        });
-
-        const confirmedCount = await Order.count({
-            where: {
-                customer_id: customer.id,
-                status: { [Op.in]: ['delivered', 'completed'] }
-            }
-        });
-
-        return { orders: rows, total: count, confirmedCount };
-    }
-
-    async getMonthlyFavorite(userId) {
-        const customer = await Customer.findOne({ where: { user_id: userId } });
-        if (!customer) throw new Error('Customer not found');
-
-        const startOfMonth = new Date();
-        startOfMonth.setDate(1);
-        startOfMonth.setHours(0, 0, 0, 0);
-
-        const favoriteData = await Order.findAll({
-            attributes: [
-                'restaurant_id',
-                [sequelize.fn('COUNT', sequelize.col('restaurant_id')), 'count']
-            ],
-            where: {
-                customer_id: customer.id,
-                created_at: { [Op.gte]: startOfMonth }
             },
-            group: ['restaurant_id'],
-            order: [[sequelize.fn('COUNT', sequelize.col('restaurant_id')), 'DESC']],
-            raw: true
+            include: {
+                items: { include: { menuItem: true } },
+                restaurant: true,
+                customer: { include: { user: true } },
+                deliveryAddress: true
+            }
         });
 
-        if (favoriteData && favoriteData.length > 0 && favoriteData[0].restaurant_id) {
-            const data = favoriteData[0];
-            const restaurant = await Restaurant.findByPk(data.restaurant_id);
-            if (restaurant) {
-                return { 
-                    type: 'restaurant',
-                    ...restaurant.toJSON(), 
-                    count: data.count 
-                };
-            }
-        }
-        return null;
-    }
-
-    // Replace the existing createOrder method with this version.
-    // Updated createOrder method using the Builder Pattern
-    async createOrder(userId, orderData, io, req) {
-        const StandardCheckoutBuilder = require('../builders/checkout/StandardCheckoutBuilder');
-        const CheckoutDirector = require('../builders/checkout/CheckoutDirector');
-
-        const builder = new StandardCheckoutBuilder(userId, orderData);
-        const director = new CheckoutDirector(builder);
-        
-        // Use the director to construct the complex CheckoutRequest object
-        const checkoutRequest = await director.constructRequest();
-
-        // 1. Online payment path (VNPay)
-        if (checkoutRequest.paymentMethod === 'vnpay') {
-            const session = await paymentService.createCheckoutSession({
-                userId,
-                restaurantId: checkoutRequest.restaurantId,
-                addressId: checkoutRequest.addressId,
-                notes: checkoutRequest.notes,
-                gatewayName: 'vnpay',
-                ipAddr: paymentService.getClientIp(req),
-            });
-
-            return {
-                order: null,
-                requiresPayment: true,
-                paymentUrl: session.paymentUrl,
-                txnRef: session.txnRef,
-                amount: session.amount,
-            };
-        }
-
-        // 2. COD path: Proceed with database records creation
-        const t = await sequelize.transaction();
-
-        try {
-            const order = await Order.create({
-                customer_id: checkoutRequest.customerId,
-                restaurant_id: checkoutRequest.restaurantId,
-                delivery_address_id: checkoutRequest.addressId,
-                notes: checkoutRequest.notes,
-                subtotal: checkoutRequest.subtotal,
-                delivery_fee: checkoutRequest.deliveryFee,
-                total_amount: checkoutRequest.totalAmount,
-                status: 'pending',
-                payment_status: 'pending',
-                payment_method: 'cod',
-            }, { transaction: t });
-
-            const finalOrderItems = checkoutRequest.finalOrderItems.map(item => ({
-                order_id: order.id,
-                menu_item_id: item.menu_item_id,
-                menu_item_name: item.menu_item_name,
-                quantity: item.quantity,
-                unit_price: item.unit_price,
-                subtotal: item.subtotal,
-            }));
-
-            await OrderItem.bulkCreate(finalOrderItems, { transaction: t });
-
-            await Notification.create({
-                user_id: userId,
-                type: 'order',
-                title: 'Đặt hàng thành công',
-                message: `Đơn hàng ${order.id} đã được tạo thành công.`
-            }, { transaction: t });
-
-            await t.commit();
-
-            const fullOrder = await Order.findByPk(order.id, {
-                include: [
-                    { model: OrderItem, include: [{ model: MenuItem }] },
-                    { model: Restaurant, attributes: ['id', 'name'] },
-                    { model: Address, attributes: ['id', 'street', 'city'] },
-                    {
-                        model: Customer,
-                        attributes: ['id', 'user_id'],
-                        include: [{ model: User, attributes: ['email', 'full_name'] }]
-                    }
-                ]
-            });
-
-            const customerSocketId = fullOrder?.Customer?.user_id;
-            const customerEmail = fullOrder?.Customer?.User?.email;
-            const customerName = fullOrder?.Customer?.User?.full_name;
-
-            await notificationService.notifyMany([
-                customerSocketId ? {
-                    channel: 'push',
-                    recipient: customerSocketId,
-                    io,
-                    orderId: order.id,
-                    subject: 'Đặt hàng thành công',
-                    content: `Đơn hàng ${order.id} đã được tạo thành công.`,
-                    pushEvent: 'ORDER_CREATED',
-                    payload: {
-                        orderId: order.id,
-                        status: 'pending',
-                    },
-                } : null,
-                customerEmail ? {
-                    channel: 'email',
-                    recipient: customerEmail,
-                    orderId: order.id,
-                    subject: 'Đặt hàng thành công',
-                    content: `Đơn hàng ${order.id} đã được tạo thành công và đang chờ xử lý.`,
-                    customerName,
-                } : null,
-            ].filter(Boolean));
-
-            return {
-                order: fullOrder,
-                requiresPayment: false,
-                paymentUrl: null,
-            };
-        } catch (error) {
-            if (t && !t.finished) await t.rollback();
-            throw error;
-        }
-    }
-    
-    
-
-    async updateStatus(orderId, status, user, io) {
-        const nextStatus = String(status || '').toLowerCase();
-        const order = await Order.findByPk(orderId, {
-            include: [
-                {
-                    model: Customer,
-                    include: [{ model: User, attributes: ['email', 'full_name'] }]
-                },
-                { model: Restaurant, attributes: ['name', 'user_id'] }
-            ]
+        await prisma.cartItem.deleteMany({
+            where: { cart_id: cart.id }
+        });
+        await prisma.cart.update({
+            where: { id: cart.id },
+            data: { total_amount: 0.0, restaurant_id: null }
         });
 
-        if (!order) throw new Error('Order not found');
-
-        if (user.role === 'customer') {
-            const customer = await Customer.findOne({ where: { user_id: user.id } });
-            if (!customer || order.customer_id !== customer.id) {
-                throw new Error('Not authorized to update this order');
-            }
-        } else if (user.role === 'restaurant') {
-            const restaurant = await Restaurant.findOne({ where: { user_id: user.id } });
-            if (!restaurant || order.restaurant_id !== restaurant.id) {
-                throw new Error('Not authorized for this restaurant');
-            }
-        } else if (user.role === 'delivery_partner') {
-            const driver = await DeliveryPartner.findOne({ where: { user_id: user.id } });
-            if (!driver || order.delivery_partner_id !== driver.id) {
-                throw new Error('Not authorized to update this delivery');
-            }
-        } else {
-            throw new Error('Not authorized to update this order');
+        if (io && order.restaurant) {
+            io.to(order.restaurant.user_id).emit('NEW_ORDER', order);
         }
-
-        const oldStatus = order.status;
-        assertRoleCanUpdateStatus({ role: user.role, targetStatus: nextStatus });
-
-        const stateContext = new OrderStatusContext(oldStatus);
-        stateContext.transitionTo(nextStatus);
-
-        order.status = stateContext.getCurrentStatus();
-
-        // If order is COD and status is delivered or completed, mark as paid
-        if ((order.status === 'delivered' || order.status === 'completed') && order.payment_method === 'cod') {
-            order.payment_status = 'paid';
-        }
-
-        await order.save();
-
-        const statusData = { orderId: order.id, status: order.status };
-
-        if (order.Customer && io) {
-            console.log(`📡 Socket.io: Emitting ORDER_STATUS_UPDATED to customer ${order.Customer.user_id}:`, statusData);
-            io.to(order.Customer.user_id).emit('ORDER_STATUS_UPDATED', statusData);
-        }
-    
-        if (order.Restaurant && io) {
-            console.log(`📡 Socket.io: Emitting ORDER_STATUS_UPDATED to restaurant ${order.Restaurant.user_id}:`, statusData);
-            io.to(order.Restaurant.user_id).emit('ORDER_STATUS_UPDATED', statusData);
-        }
-
-        if (order.status === 'preparing' && io) {
-            io.to('available_deliveries').emit('AVAILABLE_DELIVERY', {
-                orderId: order.id,
-                restaurantName: order.Restaurant?.name || 'Restaurant'
-            });
-        }
-
-        const customerSocketId = order.Customer?.user_id;
-        const customerEmail = order.Customer?.User?.email;
-        const customerName = order.Customer?.User?.full_name;
-        const restaurantName = order.Restaurant?.name;
-
-        notificationService.notifyMany([
-            customerSocketId ? {
-                channel: 'push',
-                recipient: customerSocketId,
-                io,
-                orderId: order.id,
-                status: order.status,
-                subject: 'Cập nhật giao hàng',
-                content: `Đơn hàng ${order.id} đã chuyển sang trạng thái ${order.status}.`,
-                pushEvent: 'ORDER_STATUS_UPDATED',
-                payload: { orderId: order.id, status: order.status },
-            } : null,
-            oldStatus !== 'delivered' && order.status === 'delivered' && customerEmail ? {
-                channel: 'email',
-                recipient: customerEmail,
-                orderId: order.id,
-                status: 'delivered',
-                subject: 'Đơn hàng đã được giao thành công',
-                content: `Đơn hàng ${order.id} đã được giao thành công.`,
-                customerName,
-                restaurantName,
-            } : null,
-        ].filter(Boolean)).catch((notifyError) => {
-            console.error('Delivery notification failed:', notifyError);
-        });
 
         return order;
     }
 
-    async getAvailableDeliveries() {
-        return await Order.findAll({
-            where: {
-                status: 'preparing',
-                delivery_partner_id: null
+    async getCustomerOrders(userId) {
+        const customer = await prisma.customer.findUnique({
+            where: { user_id: userId }
+        });
+        if (!customer) throw new Error('Customer profile not found');
+
+        return await prisma.order.findMany({
+            where: { customer_id: customer.id },
+            include: {
+                restaurant: { select: { name: true, image_url: true } },
+                deliveryPartner: { include: { user: { select: { full_name: true, phone_number: true } } } },
+                items: { include: { menuItem: { select: { name: true, price: true } } } }
             },
-            include: [
-                { model: Restaurant, attributes: ['name', 'user_id', 'location'] },
-                { model: Address, attributes: ['street', 'city'] },
-                { model: Customer, include: [{ model: User, attributes: ['full_name', 'phone_number'] }] }
-            ],
-            order: [['updated_at', 'ASC']]
+            orderBy: { created_at: 'desc' }
         });
     }
 
-    async acceptByDriver(orderId, driverId, io) {
-        const order = await Order.findByPk(orderId, {
-            include: [{ model: Customer }, { model: Restaurant }]
+    async getOrderDetails(orderId, userId, userRole) {
+        const order = await prisma.order.findUnique({
+            where: { id: orderId },
+            include: {
+                restaurant: true,
+                deliveryAddress: true,
+                deliveryPartner: { include: { user: { select: { full_name: true, phone_number: true } } } },
+                customer: { include: { user: { select: { full_name: true, phone_number: true, email: true } } } },
+                items: { include: { menuItem: true } }
+            }
         });
 
         if (!order) throw new Error('Order not found');
-        if (order.status !== 'preparing' || order.delivery_partner_id) {
-            throw new Error('Order is no longer available');
+
+        if (userRole === 'customer' && order.customer.user_id !== userId) {
+            throw new Error('Unauthorized');
+        }
+        if (userRole === 'restaurant' && order.restaurant.user_id !== userId) {
+            throw new Error('Unauthorized');
         }
 
-        const stateContext = new OrderStatusContext(order.status);
-        stateContext.transitionTo('picked_up');
+        return order;
+    }
 
-        order.delivery_partner_id = driverId;
-        order.status = stateContext.getCurrentStatus();
-        await order.save();
-
-        const fullOrder = await Order.findByPk(order.id, {
-            include: [
-                { 
-                    model: DeliveryPartner, 
-                    include: [{ model: User, attributes: ['full_name', 'phone_number'] }] 
-                }
-            ]
+    async updateOrderStatus(orderId, status, userId, userRole, io) {
+        const order = await prisma.order.findUnique({
+            where: { id: orderId },
+            include: {
+                restaurant: true,
+                customer: { include: { user: true } },
+                deliveryPartner: { include: { user: true } }
+            }
         });
 
-        const statusData = { 
-            orderId: order.id, 
-            status: order.status,
-            deliveryPartner: fullOrder.DeliveryPartner
-        };
+        if (!order) throw new Error('Order not found');
+
+        const updatedOrder = await prisma.order.update({
+            where: { id: orderId },
+            data: { status },
+            include: {
+                restaurant: true,
+                customer: { include: { user: true } },
+                deliveryPartner: { include: { user: true } }
+            }
+        });
 
         if (io) {
-            io.to('available_deliveries').emit('ORDER_ACCEPTED', { orderId: order.id });
-            if (order.Customer) io.to(order.Customer.user_id).emit('ORDER_STATUS_UPDATED', statusData);
-            if (order.Restaurant) io.to(order.Restaurant.user_id).emit('ORDER_STATUS_UPDATED', statusData);
+            const statusData = { orderId, status };
+            if (updatedOrder.customer?.user_id) io.to(updatedOrder.customer.user_id).emit('ORDER_STATUS_UPDATED', statusData);
+            if (updatedOrder.restaurant?.user_id) io.to(updatedOrder.restaurant.user_id).emit('ORDER_STATUS_UPDATED', statusData);
         }
 
-        return order;
+        return updatedOrder;
     }
 
     async getDriverDeliveries(userId) {
-        const driver = await DeliveryPartner.findOne({ where: { user_id: userId } });
+        const driver = await prisma.deliveryPartner.findUnique({
+            where: { user_id: userId }
+        });
         if (!driver) throw new Error('Driver profile not found');
 
-        return await Order.findAll({
+        return await prisma.order.findMany({
             where: {
                 delivery_partner_id: driver.id,
                 status: 'picked_up'
             },
-            include: [
-                { model: Restaurant, attributes: ['name', 'user_id', 'location'] },
-                { model: Address, attributes: ['street', 'city', 'latitude', 'longitude'] },
-                { model: Customer, include: [{ model: User, attributes: ['full_name', 'phone_number'] }] }
-            ],
-            order: [['updated_at', 'DESC']]
+            include: {
+                restaurant: { select: { name: true, user_id: true, address: true } },
+                deliveryAddress: true,
+                customer: { include: { user: { select: { full_name: true, phone_number: true } } } }
+            },
+            orderBy: { updated_at: 'desc' }
         });
     }
 
     async getDriverHistory(userId) {
-        const driver = await DeliveryPartner.findOne({ where: { user_id: userId } });
+        const driver = await prisma.deliveryPartner.findUnique({
+            where: { user_id: userId }
+        });
         if (!driver) throw new Error('Driver profile not found');
 
-        return await Order.findAll({
+        return await prisma.order.findMany({
             where: {
                 delivery_partner_id: driver.id,
-                status: { [Op.in]: ['delivered', 'completed'] }
+                status: { in: ['delivered', 'completed'] }
             },
-            include: [
-                { model: Restaurant, attributes: ['name', 'user_id', 'location'] },
-                { model: Address, attributes: ['street', 'city'] }
-            ],
-            order: [['updated_at', 'DESC']]
+            include: {
+                restaurant: { select: { name: true, user_id: true, address: true } },
+                deliveryAddress: true
+            },
+            orderBy: { updated_at: 'desc' }
         });
     }
 
-    async cancelOrder(orderId, userId, io, req = null) {
-        const order = await Order.findByPk(orderId, {
-            include: [
-                { model: Restaurant },
-                { model: Customer, include: [{ model: User, attributes: ['email', 'full_name'] }] }
-            ]
+    async cancelOrder(orderId, userId, io) {
+        const order = await prisma.order.findUnique({
+            where: { id: orderId },
+            include: {
+                restaurant: true,
+                customer: { include: { user: { select: { email: true, full_name: true } } } }
+            }
         });
 
         if (!order) throw new Error('Order not found');
 
-        const customer = await Customer.findOne({ where: { user_id: userId } });
+        const customer = await prisma.customer.findUnique({ where: { user_id: userId } });
         if (!customer || order.customer_id !== customer.id) {
             throw new Error('Not authorized to cancel this order');
         }
 
-        const allowedStatuses = ['pending', 'accepted'];
+        const allowedStatuses = ['placed', 'accepted'];
         if (!allowedStatuses.includes(order.status)) {
             throw new Error(`Cannot cancel order in ${order.status} status.`);
         }
 
-        let refund = {
-            refunded: false,
-            refundStatus: 'none',
-            refundAmount: 0,
-            refundMessage: 'No refund required',
-        };
-
-        try {
-            refund = await paymentService.refundOrderPayment({
-                order,
-                ipAddr: req ? paymentService.getClientIp(req) : '127.0.0.1',
-                createBy: 'customer_cancel',
-            });
-        } catch (refundError) {
-            console.error('Refund processing failed:', refundError);
-            refund = {
-                refunded: false,
-                refundStatus: 'failed',
-                refundAmount: 0,
-                refundMessage: refundError.message || 'Refund request failed',
-            };
-        }
-
-        // Chỉ đổi sang refunded khi refund thành công thật
-        if (refund.refundResponseCode === '99') {
-            order.status = 'cancelled';
-            order.payment_status = 'refunded';
-        } else {
-            order.status = 'cancelled';
-            order.payment_status = 'cancelled';
-        }
-
-        await order.save();
+        const updated = await prisma.order.update({
+            where: { id: orderId },
+            data: {
+                status: 'cancelled',
+                payment_status: 'cancelled'
+            }
+        });
 
         if (io) {
-            if (order.Customer) {
-                io.to(order.Customer.user_id).emit('ORDER_STATUS_UPDATED', {
-                    orderId: order.id,
-                    status: order.status,
-                    refund,
-                });
-            }
-
-            if (order.Restaurant) {
-                io.to(order.Restaurant.user_id).emit('ORDER_STATUS_UPDATED', {
-                    orderId: order.id,
-                    status: order.status,
-                    refund,
-                });
-            }
+            const data = { orderId: order.id, status: 'cancelled' };
+            if (order.customer?.user_id) io.to(order.customer.user_id).emit('ORDER_STATUS_UPDATED', data);
+            if (order.restaurant?.user_id) io.to(order.restaurant.user_id).emit('ORDER_STATUS_UPDATED', data);
         }
 
-        return {
-            order,
-            refund,
-        };
-    }
-
-    async getRestaurantYearlySummary(userId, year) {
-        const restaurant = await Restaurant.findOne({ where: { user_id: userId } });
-        if (!restaurant) throw new Error('Restaurant not found for this user');
-
-        const targetYear = parseInt(year) || new Date().getFullYear();
-        const startOfYear = new Date(targetYear, 0, 1, 0, 0, 0, 0);
-        const endOfYear = new Date(targetYear, 11, 31, 23, 59, 59, 999);
-
-        // All delivered/completed orders for the target year
-        const deliveredOrders = await Order.findAll({
-            where: {
-                restaurant_id: restaurant.id,
-                status: { [Op.in]: ['delivered', 'completed'] },
-                created_at: { [Op.between]: [startOfYear, endOfYear] }
-            },
-            include: [
-                {
-                    model: OrderItem,
-                    include: [{ model: MenuItem, include: [{ model: MenuCategory }] }]
-                }
-            ]
-        });
-
-        // Monthly revenue (12 months)
-        const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-        const monthlyRevenue = MONTHS.map(month => ({ month, revenue: 0 }));
-        deliveredOrders.forEach(order => {
-            const m = new Date(order.created_at).getMonth();
-            const subtotal = Number(order.subtotal) || Math.max(Number(order.total_amount || 0) - Number(order.delivery_fee || 0), 0);
-            monthlyRevenue[m].revenue += subtotal;
-        });
-
-        const totalRevenue = monthlyRevenue.reduce((s, m) => s + m.revenue, 0);
-        const totalOrders = deliveredOrders.length;
-        const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-
-        // Top 5 best-selling dishes by quantity
-        const dishMap = {};
-        deliveredOrders.forEach(order => {
-            (order.OrderItems || []).forEach(item => {
-                const id = item.menu_item_id;
-                if (!dishMap[id]) dishMap[id] = { name: item.menu_item_name, quantity: 0, revenue: 0 };
-                dishMap[id].quantity += Number(item.quantity);
-                dishMap[id].revenue += Number(item.subtotal || 0);
-            });
-        });
-        const topDishes = Object.values(dishMap)
-            .sort((a, b) => b.quantity - a.quantity)
-            .slice(0, 5);
-
-        // Category distribution by quantity sold
-        const catMap = {};
-        deliveredOrders.forEach(order => {
-            (order.OrderItems || []).forEach(item => {
-                const catName = item.MenuItem?.MenuCategory?.name || 'Other';
-                if (!catMap[catName]) catMap[catName] = 0;
-                catMap[catName] += Number(item.quantity);
-            });
-        });
-        const categoryDistribution = Object.entries(catMap)
-            .map(([name, value]) => ({ name, value }))
-            .sort((a, b) => b.value - a.value);
-
-        // All recent orders across all statuses for the selected year
-        const recentOrders = await Order.findAll({
-            where: {
-                restaurant_id: restaurant.id,
-                created_at: { [Op.between]: [startOfYear, endOfYear] }
-            },
-            include: [
-                { model: Customer, include: [{ model: User, attributes: ['full_name'] }] }
-            ],
-            order: [['created_at', 'DESC']]
-        });
-
-        return {
-            stats: { totalRevenue, totalOrders, avgOrderValue },
-            monthlyRevenue,
-            topDishes,
-            categoryDistribution,
-            recentOrders: recentOrders.map(o => ({
-                id: o.id,
-                customerName: o.Customer?.User?.full_name || 'Unknown',
-                subtotal: Number(o.subtotal) || Math.max(Number(o.total_amount || 0) - Number(o.delivery_fee || 0), 0),
-                createdAt: o.created_at,
-                status: o.status
-            }))
-        };
+        return { order: updated };
     }
 }
 
