@@ -50,13 +50,13 @@ Before modifying anything, create a safe baseline.
 
 ### Tasks
 
-- [ ] Download/clone the original repository.
-- [ ] Keep the original project untouched as a baseline.
-- [ ] Create a separate working copy.
-- [ ] Record the original Git commit/hash.
-- [ ] Create a new Git repository for the personal version.
+- [x] Download/clone the original repository.
+- [x] Keep the original project untouched as a baseline.
+- [x] Create a separate working copy.
+- [x] Record the original Git commit/hash.
+- [x] Create a new Git repository for the personal version.
 - [ ] Do not push the original project's history unless intentionally required.
-- [ ] Create an initial checkpoint commit/tag.
+- [x] Create an initial checkpoint commit/tag.
 
 ### Suggested working names
 
@@ -223,10 +223,10 @@ Separate your project identity from the original repository.
 - [x] Create personal repository space (orderly-food-delivery-system).
 - [x] Initialized Git repository with main branch.
 - [x] Created baseline initial commit (eat(orderly): initial commit - rebranded microservices platform Orderly).
-- [ ] Choose final repository name.
+- [x] Choose final repository name (`orderly-food-delivery-system`).
 - [ ] Remove original remote.
-- [ ] Add personal remote.
-- [ ] Create clean initial commit.
+- [x] Add personal remote (`https://github.com/rajesh-kayal-dev/orderly-food-delivery-system.git`).
+- [x] Create clean initial commit & push to GitHub.
 
 Suggested name:
 
@@ -1925,13 +1925,13 @@ If you can answer these naturally, **you own the project rather than merely havi
 # 38. Project Completion Checklist
 
 ```text
-[ ] Clone/download
-[ ] Backup original
-[ ] Audit
-[ ] Run original
-[ ] New GitHub repo
-[ ] Rename to FoodFlow
-[ ] Clean branding
+[x] Clone/download
+[x] Backup original
+[x] Audit
+[x] Run original
+[x] New GitHub repo (https://github.com/rajesh-kayal-dev/orderly-food-delivery-system.git)
+[x] Rename to Orderly
+[x] Clean branding (Orderly PNG Logo & Dynamic Browser Titles)
 [ ] Environment setup
 [ ] Docker Compose
 [ ] Auth
