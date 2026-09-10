@@ -1,104 +1,74 @@
-﻿import menuService from '../services/menuService.js';
-import prisma from '../config/prisma.js';
+﻿import * as menuService from '../services/menuService.js';
 
-export const getCategories = async (req, res) => {
-    try {
-        const categories = await prisma.menuCategory.findMany({
-            where: { restaurant_id: req.params.restaurantId },
-            include: { menuItems: true }
-        });
-        res.json({ success: true, data: categories });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, message: 'Server Error' });
-    }
+export const getCategories = async (req, res, next) => {
+  try {
+    const categories = await menuService.getCategoriesByRestaurantId(req.params.restaurantId);
+    return res.json({ success: true, data: categories });
+  } catch (error) {
+    next(error);
+  }
 };
 
-export const getMenuItems = async (req, res) => {
-    try {
-        const { restaurantId, categoryId } = req.query;
-        const where = {};
-        if (restaurantId) where.restaurant_id = restaurantId;
-        if (categoryId) where.category_id = categoryId;
-
-        const items = await prisma.menuItem.findMany({
-            where,
-            include: { category: true }
-        });
-        res.json({ success: true, data: items });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, message: 'Server Error' });
-    }
+export const getMenuItems = async (req, res, next) => {
+  try {
+    const { restaurantId, categoryId } = req.query;
+    const items = await menuService.getMenuItems({ restaurantId, categoryId });
+    return res.json({ success: true, data: items });
+  } catch (error) {
+    next(error);
+  }
 };
 
-export const getFullMenu = async (req, res) => {
-    try {
-        const categories = await prisma.menuCategory.findMany({
-            where: { restaurant_id: req.params.restaurantId },
-            include: { menuItems: true }
-        });
-        res.json({ success: true, data: categories });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, message: 'Server Error' });
-    }
+export const getFullMenu = async (req, res, next) => {
+  try {
+    const categories = await menuService.getCategoriesByRestaurantId(req.params.restaurantId);
+    return res.json({ success: true, data: categories });
+  } catch (error) {
+    next(error);
+  }
 };
 
-export const createMenuItem = async (req, res) => {
-    try {
-        const item = await menuService.createMenuItem(req.user.id, req.body);
-        res.status(201).json({ success: true, data: item });
-    } catch (error) {
-        console.error(error);
-        res.status(400).json({ success: false, message: error.message });
-    }
+export const createMenuItem = async (req, res, next) => {
+  try {
+    const item = await menuService.createMenuItem(req.user.id, req.body);
+    return res.status(201).json({ success: true, data: item });
+  } catch (error) {
+    next(error);
+  }
 };
 
-export const updateMenuItem = async (req, res) => {
-    try {
-        const item = await menuService.updateMenuItem(req.user.id, req.params.id, req.body);
-        res.json({ success: true, data: item });
-    } catch (error) {
-        console.error(error);
-        res.status(400).json({ success: false, message: error.message });
-    }
+export const updateMenuItem = async (req, res, next) => {
+  try {
+    const item = await menuService.updateMenuItem(req.user.id, req.params.id, req.body);
+    return res.json({ success: true, data: item });
+  } catch (error) {
+    next(error);
+  }
 };
 
-export const toggleAvailability = async (req, res) => {
-    try {
-        const item = await prisma.menuItem.findUnique({ where: { id: req.params.id } });
-        if (!item) return res.status(404).json({ success: false, message: 'Item not found' });
-        const updated = await prisma.menuItem.update({
-            where: { id: req.params.id },
-            data: { is_available: !item.is_available }
-        });
-        res.json({ success: true, data: updated });
-    } catch (error) {
-        console.error(error);
-        res.status(400).json({ success: false, message: error.message });
-    }
+export const toggleAvailability = async (req, res, next) => {
+  try {
+    const updated = await menuService.toggleItemAvailability(req.params.id);
+    return res.json({ success: true, data: updated });
+  } catch (error) {
+    next(error);
+  }
 };
 
-export const deleteMenuItem = async (req, res) => {
-    try {
-        await menuService.deleteMenuItem(req.user.id, req.params.id);
-        res.json({ success: true, message: 'Item deleted' });
-    } catch (error) {
-        console.error(error);
-        res.status(400).json({ success: false, message: error.message });
-    }
+export const deleteMenuItem = async (req, res, next) => {
+  try {
+    await menuService.deleteMenuItem(req.user.id, req.params.id);
+    return res.json({ success: true, message: 'Item deleted' });
+  } catch (error) {
+    next(error);
+  }
 };
 
-export const getGlobalCategories = async (req, res) => {
-    try {
-        const categories = await prisma.menuCategory.findMany({
-            select: { name: true },
-            distinct: ['name']
-        });
-        res.json({ success: true, data: categories.map(c => c.name) });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, message: 'Server Error' });
-    }
+export const getGlobalCategories = async (req, res, next) => {
+  try {
+    const categories = await menuService.getGlobalCategories();
+    return res.json({ success: true, data: categories });
+  } catch (error) {
+    next(error);
+  }
 };

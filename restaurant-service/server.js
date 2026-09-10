@@ -1,35 +1,40 @@
-﻿import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import http from 'http';
+﻿import http from 'http';
+import app from './app.js';
+import env from './config/env.js';
 import prisma from './config/prisma.js';
-import restaurantRoutes from './routes/restaurantRoutes.js';
-import menuRoutes from './routes/menuRoutes.js';
 
-dotenv.config();
-
-const app = express();
 const server = http.createServer(app);
 
-app.use(cors({
-    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-    credentials: true
-}));
+const startServer = async () => {
+  try {
+    await prisma.$connect();
+    console.log('Orderly Restaurant Service: Database connected (Neon PostgreSQL)');
 
-app.use(express.json());
-
-app.use('/api/restaurants', restaurantRoutes);
-app.use('/api/menu', menuRoutes);
-
-const PORT = process.env.PORT || 5002;
-
-prisma.$connect().then(() => {
-    console.log('Orderly Restaurant Service Database connected (Neon PostgreSQL)');
-    server.listen(PORT, () => {
-        console.log(`Orderly Restaurant Microservice running on port ${PORT}`);
+    server.listen(env.port, () => {
+      console.log(`Orderly Restaurant Microservice running on port ${env.port} [${env.nodeEnv}]`);
     });
-}).catch(err => {
-    console.error('Failed to connect database in Restaurant Service:', err);
-});
+  } catch (error) {
+    console.error('Failed to start Restaurant Service:', error);
+    process.exit(1);
+  }
+};
+
+const gracefulShutdown = async (signal) => {
+  console.log(`\nReceived ${signal}. Shutting down Restaurant Service gracefully...`);
+  server.close(async () => {
+    console.log('HTTP server closed.');
+    try {
+      await prisma.$disconnect();
+      console.log('Prisma disconnected.');
+      process.exit(0);
+    } catch (err) {
+      console.error('Error during Prisma disconnect:', err);
+      process.exit(1);
+    }
+  });
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+startServer();
