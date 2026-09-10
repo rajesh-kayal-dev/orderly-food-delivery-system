@@ -1,4 +1,4 @@
-class AccountState {
+﻿export default class AccountState {
   constructor(name) {
     this.name = name;
   }
@@ -19,5 +19,3 @@ class AccountState {
     throw new Error(`suspend() is not supported for ${this.name}`);
   }
 }
-
-module.exports = AccountState;

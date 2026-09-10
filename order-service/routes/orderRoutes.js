@@ -1,19 +1,29 @@
-const express = require('express');
+﻿import express from 'express';
+import {
+    createOrder,
+    getCustomerOrders,
+    getOrderDetails,
+    updateOrderStatus,
+    cancelOrder,
+    getRestaurantOrders,
+    getAvailableDeliveries,
+    acceptDeliveryByDriver,
+    getDriverDeliveries,
+    getDriverHistory
+} from '../controllers/orderController.js';
+import { protect, authorize } from '../middleware/authMiddleware.js';
+
 const router = express.Router();
-const { getRestaurantOrders, updateOrderStatus, getUserOrders, getMonthlyFavorite, createOrder, getAvailableDeliveries, acceptDelivery, getDriverDeliveries, getDriverHistory, cancelOrder, getRestaurantYearlySummary, getActiveCount } = require('../controllers/orderController');
-const { protect } = require('../middleware/authMiddleware');
 
-router.post('/', protect, createOrder);
-router.get('/active-count', protect, getActiveCount);
-router.get('/deliveries/available', protect, getAvailableDeliveries);
-router.get('/driver/me', protect, getDriverDeliveries);
-router.get('/driver/me/history', protect, getDriverHistory);
-router.put('/:id/accept-delivery', protect, acceptDelivery);
-router.get('/restaurant/me/yearly-summary', protect, getRestaurantYearlySummary);
-router.get('/restaurant/me', protect, getRestaurantOrders);
-router.get('/me', protect, getUserOrders);
-router.get('/me/favorite', protect, getMonthlyFavorite);
+router.post('/', protect, authorize('customer'), createOrder);
+router.get('/customer', protect, authorize('customer'), getCustomerOrders);
+router.get('/restaurant', protect, authorize('restaurant'), getRestaurantOrders);
+router.get('/available-deliveries', protect, authorize('delivery_partner'), getAvailableDeliveries);
+router.post('/:id/accept', protect, authorize('delivery_partner'), acceptDeliveryByDriver);
+router.get('/driver-deliveries', protect, authorize('delivery_partner'), getDriverDeliveries);
+router.get('/driver-history', protect, authorize('delivery_partner'), getDriverHistory);
+router.get('/:id', protect, getOrderDetails);
 router.put('/:id/status', protect, updateOrderStatus);
-router.put('/:id/cancel', protect, cancelOrder);
+router.post('/:id/cancel', protect, authorize('customer'), cancelOrder);
 
-module.exports = router;
+export default router;

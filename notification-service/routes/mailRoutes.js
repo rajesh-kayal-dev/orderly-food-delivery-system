@@ -1,9 +1,15 @@
-const express = require('express');
+﻿import express from 'express';
+import nodemailer from 'nodemailer';
+import {
+    getDeliveredEmailTemplate,
+    getRefundEmailTemplate,
+    getApprovalStatusTemplate
+} from '../mailTemplates.js';
+
 const router = express.Router();
-const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
-    host: process.env.MAIL_HOST,
+    host: process.env.MAIL_HOST || 'smtp.gmail.com',
     port: Number(process.env.MAIL_PORT || 587),
     secure: String(process.env.MAIL_SECURE || 'false') === 'true',
     auth: {
@@ -12,13 +18,6 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-const {
-    getDeliveredEmailTemplate,
-    getRefundEmailTemplate,
-    getApprovalStatusTemplate
-} = require('../mailTemplates');
-
-// Helper to send email
 const sendEmail = async (options) => {
     return transporter.sendMail({
         from: process.env.MAIL_FROM || process.env.MAIL_USER,
@@ -28,17 +27,16 @@ const sendEmail = async (options) => {
     });
 };
 
-// Route: Send Pending Approval Status Email
 router.post('/send-approval-status', async (req, res) => {
     try {
         const { to, fullName, accountType, status, reason } = req.body;
         const normalizedStatus = String(status || '').toUpperCase();
         const isApproved = normalizedStatus === 'APPROVED';
-        const roleLabel = accountType === 'restaurant' ? 'nhà hàng' : 'tài xế';
+        const roleLabel = accountType === 'restaurant' ? 'restaurant' : 'driver';
 
         const subject = isApproved
-            ? `Tai khoan ${roleLabel} cua ban da duoc phe duyet`
-            : `Cap nhat ket qua xet duyet tai khoan ${roleLabel}`;
+            ? `Your ${roleLabel} account has been approved`
+            : `Account approval update`;
 
         const html = getApprovalStatusTemplate({ fullName, accountType, status, reason });
 
@@ -50,11 +48,10 @@ router.post('/send-approval-status', async (req, res) => {
     }
 });
 
-// Route: Send Order Delivered Email
 router.post('/send-order-delivered', async (req, res) => {
     try {
         const { to, customerName, orderId, restaurantName } = req.body;
-        const subject = `Don hang #${orderId} da duoc giao thanh cong`;
+        const subject = `Order #${orderId} delivered successfully`;
         const html = getDeliveredEmailTemplate({ customerName, orderId, restaurantName });
 
         await sendEmail({ to, subject, html });
@@ -65,14 +62,13 @@ router.post('/send-order-delivered', async (req, res) => {
     }
 });
 
-// Route: Send Refund Email
 router.post('/send-refund', async (req, res) => {
     try {
         const { to, customerName, orderId, refundAmount, gatewayName, status } = req.body;
         const isSuccess = status === 'success';
         const subject = isSuccess
-            ? `Hoan tien don hang ${orderId} thanh cong`
-            : `Cap nhat hoan tien don hang ${orderId}`;
+            ? `Refund for order ${orderId} successful`
+            : `Refund update for order ${orderId}`;
 
         const html = getRefundEmailTemplate({ customerName, orderId, refundAmount, gatewayName, status });
 
@@ -84,4 +80,4 @@ router.post('/send-refund', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

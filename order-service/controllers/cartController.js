@@ -1,9 +1,6 @@
-const cartService = require('../services/cartService');
+﻿import cartService from '../services/cartService.js';
 
-// @desc    Get user cart
-// @route   GET /api/cart
-// @access  Private
-exports.getCart = async (req, res) => {
+export const getCart = async (req, res) => {
     try {
         const cart = await cartService.getCart(req.user.id);
         res.json({ success: true, data: cart });
@@ -14,10 +11,7 @@ exports.getCart = async (req, res) => {
     }
 };
 
-// @desc    Add item to cart
-// @route   POST /api/cart/items
-// @access  Private
-exports.addItemToCart = async (req, res) => {
+export const addItemToCart = async (req, res) => {
     try {
         await cartService.addItem(req.user.id, req.body);
         res.json({ success: true, message: 'Item added to cart' });
@@ -31,10 +25,7 @@ exports.addItemToCart = async (req, res) => {
     }
 };
 
-// @desc    Update cart item quantity
-// @route   PUT /api/cart/items/:itemId
-// @access  Private
-exports.updateItemQuantity = async (req, res) => {
+export const updateItemQuantity = async (req, res) => {
     try {
         const { quantity } = req.body;
         await cartService.updateQuantity(req.params.itemId, quantity);
@@ -46,10 +37,7 @@ exports.updateItemQuantity = async (req, res) => {
     }
 };
 
-// @desc    Remove item from cart
-// @route   DELETE /api/cart/items/:itemId
-// @access  Private
-exports.removeItem = async (req, res) => {
+export const removeItem = async (req, res) => {
     try {
         await cartService.removeItem(req.params.itemId);
         res.json({ success: true, message: 'Item removed' });
@@ -59,10 +47,7 @@ exports.removeItem = async (req, res) => {
     }
 };
 
-// @desc    Clear cart
-// @route   DELETE /api/cart
-// @access  Private
-exports.clearCart = async (req, res) => {
+export const clearCart = async (req, res) => {
     try {
         await cartService.clearCart(req.user.id);
         res.json({ success: true, message: 'Cart cleared' });

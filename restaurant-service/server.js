@@ -1,8 +1,10 @@
-﻿const express = require('express');
-const cors = require('cors');
-const dotenv = require('dotenv');
-const http = require('http');
-const prisma = require('./config/prisma');
+﻿import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import http from 'http';
+import prisma from './config/prisma.js';
+import restaurantRoutes from './routes/restaurantRoutes.js';
+import menuRoutes from './routes/menuRoutes.js';
 
 dotenv.config();
 
@@ -17,9 +19,6 @@ app.use(cors({
 }));
 
 app.use(express.json());
-
-const restaurantRoutes = require('./routes/restaurantRoutes');
-const menuRoutes = require('./routes/menuRoutes');
 
 app.use('/api/restaurants', restaurantRoutes);
 app.use('/api/menu', menuRoutes);

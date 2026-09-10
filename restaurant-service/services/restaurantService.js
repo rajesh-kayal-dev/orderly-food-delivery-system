@@ -1,60 +1,84 @@
-const prisma = require('../config/prisma');
+﻿import prisma from '../config/prisma.js';
 
 class RestaurantService {
-    async getAllRestaurants(query) {
-        const { search, category } = query;
+    async getAllRestaurants(query = {}) {
+        const { search, activeOnly = true } = query;
         const where = {};
+
+        if (activeOnly) {
+            where.is_active = true;
+        }
 
         if (search) {
             where.OR = [
                 { name: { contains: search, mode: 'insensitive' } },
-                { cuisine_type: { contains: search, mode: 'insensitive' } }
+                { description: { contains: search, mode: 'insensitive' } },
+                { address: { contains: search, mode: 'insensitive' } }
             ];
         }
 
         return await prisma.restaurant.findMany({
             where,
             include: {
-                MenuCategories: {
+                categories: {
                     include: {
-                        items: true
+                        menuItems: true
+                    }
+                }
+            },
+            orderBy: { name: 'asc' }
+        });
+    }
+
+    async getRestaurantById(id) {
+        const restaurant = await prisma.restaurant.findUnique({
+            where: { id },
+            include: {
+                categories: {
+                    include: {
+                        menuItems: true
                     }
                 }
             }
         });
-    }
 
-    async getRestaurantById(id, options = {}) {
-        const { allowClosed = false } = options;
-        const restaurant = await prisma.restaurant.findUnique({
-            where: { id }
-        });
         if (!restaurant) {
             throw new Error('Restaurant not found');
-        }
-
-        if (!allowClosed && !restaurant.is_open) {
-            const error = new Error('Restaurant is currently closed');
-            error.type = 'RESTAURANT_CLOSED';
-            throw error;
         }
 
         return restaurant;
     }
 
     async getRestaurantByUserId(userId) {
+        const restaurant = await prisma.restaurant.findUnique({
+            where: { user_id: userId },
+            include: {
+                categories: {
+                    include: {
+                        menuItems: true
+                    }
+                }
+            }
+        });
+
+        if (!restaurant) {
+            throw new Error('Restaurant profile not found for this user');
+        }
+
+        return restaurant;
+    }
+
+    async updateRestaurantProfile(userId, updateData) {
         const restaurant = await prisma.restaurant.findUnique({ where: { user_id: userId } });
         if (!restaurant) {
             throw new Error('Restaurant profile not found');
         }
-        return restaurant;
-    }
 
-    async createRestaurant(restaurantData) {
-        return await prisma.restaurant.create({
-            data: restaurantData
+        return await prisma.restaurant.update({
+            where: { id: restaurant.id },
+            data: updateData
         });
     }
 }
 
-module.exports = new RestaurantService();
+export default new RestaurantService();

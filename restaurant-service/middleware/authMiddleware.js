@@ -1,6 +1,12 @@
-const jwt = require('jsonwebtoken');
+﻿import jwt from 'jsonwebtoken';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const protect = async (req, res, next) => {
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export const protect = async (req, res, next) => {
     let token;
 
     if (
@@ -9,16 +15,13 @@ const protect = async (req, res, next) => {
     ) {
         try {
             token = req.headers.authorization.split(' ')[1];
-            
-            const fs = require('fs');
-            const path = require('path');
-            const publicKey = fs.readFileSync(path.join(__dirname, '../certs/public.key'));
+            const publicKey = fs.readFileSync(path.join(__dirname, '../certs/public.key'), 'utf8');
 
             const decoded = jwt.verify(token, publicKey, { algorithms: ['RS256'] });
             req.user = decoded;
             next();
         } catch (error) {
-            console.error('Not authorized, token failed');
+            console.error('Not authorized, token failed:', error);
             res.status(401).json({ success: false, message: 'Not authorized, token failed' });
         }
     }
@@ -28,16 +31,14 @@ const protect = async (req, res, next) => {
     }
 };
 
-const authorize = (...roles) => {
+export const authorize = (...roles) => {
     return (req, res, next) => {
         if (!req.user || !roles.includes(req.user.role)) {
             return res.status(403).json({
                 success: false,
-                message: `User role ${req.user ? req.user.role : 'Unknown'} is not authorized to access this route`
+                message: `User role ${req.user ? req.user.role : 'Unknown'} is not authorized`
             });
         }
         next();
     };
 };
-
-module.exports = { protect, authorize };

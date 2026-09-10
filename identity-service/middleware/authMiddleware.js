@@ -1,16 +1,20 @@
-﻿const jwt = require('jsonwebtoken');
-const prisma = require('../config/prisma');
-const fs = require('fs');
-const path = require('path');
+﻿import jwt from 'jsonwebtoken';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import prisma from '../config/prisma.js';
 
-exports.protect = async (req, res, next) => {
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export const protect = async (req, res, next) => {
   let token;
 
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     try {
       token = req.headers.authorization.split(' ')[1];
 
-      const publicKey = fs.readFileSync(path.join(__dirname, '../certs/public.key'));
+      const publicKey = fs.readFileSync(path.join(__dirname, '../certs/public.key'), 'utf8');
       const decoded = jwt.verify(token, publicKey, { algorithms: ['RS256'] });
 
       req.user = await prisma.user.findUnique({
@@ -31,16 +35,16 @@ exports.protect = async (req, res, next) => {
   }
 };
 
-exports.authorize = (...roles) => {
+export const authorize = (...roles) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ success: false, message: `User role ${req.user.role} is not authorized to access this route` });
+    if (!roles.includes(req.user?.role)) {
+      return res.status(403).json({ success: false, message: `User role ${req.user?.role} is not authorized` });
     }
     next();
   };
 };
 
-exports.admin = (req, res, next) => {
+export const admin = (req, res, next) => {
   if (req.user && req.user.role === 'admin') {
     next();
   } else {

@@ -1,9 +1,6 @@
-const authService = require('../services/authService');
+﻿import authService from '../services/authService.js';
 
-// @desc    Register a new user
-// @route   POST /api/auth/register
-// @access  Public
-exports.registerUser = async (req, res) => {
+export const registerUser = async (req, res) => {
   try {
     const result = await authService.register(req.body);
     res.status(201).json({
@@ -26,10 +23,7 @@ exports.registerUser = async (req, res) => {
   }
 };
 
-// @desc    Auth user & get token
-// @route   POST /api/auth/login
-// @access  Public
-exports.loginUser = async (req, res) => {
+export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
     const result = await authService.login(email, password);
@@ -49,17 +43,14 @@ exports.loginUser = async (req, res) => {
   } catch (error) {
     console.error(error);
     const statusCode =
-      error.message === 'Invalid email or password' ? 401 :
+      error.message === 'Invalid credentials' || error.message === 'Invalid email or password' ? 401 :
       error.message.includes('pending admin approval') ? 403 :
       error.message.includes('deactivated') ? 403 : 500;
     res.status(statusCode).json({ success: false, message: error.message });
   }
 };
 
-// @desc    Get user profile
-// @route   GET /api/auth/profile
-// @access  Private
-exports.getProfile = async (req, res) => {
+export const getProfile = async (req, res) => {
   try {
     const user = await authService.getProfile(req.user.id);
     res.json({ success: true, data: user });
@@ -70,10 +61,7 @@ exports.getProfile = async (req, res) => {
   }
 };
 
-// @desc    Update user profile
-// @route   PUT /api/auth/profile
-// @access  Private
-exports.updateProfile = async (req, res) => {
+export const updateProfile = async (req, res) => {
   try {
     const updatedUser = await authService.updateProfile(req.user.id, req.body, req.io);
     res.json({

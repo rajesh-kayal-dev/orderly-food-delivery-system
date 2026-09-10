@@ -1,2 +1,2 @@
-﻿const orderService = require('../orderService');
-module.exports = orderService;
+﻿import orderService from '../orderService.js';
+export default orderService;

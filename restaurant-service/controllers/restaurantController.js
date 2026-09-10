@@ -1,10 +1,7 @@
-const restaurantService = require('../services/restaurantService');
-const { Restaurant } = require('../models');
+﻿import restaurantService from '../services/restaurantService.js';
+import prisma from '../config/prisma.js';
 
-// @desc    Get all restaurants
-// @route   GET /api/restaurants
-// @access  Public
-exports.getRestaurants = async (req, res) => {
+export const getRestaurants = async (req, res) => {
     try {
         const restaurants = await restaurantService.getAllRestaurants(req.query);
         res.json({ success: true, data: restaurants });
@@ -14,10 +11,7 @@ exports.getRestaurants = async (req, res) => {
     }
 };
 
-// @desc    Get single restaurant
-// @route   GET /api/restaurants/:id
-// @access  Public
-exports.getRestaurantById = async (req, res) => {
+export const getRestaurantById = async (req, res) => {
     try {
         const restaurant = await restaurantService.getRestaurantById(req.params.id);
         res.json({ success: true, data: restaurant });
@@ -31,10 +25,7 @@ exports.getRestaurantById = async (req, res) => {
     }
 };
 
-// @desc    Get restaurant profile by user ID
-// @route   GET /api/restaurants/my-profile
-// @access  Private
-exports.getMyRestaurantProfile = async (req, res) => {
+export const getMyRestaurantProfile = async (req, res) => {
     try {
         const restaurant = await restaurantService.getRestaurantByUserId(req.user.id);
         res.json({ success: true, data: restaurant });
@@ -44,50 +35,41 @@ exports.getMyRestaurantProfile = async (req, res) => {
     }
 };
 
-// @desc    Update restaurant profile by user ID
-// @route   PUT /api/restaurants/my-profile
-// @access  Private
-exports.updateMyRestaurantProfile = async (req, res) => {
+export const updateMyRestaurantProfile = async (req, res) => {
     try {
-        const restaurant = await restaurantService.getRestaurantByUserId(req.user.id);
-        const { is_open, name, location, cuisine_type } = req.body;
-        
-        if (name) restaurant.name = name;
-        if (location) restaurant.location = location;
-        if (cuisine_type) restaurant.cuisine_type = cuisine_type;
-        if (typeof is_open === 'boolean') restaurant.is_open = is_open;
-        
-        await restaurant.save();
-        
-        // Note: In a complete microservices architecture, you might emit a message here
-        // to notify other services of the status change.
-
-        res.json({ success: true, data: restaurant });
+        const { is_active, name, address, description, opens_at, closes_at } = req.body;
+        const updated = await restaurantService.updateRestaurantProfile(req.user.id, {
+            ...(name && { name }),
+            ...(address && { address }),
+            ...(description && { description }),
+            ...(opens_at && { opens_at }),
+            ...(closes_at && { closes_at }),
+            ...(typeof is_active === 'boolean' && { is_active })
+        });
+        res.json({ success: true, data: updated });
     } catch (error) {
         console.error(error);
         res.status(400).json({ success: false, message: error.message });
     }
 };
 
-// @desc    Create restaurant profile
-// @route   POST /api/restaurants
-// @access  Private
-exports.createRestaurantProfile = async (req, res) => {
+export const createRestaurantProfile = async (req, res) => {
     try {
-        const { name, location, cuisine_type } = req.body;
+        const { name, address, description } = req.body;
         
-        // Check if profile already exists
-        const existing = await Restaurant.findOne({ where: { user_id: req.user.id } });
+        const existing = await prisma.restaurant.findUnique({ where: { user_id: req.user.id } });
         if (existing) {
             return res.status(400).json({ success: false, message: 'Restaurant profile already exists' });
         }
 
-        const restaurant = await restaurantService.createRestaurant({
-            user_id: req.user.id,
-            name: name || 'New Restaurant',
-            location,
-            cuisine_type,
-            is_open: true
+        const restaurant = await prisma.restaurant.create({
+            data: {
+                user_id: req.user.id,
+                name: name || 'New Restaurant',
+                address,
+                description,
+                is_active: true
+            }
         });
 
         res.status(201).json({ success: true, data: restaurant });

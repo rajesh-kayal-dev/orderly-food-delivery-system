@@ -1,5 +1,5 @@
-const express = require('express');
-const {
+﻿import express from 'express';
+import {
     getCategories,
     getMenuItems,
     getFullMenu,
@@ -8,8 +8,8 @@ const {
     toggleAvailability,
     deleteMenuItem,
     getGlobalCategories
-} = require('../controllers/menuController');
-const { protect, authorize } = require('../middleware/authMiddleware');
+} from '../controllers/menuController.js';
+import { protect, authorize } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -24,4 +24,4 @@ router.put('/:id', protect, authorize('restaurant'), updateMenuItem);
 router.patch('/:id/toggle-availability', protect, authorize('restaurant'), toggleAvailability);
 router.delete('/:id', protect, authorize('restaurant'), deleteMenuItem);
 
-module.exports = router;
+export default router;

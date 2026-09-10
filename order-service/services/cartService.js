@@ -1,4 +1,4 @@
-﻿const prisma = require('../config/prisma');
+﻿import prisma from '../config/prisma.js';
 
 class CartService {
     async getCart(userId) {
@@ -32,11 +32,6 @@ class CartService {
 
         const restaurant = await prisma.restaurant.findUnique({ where: { id: restaurant_id } });
         if (!restaurant) throw new Error('Restaurant not found');
-        if (restaurant.is_active === false) {
-            const error = new Error('Restaurant is currently closed');
-            error.type = 'RESTAURANT_CLOSED';
-            throw error;
-        }
 
         const menuItem = await prisma.menuItem.findUnique({ where: { id: menu_item_id } });
         if (!menuItem) throw new Error('Menu item not found');
@@ -135,4 +130,4 @@ class CartService {
     }
 }
 
-module.exports = new CartService();
+export default new CartService();

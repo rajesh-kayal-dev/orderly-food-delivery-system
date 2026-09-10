@@ -1,8 +1,8 @@
-﻿const ActiveState = require('./ActiveState');
-const PendingState = require('./PendingState');
-const SuspendedState = require('./SuspendedState');
+﻿import ActiveState from './ActiveState.js';
+import PendingState from './PendingState.js';
+import SuspendedState from './SuspendedState.js';
 
-class UserAccount {
+export default class UserAccount {
   constructor(user) {
     this.user = user;
     this.state = this.resolveStateFromUser(user);
@@ -51,11 +51,7 @@ class UserAccount {
         where: { id: this.user.id },
         data: { is_active: this.user.is_active }
       });
-    } else if (typeof this.user.save === 'function') {
-      await this.user.save();
     }
     return this.user;
   }
 }
-
-module.exports = UserAccount;

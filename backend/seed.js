@@ -1,11 +1,12 @@
-﻿require('dotenv').config();
-const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcryptjs');
+﻿import dotenv from 'dotenv';
+import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
+dotenv.config();
 const prisma = new PrismaClient();
 
 async function seed() {
-  console.log('Seeding Neon database with Orderly initial data...');
+  console.log('Seeding Neon database with Orderly initial data (ESM)...');
 
   await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
@@ -189,7 +190,7 @@ async function seed() {
   });
   console.log('Customer user created:', customerUser.email);
 
-  console.log('Database seeding completed successfully!');
+  console.log('Database seeding completed successfully (ESM)!');
 }
 
 seed()

@@ -1,10 +1,10 @@
-const express = require('express');
-const { createProxyMiddleware } = require('http-proxy-middleware');
-const cors = require('cors');
-const rateLimit = require('express-rate-limit');
-const morgan = require('morgan');
-const helmet = require('helmet');
-const dotenv = require('dotenv');
+﻿import express from 'express';
+import { createProxyMiddleware } from 'http-proxy-middleware';
+import cors from 'cors';
+import rateLimit from 'express-rate-limit';
+import morgan from 'morgan';
+import helmet from 'helmet';
+import dotenv from 'dotenv';
 
 dotenv.config();
 
@@ -17,15 +17,12 @@ const SERVICES = {
     RESTAURANT_SERVICE: process.env.RESTAURANT_SERVICE_URL || 'http://localhost:5004',
 };
 
-// 1. Security Headers (Helmet) - Adjusted for development
 app.use(helmet({
-    contentSecurityPolicy: false, 
+    contentSecurityPolicy: false,
 }));
 
-// 2. Logging (Morgan)
 app.use(morgan('dev'));
 
-// 3. Rate Limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 1000,
@@ -35,7 +32,6 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// 4. Global CORS
 app.use(cors({
     origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
@@ -43,24 +39,18 @@ app.use(cors({
     credentials: true
 }));
 
-// Health Check
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'API Gateway is Healthy', uptime: process.uptime() });
 });
 
-/**
- * 5. Proxy Configuration - REST API
- */
-
-// Route Identity (Auth) Service
 app.use('/api/auth', createProxyMiddleware({
     target: SERVICES.IDENTITY_SERVICE,
     changeOrigin: true,
-    onProxyReq: (proxyReq, req, res) => {
+    onProxyReq: (proxyReq) => {
         proxyReq.setHeader('X-Gateway-Request', 'true');
         proxyReq.setHeader('X-Service-Name', 'identity-service');
     },
-    onProxyRes: (proxyRes, req, res) => {
+    onProxyRes: (proxyRes) => {
         proxyRes.headers['X-Service-Name'] = 'identity-service';
     },
     onError: (err, req, res) => {
@@ -72,15 +62,14 @@ app.use('/api/auth', createProxyMiddleware({
     }
 }));
 
-// Route Order & Payment Service
 app.use(['/api/orders', '/api/payments'], createProxyMiddleware({
     target: SERVICES.ORDER_SERVICE,
     changeOrigin: true,
-    onProxyReq: (proxyReq, req, res) => {
+    onProxyReq: (proxyReq) => {
         proxyReq.setHeader('X-Gateway-Request', 'true');
         proxyReq.setHeader('X-Service-Name', 'order-service');
     },
-    onProxyRes: (proxyRes, req, res) => {
+    onProxyRes: (proxyRes) => {
         proxyRes.headers['X-Service-Name'] = 'order-service';
     },
     onError: (err, req, res) => {
@@ -92,15 +81,14 @@ app.use(['/api/orders', '/api/payments'], createProxyMiddleware({
     }
 }));
 
-// Route Cart Service
 app.use('/api/cart', createProxyMiddleware({
     target: SERVICES.ORDER_SERVICE,
     changeOrigin: true,
-    onProxyReq: (proxyReq, req, res) => {
+    onProxyReq: (proxyReq) => {
         proxyReq.setHeader('X-Gateway-Request', 'true');
         proxyReq.setHeader('X-Service-Name', 'order-service');
     },
-    onProxyRes: (proxyRes, req, res) => {
+    onProxyRes: (proxyRes) => {
         proxyRes.headers['X-Service-Name'] = 'order-service';
     },
     onError: (err, req, res) => {
@@ -112,15 +100,14 @@ app.use('/api/cart', createProxyMiddleware({
     }
 }));
 
-// Route Admin - Orders (to Order Service)
 app.use('/api/admin/orders', createProxyMiddleware({
     target: SERVICES.ORDER_SERVICE,
     changeOrigin: true,
-    onProxyReq: (proxyReq, req, res) => {
+    onProxyReq: (proxyReq) => {
         proxyReq.setHeader('X-Gateway-Request', 'true');
         proxyReq.setHeader('X-Service-Name', 'order-service');
     },
-    onProxyRes: (proxyRes, req, res) => {
+    onProxyRes: (proxyRes) => {
         proxyRes.headers['X-Service-Name'] = 'order-service';
     },
     onError: (err, req, res) => {
@@ -129,15 +116,14 @@ app.use('/api/admin/orders', createProxyMiddleware({
     }
 }));
 
-// Route Admin - Identity/Stats/Approvals (to Identity Service)
 app.use('/api/admin', createProxyMiddleware({
     target: SERVICES.IDENTITY_SERVICE,
     changeOrigin: true,
-    onProxyReq: (proxyReq, req, res) => {
+    onProxyReq: (proxyReq) => {
         proxyReq.setHeader('X-Gateway-Request', 'true');
         proxyReq.setHeader('X-Service-Name', 'identity-service');
     },
-    onProxyRes: (proxyRes, req, res) => {
+    onProxyRes: (proxyRes) => {
         proxyRes.headers['X-Service-Name'] = 'identity-service';
     },
     onError: (err, req, res) => {
@@ -146,15 +132,14 @@ app.use('/api/admin', createProxyMiddleware({
     }
 }));
 
-// Route Restaurant Service
 app.use(['/api/restaurants', '/api/menu'], createProxyMiddleware({
     target: SERVICES.RESTAURANT_SERVICE,
     changeOrigin: true,
-    onProxyReq: (proxyReq, req, res) => {
+    onProxyReq: (proxyReq) => {
         proxyReq.setHeader('X-Gateway-Request', 'true');
         proxyReq.setHeader('X-Service-Name', 'restaurant-service');
     },
-    onProxyRes: (proxyRes, req, res) => {
+    onProxyRes: (proxyRes) => {
         proxyRes.headers['X-Service-Name'] = 'restaurant-service';
     },
     onError: (err, req, res) => {
@@ -166,7 +151,6 @@ app.use(['/api/restaurants', '/api/menu'], createProxyMiddleware({
     }
 }));
 
-// Route Notification Service
 app.use('/api/notifications', createProxyMiddleware({
     target: 'http://localhost:5005',
     changeOrigin: true,
@@ -176,11 +160,10 @@ app.use('/api/notifications', createProxyMiddleware({
     }
 }));
 
-// Route everything else to Backend (Monolith)
 app.use('/api', createProxyMiddleware({
     target: SERVICES.BACKEND,
     changeOrigin: true,
-    onProxyReq: (proxyReq, req, res) => {
+    onProxyReq: (proxyReq) => {
         proxyReq.setHeader('X-Gateway-Request', 'true');
     },
     onError: (err, req, res) => {
@@ -192,15 +175,11 @@ app.use('/api', createProxyMiddleware({
     }
 }));
 
-/**
- * 6. Proxy Configuration - Socket.io (WebSockets)
- */
 const socketProxy = createProxyMiddleware({
-    target: 'http://localhost:5005', // Now points to NOTIFICATION_SERVICE
+    target: 'http://localhost:5005',
     changeOrigin: true,
-    ws: true, 
-    logLevel: 'debug',
-    onError: (err, req, res) => {
+    ws: true,
+    onError: (err) => {
         console.error('Proxy Error (Socket):', err.message);
     }
 });
@@ -208,11 +187,10 @@ const socketProxy = createProxyMiddleware({
 app.use('/socket.io', socketProxy);
 
 const server = app.listen(PORT, () => {
-    console.log(`🚀 API Gateway running at http://localhost:${PORT}`);
-    console.log(`🔗 Proxying /socket.io to: http://localhost:5005`);
+    console.log(`Orderly API Gateway running at http://localhost:${PORT}`);
+    console.log(`Proxying /socket.io to: http://localhost:5005`);
 });
 
-// Handle WebSocket upgrade manually
 server.on('upgrade', (req, socket, head) => {
     if (req.url.startsWith('/socket.io')) {
         socketProxy.upgrade(req, socket, head);

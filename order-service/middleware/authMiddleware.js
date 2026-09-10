@@ -1,21 +1,21 @@
-const jwt = require('jsonwebtoken');
+﻿import jwt from 'jsonwebtoken';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-// Protect route middleware
-exports.protect = async (req, res, next) => {
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export const protect = async (req, res, next) => {
   let token;
 
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     try {
       token = req.headers.authorization.split(' ')[1];
+      const publicKey = fs.readFileSync(path.join(__dirname, '../certs/public.key'), 'utf8');
 
-      // Decode and verify token locally using Public Key (RS256)
-      const fs = require('fs');
-      const path = require('path');
-      const publicKey = fs.readFileSync(path.join(__dirname, '../certs/public.key'));
-      
       const decoded = jwt.verify(token, publicKey, { algorithms: ['RS256'] });
 
-      // Extract user info from decoded token payload
       req.user = {
         id: decoded.id,
         email: decoded.email,
@@ -33,18 +33,16 @@ exports.protect = async (req, res, next) => {
   }
 };
 
-// Role-based authorization middleware
-exports.authorize = (...roles) => {
+export const authorize = (...roles) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ success: false, message: `User role ${req.user.role} is not authorized to access this route` });
+    if (!roles.includes(req.user?.role)) {
+      return res.status(403).json({ success: false, message: `User role ${req.user?.role} is not authorized` });
     }
     next();
   };
 };
 
-// Admin only middleware
-exports.admin = (req, res, next) => {
+export const admin = (req, res, next) => {
   if (req.user && req.user.role === 'admin') {
     next();
   } else {

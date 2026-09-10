@@ -1,6 +1,7 @@
-const AccountState = require('./AccountState');
+﻿import AccountState from './AccountState.js';
+import ActiveState from './ActiveState.js';
 
-class SuspendedState extends AccountState {
+export default class SuspendedState extends AccountState {
   constructor() {
     super('SUSPENDED');
   }
@@ -10,7 +11,6 @@ class SuspendedState extends AccountState {
   }
 
   activate(account) {
-    const ActiveState = require('./ActiveState');
     account.user.is_active = true;
     account.setState(new ActiveState());
     return account;
@@ -21,5 +21,3 @@ class SuspendedState extends AccountState {
     return account;
   }
 }
-
-module.exports = SuspendedState;

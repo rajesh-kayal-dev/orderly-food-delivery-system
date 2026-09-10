@@ -1,4 +1,4 @@
-﻿const prisma = require('../../config/prisma');
+﻿import prisma from '../../config/prisma.js';
 
 class DeliveryMgmtService {
     async getAvailableDeliveries() {
@@ -91,4 +91,4 @@ class DeliveryMgmtService {
     }
 }
 
-module.exports = new DeliveryMgmtService();
+export default new DeliveryMgmtService();

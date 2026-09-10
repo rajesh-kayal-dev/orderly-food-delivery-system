@@ -1,6 +1,6 @@
-const express = require('express');
-const { getRestaurants, getRestaurantById, getMyRestaurantProfile, updateMyRestaurantProfile, createRestaurantProfile } = require('../controllers/restaurantController');
-const { protect, authorize } = require('../middleware/authMiddleware');
+﻿import express from 'express';
+import { getRestaurants, getRestaurantById, getMyRestaurantProfile, updateMyRestaurantProfile, createRestaurantProfile } from '../controllers/restaurantController.js';
+import { protect, authorize } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -10,4 +10,4 @@ router.post('/', protect, authorize('restaurant'), createRestaurantProfile);
 router.get('/', getRestaurants);
 router.get('/:id', getRestaurantById);
 
-module.exports = router;
+export default router;

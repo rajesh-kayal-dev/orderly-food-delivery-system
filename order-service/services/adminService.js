@@ -1,4 +1,4 @@
-﻿const prisma = require('../config/prisma');
+﻿import prisma from '../config/prisma.js';
 
 class AdminService {
   async getAllOrders(restaurantId, statusFilter, page = 1, limit = 20, month, year) {
@@ -90,4 +90,4 @@ class AdminService {
   }
 }
 
-module.exports = new AdminService();
+export default new AdminService();

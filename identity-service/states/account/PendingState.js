@@ -1,6 +1,8 @@
-const AccountState = require('./AccountState');
+﻿import AccountState from './AccountState.js';
+import ActiveState from './ActiveState.js';
+import SuspendedState from './SuspendedState.js';
 
-class PendingState extends AccountState {
+export default class PendingState extends AccountState {
   constructor() {
     super('PENDING');
   }
@@ -10,18 +12,14 @@ class PendingState extends AccountState {
   }
 
   activate(account) {
-    const ActiveState = require('./ActiveState');
     account.user.is_active = true;
     account.setState(new ActiveState());
     return account;
   }
 
   suspend(account) {
-    const SuspendedState = require('./SuspendedState');
     account.user.is_active = false;
     account.setState(new SuspendedState());
     return account;
   }
 }
-
-module.exports = PendingState;
