@@ -1,38 +1,45 @@
-import "mapbox-gl/dist/mapbox-gl.css";
+import "leaflet/dist/leaflet.css";
 import { useEffect, useMemo, useRef, useState } from "react";
-import Map, { Marker, Source, Layer } from "react-map-gl/mapbox";
-import RoomIcon from "@mui/icons-material/Room";
-import TwoWheelerIcon from "@mui/icons-material/TwoWheeler";
-import MapboxNavigationAdapter from "../../adapters/navigation/MapboxNavigationAdapter";
+import { MapContainer, TileLayer, Marker, Polyline, useMap } from "react-leaflet";
+import L from "leaflet";
+import OpenStreetMapAdapter from "../../adapters/navigation/OpenStreetMapAdapter";
 
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || "";
+// Custom Leaflet Markers for Driver & Customer Pins
+const driverIcon = new L.DivIcon({
+  className: "custom-driver-icon",
+  html: `<div style="background-color:#FF6B35; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:20px; box-shadow:0 4px 10px rgba(0,0,0,0.3); border:2px solid white;">??</div>`,
+  iconSize: [36, 36],
+  iconAnchor: [18, 18],
+});
 
-const routeLayerStyle = {
-  id: "route",
-  type: "line",
-  paint: {
-    "line-color": "#3b82f6",
-    "line-width": 5,
-  },
-};
+const destinationIcon = new L.DivIcon({
+  className: "custom-dest-icon",
+  html: `<div style="background-color:#EF4444; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:20px; box-shadow:0 4px 10px rgba(0,0,0,0.3); border:2px solid white;">??</div>`,
+  iconSize: [36, 36],
+  iconAnchor: [18, 36],
+});
+
+function MapController({ center, bounds }) {
+  const map = useMap();
+  useEffect(() => {
+    if (bounds) {
+      map.fitBounds(bounds, { padding: [50, 50] });
+    } else if (center) {
+      map.setView(center, 15);
+    }
+  }, [center, bounds, map]);
+  return null;
+}
 
 export default function AppMap({ destinationLat, destinationLng }) {
-  const navigationService = useMemo(
-    () => new MapboxNavigationAdapter(MAPBOX_TOKEN),
-    []
-  );
+  const navigationService = useMemo(() => new OpenStreetMapAdapter(), []);
 
   const [currentPosition, setCurrentPosition] = useState(null);
   const [destination, setDestination] = useState(null);
-  const [routeGeoJson, setRouteGeoJson] = useState(null);
+  const [routePositions, setRoutePositions] = useState([]);
+  const [mapCenter, setMapCenter] = useState([28.6448, 77.216]);
+  const [mapBounds, setMapBounds] = useState(null);
 
-  const [viewState, setViewState] = useState({
-    latitude: 28.6448,
-    longitude: 77.216,
-    zoom: 14,
-  });
-
-  const mapRef = useRef(null);
   const watchIdRef = useRef(null);
   const lastRouteFetchRef = useRef(0);
 
@@ -48,19 +55,17 @@ export default function AppMap({ destinationLat, destinationLng }) {
       parsedLng < -180 ||
       parsedLng > 180
     ) {
-      console.error("Invalid latitude/longitude");
       return;
     }
 
-    const newDestination = { lat: parsedLat, lng: parsedLng };
-    setDestination(newDestination);
-    setRouteGeoJson(null);
+    setDestination({ lat: parsedLat, lng: parsedLng });
   }
 
   useEffect(() => {
     watchIdRef.current = navigationService.watchCurrentPosition(
       (nextPos) => {
         setCurrentPosition(nextPos);
+        setMapCenter([nextPos.lat, nextPos.lng]);
       },
       (error) => {
         console.error("GPS error:", error);
@@ -96,17 +101,22 @@ export default function AppMap({ destinationLat, destinationLng }) {
           currentPosition,
           destination
         );
-        setRouteGeoJson(route);
 
-        if (mapRef.current) {
-          navigationService.fitMapToPoints(
-            mapRef.current,
-            currentPosition,
-            destination
-          );
+        if (route && route.geometry && route.geometry.coordinates) {
+          // GeoJSON is [lng, lat], Leaflet Polyline needs [lat, lng]
+          const latLngs = route.geometry.coordinates.map(([lng, lat]) => [
+            lat,
+            lng,
+          ]);
+          setRoutePositions(latLngs);
+
+          setMapBounds([
+            [Math.min(currentPosition.lat, destination.lat), Math.min(currentPosition.lng, destination.lng)],
+            [Math.max(currentPosition.lat, destination.lat), Math.max(currentPosition.lng, destination.lng)],
+          ]);
         }
       } catch (err) {
-        console.error("getRoute error:", err);
+        console.error("Route error:", err);
       }
     };
 
@@ -114,17 +124,19 @@ export default function AppMap({ destinationLat, destinationLng }) {
   }, [currentPosition, destination, navigationService]);
 
   function handleCenterCurrentLocation() {
-    if (!mapRef.current || !currentPosition) return;
-    navigationService.focusCurrentLocation(mapRef.current, currentPosition);
+    if (currentPosition) {
+      setMapBounds(null);
+      setMapCenter([currentPosition.lat, currentPosition.lng]);
+    }
   }
 
   function handleFitCurrentAndDestination() {
-    if (!mapRef.current || !currentPosition || !destination) return;
-    navigationService.fitMapToPoints(
-      mapRef.current,
-      currentPosition,
-      destination
-    );
+    if (currentPosition && destination) {
+      setMapBounds([
+        [Math.min(currentPosition.lat, destination.lat), Math.min(currentPosition.lng, destination.lng)],
+        [Math.max(currentPosition.lat, destination.lat), Math.max(currentPosition.lng, destination.lng)],
+      ]);
+    }
   }
 
   return (
@@ -134,7 +146,7 @@ export default function AppMap({ destinationLat, destinationLng }) {
           position: "absolute",
           right: 16,
           bottom: 16,
-          zIndex: 20,
+          zIndex: 1000,
           display: "flex",
           flexDirection: "column",
           gap: 10,
@@ -150,6 +162,7 @@ export default function AppMap({ destinationLat, destinationLng }) {
             color: "#fff",
             cursor: "pointer",
             fontWeight: 700,
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
           }}
         >
           Focus My Location
@@ -161,62 +174,53 @@ export default function AppMap({ destinationLat, destinationLng }) {
             padding: "10px 14px",
             border: "none",
             borderRadius: 12,
-            background: "#2563eb",
+            background: "#FF6B35",
             color: "#fff",
             cursor: "pointer",
             fontWeight: 700,
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
           }}
         >
           Center The Route
         </button>
       </div>
 
-      <Map
-        ref={mapRef}
-        {...viewState}
-        onMove={(evt) => setViewState(evt.viewState)}
-        mapboxAccessToken={MAPBOX_TOKEN}
-        mapStyle="mapbox://styles/giabao123963/cmmww1vdo000h01qwduq52tpu"
+      <MapContainer
+        center={mapCenter}
+        zoom={14}
+        scrollWheelZoom={true}
         style={{ width: "100%", height: "100%" }}
       >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+
+        <MapController center={mapCenter} bounds={mapBounds} />
+
         {currentPosition && (
           <Marker
-            longitude={currentPosition.lng}
-            latitude={currentPosition.lat}
-            anchor="center"
-          >
-            <TwoWheelerIcon
-              sx={{
-                fontSize: 40,
-                color: "#ff7300",
-                filter: "drop-shadow(0 0 4px rgba(0,0,0,0.35))",
-              }}
-            />
-          </Marker>
+            position={[currentPosition.lat, currentPosition.lng]}
+            icon={driverIcon}
+          />
         )}
 
         {destination && (
           <Marker
-            longitude={destination.lng}
-            latitude={destination.lat}
-            anchor="bottom"
-          >
-            <RoomIcon
-              sx={{
-                fontSize: 35,
-                color: "red",
-                filter: "drop-shadow(0 0 4px rgba(0,0,0,0.35))",
-              }}
-            />
-          </Marker>
+            position={[destination.lat, destination.lng]}
+            icon={destinationIcon}
+          />
         )}
 
-        {routeGeoJson && (
-          <Source id="route-source" type="geojson" data={routeGeoJson}>
-            <Layer {...routeLayerStyle} />
-          </Source>
+        {routePositions.length > 0 && (
+          <Polyline
+            positions={routePositions}
+            color="#FF6B35"
+            weight={5}
+            opacity={0.85}
+          />
         )}
-      </Map>
+      </MapContainer>
     </div>
   );
 }
