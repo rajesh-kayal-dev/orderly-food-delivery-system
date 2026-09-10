@@ -1,4 +1,4 @@
-﻿@echo off
+@echo off
 echo ========================================================
 echo           Starting Orderly Platform Services            
 echo ========================================================
