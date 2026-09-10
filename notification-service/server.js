@@ -1,48 +1,41 @@
-﻿import express from 'express';
-import http from 'http';
+﻿import http from 'http';
 import { Server } from 'socket.io';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import mailRoutes from './routes/mailRoutes.js';
-import createSocketRouter from './routes/socketRoutes.js';
+import { createApp } from './app.js';
+import env from './config/env.js';
+import { initSocket } from './services/socketService.js';
 
-dotenv.config();
-
-const app = express();
-const server = http.createServer(app);
-
-app.use(cors({
-    origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    credentials: true
-}));
-
-app.use(express.json());
+const server = http.createServer();
 
 const io = new Server(server, {
-    cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
-    }
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
 });
 
-app.use('/api/notifications/mail', mailRoutes);
-app.use('/api/notifications/realtime', createSocketRouter(io));
+const app = createApp(io);
+server.on('request', app);
 
-io.on('connection', (socket) => {
-    console.log(`Orderly Notification Service: Client connected: ${socket.id}`);
+initSocket(io);
 
-    socket.on('join', (room) => {
-        socket.join(room);
-        console.log(`Client ${socket.id} joined room: ${room}`);
-    });
+const startServer = () => {
+  server.listen(env.port, () => {
+    console.log(`Orderly Notification Microservice running on port ${env.port} [${env.nodeEnv}]`);
+  });
+};
 
-    socket.on('disconnect', () => {
-        console.log(`Client disconnected: ${socket.id}`);
-    });
-});
+const gracefulShutdown = (signal) => {
+  console.log(`\nReceived ${signal}. Shutting down Notification Service gracefully...`);
+  io.close(() => {
+    console.log('Socket.IO closed.');
+  });
+  server.close(() => {
+    console.log('HTTP server closed.');
+    process.exit(0);
+  });
+};
 
-const PORT = process.env.PORT || 5005;
-server.listen(PORT, () => {
-    console.log(`Orderly Notification Microservice running on port ${PORT}`);
-});
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+startServer();

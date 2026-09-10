@@ -1,4 +1,4 @@
-﻿import express from 'express';
+import express from 'express';
 import cors from 'cors';
 import env from './config/env.js';
 import authRoutes from './routes/authRoutes.js';
@@ -31,7 +31,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 
 // 404 Route Handler
-app.use('*', (req, res) => {
+app.use((req, res) => {
   res.status(404).json({
     success: false,
     message: `Endpoint not found: ${req.method} ${req.originalUrl}`
