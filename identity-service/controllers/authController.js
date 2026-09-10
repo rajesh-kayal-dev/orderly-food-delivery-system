@@ -1,9 +1,9 @@
-﻿import authService from '../services/authService.js';
+﻿import * as authService from '../services/authService.js';
 
-export const registerUser = async (req, res) => {
+export const registerUser = async (req, res, next) => {
   try {
     const result = await authService.register(req.body);
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       data: {
         id: result.user.id,
@@ -17,17 +17,15 @@ export const registerUser = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(error);
-    const statusCode = error.message === 'User already exists' ? 400 : 500;
-    res.status(statusCode).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
-export const loginUser = async (req, res) => {
+export const loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const result = await authService.login(email, password);
-    res.json({
+    return res.json({
       success: true,
       data: {
         id: result.user.id,
@@ -41,36 +39,27 @@ export const loginUser = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(error);
-    const statusCode =
-      error.message === 'Invalid credentials' || error.message === 'Invalid email or password' ? 401 :
-      error.message.includes('pending admin approval') ? 403 :
-      error.message.includes('deactivated') ? 403 : 500;
-    res.status(statusCode).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
-export const getProfile = async (req, res) => {
+export const getProfile = async (req, res, next) => {
   try {
     const user = await authService.getProfile(req.user.id);
-    res.json({ success: true, data: user });
+    return res.json({ success: true, data: user });
   } catch (error) {
-    console.error(error);
-    const statusCode = error.message === 'User not found' ? 404 : 500;
-    res.status(statusCode).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
-export const updateProfile = async (req, res) => {
+export const updateProfile = async (req, res, next) => {
   try {
-    const updatedUser = await authService.updateProfile(req.user.id, req.body, req.io);
-    res.json({
+    const updatedUser = await authService.updateProfile(req.user.id, req.body);
+    return res.json({
       success: true,
       data: updatedUser
     });
   } catch (error) {
-    console.error(error);
-    const statusCode = error.message === 'User not found' ? 404 : 500;
-    res.status(statusCode).json({ success: false, message: error.message });
+    next(error);
   }
 };

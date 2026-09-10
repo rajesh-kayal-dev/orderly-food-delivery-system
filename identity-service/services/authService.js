@@ -1,111 +1,206 @@
 ﻿import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import prisma from '../config/prisma.js';
 import UserAccount from '../states/account/UserAccount.js';
+import { signToken } from './tokenService.js';
+import { AppError } from '../middleware/errorHandler.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+export const generateTokenResponse = (user) => {
+  const payload = {
+    id: user.id,
+    email: user.email,
+    role: user.role,
+    full_name: user.full_name
+  };
 
-class AuthService {
-    async register(userData) {
-        const { email, password, full_name, role, phone_number } = userData;
+  const token = signToken(payload);
 
-        const existingUser = await prisma.user.findUnique({ where: { email } });
-        if (existingUser) {
-            throw new Error('Email is already registered');
-        }
-
-        const password_hash = await bcrypt.hash(password, 10);
-
-        const newUser = await prisma.user.create({
-            data: {
-                email,
-                password_hash,
-                full_name,
-                phone_number,
-                role: role || 'customer'
-            }
-        });
-
-        if (newUser.role === 'customer') {
-            await prisma.customer.create({ data: { user_id: newUser.id } });
-        } else if (newUser.role === 'restaurant') {
-            await prisma.restaurant.create({
-                data: {
-                    user_id: newUser.id,
-                    name: `${full_name}'s Restaurant`
-                }
-            });
-        } else if (newUser.role === 'delivery_partner') {
-            await prisma.deliveryPartner.create({ data: { user_id: newUser.id } });
-        }
-
-        return this.generateTokenResponse(newUser);
+  return {
+    token,
+    user: {
+      id: user.id,
+      email: user.email,
+      full_name: user.full_name,
+      role: user.role,
+      phone_number: user.phone_number
     }
+  };
+};
 
-    async login(email, password) {
-        const user = await prisma.user.findUnique({ where: { email } });
-        if (!user) {
-            throw new Error('Invalid credentials');
-        }
+export const register = async (userData) => {
+  const { email, password, full_name, role = 'customer', phone_number } = userData;
 
-        const isMatch = await bcrypt.compare(password, user.password_hash);
-        if (!isMatch) {
-            throw new Error('Invalid credentials');
-        }
+  if (!email || !password || !full_name) {
+    throw new AppError('Email, password, and full name are required', 400);
+  }
 
-        const account = new UserAccount(user);
-        account.login();
+  const existingUser = await prisma.user.findUnique({ where: { email } });
+  if (existingUser) {
+    throw new AppError('Email is already registered', 400);
+  }
 
-        return this.generateTokenResponse(user);
+  const password_hash = await bcrypt.hash(password, 10);
+  const isAutoActive = role === 'customer' || role === 'admin' || role === 'customer_support';
+
+  const newUser = await prisma.user.create({
+    data: {
+      email,
+      password_hash,
+      full_name,
+      phone_number,
+      role,
+      is_active: isAutoActive
     }
+  });
 
-    generateTokenResponse(user) {
-        const privateKeyPath = path.join(__dirname, '../certs/private.key');
-        const privateKey = fs.readFileSync(privateKeyPath, 'utf8');
+  let profile = null;
+  if (newUser.role === 'customer') {
+    profile = await prisma.customer.create({ data: { user_id: newUser.id } });
+  } else if (newUser.role === 'restaurant') {
+    profile = await prisma.restaurant.create({
+      data: {
+        user_id: newUser.id,
+        name: `${full_name}'s Restaurant`
+      }
+    });
+  } else if (newUser.role === 'delivery_partner') {
+    profile = await prisma.deliveryPartner.create({ data: { user_id: newUser.id } });
+  }
 
-        const payload = {
-            id: user.id,
-            email: user.email,
-            role: user.role,
-            full_name: user.full_name
-        };
+  const tokenData = generateTokenResponse(newUser);
+  const account = new UserAccount(newUser);
 
-        const token = jwt.sign(payload, privateKey, {
-            algorithm: 'RS256',
-            expiresIn: '7d'
-        });
+  return {
+    ...tokenData,
+    accountState: account.getStateName(),
+    profile
+  };
+};
 
-        return {
-            token,
-            user: {
-                id: user.id,
-                email: user.email,
-                full_name: user.full_name,
-                role: user.role
-            }
-        };
+export const login = async (email, password) => {
+  if (!email || !password) {
+    throw new AppError('Email and password are required', 400);
+  }
+
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) {
+    throw new AppError('Invalid credentials', 401);
+  }
+
+  const isMatch = await bcrypt.compare(password, user.password_hash);
+  if (!isMatch) {
+    throw new AppError('Invalid credentials', 401);
+  }
+
+  const account = new UserAccount(user);
+  account.login();
+
+  let profile = null;
+  if (user.role === 'customer') {
+    profile = await prisma.customer.findUnique({ where: { user_id: user.id } });
+  } else if (user.role === 'restaurant') {
+    profile = await prisma.restaurant.findUnique({ where: { user_id: user.id } });
+  } else if (user.role === 'delivery_partner') {
+    profile = await prisma.deliveryPartner.findUnique({ where: { user_id: user.id } });
+  }
+
+  const tokenData = generateTokenResponse(user);
+
+  return {
+    ...tokenData,
+    accountState: account.getStateName(),
+    profile
+  };
+};
+
+export const getProfile = async (userId) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      email: true,
+      full_name: true,
+      phone_number: true,
+      role: true,
+      is_active: true,
+      created_at: true,
+      customer: true,
+      restaurant: true,
+      deliveryPartner: true
     }
+  });
 
-    async getProfile(userId) {
-        const user = await prisma.user.findUnique({
-            where: { id: userId },
-            select: {
-                id: true,
-                email: true,
-                full_name: true,
-                phone_number: true,
-                role: true,
-                is_active: true,
-                created_at: true
-            }
-        });
-        if (!user) throw new Error('User not found');
-        return user;
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
+
+  return user;
+};
+
+export const updateProfile = async (userId, updateData) => {
+  const { full_name, phone_number, password, restaurant_name, location, cuisine_type, vehicle_license } = updateData;
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
+
+  const updateFields = {};
+  if (full_name) updateFields.full_name = full_name;
+  if (phone_number) updateFields.phone_number = phone_number;
+  if (password) updateFields.password_hash = await bcrypt.hash(password, 10);
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: updateFields,
+    select: {
+      id: true,
+      email: true,
+      full_name: true,
+      phone_number: true,
+      role: true,
+      is_active: true,
+      updated_at: true
     }
-}
+  });
 
-export default new AuthService();
+  if (user.role === 'restaurant' && (restaurant_name || location || cuisine_type)) {
+    await prisma.restaurant.updateMany({
+      where: { user_id: userId },
+      data: {
+        ...(restaurant_name ? { name: restaurant_name } : {}),
+        ...(location ? { address: location } : {})
+      }
+    });
+  }
+
+  if (user.role === 'delivery_partner' && vehicle_license) {
+    await prisma.deliveryPartner.updateMany({
+      where: { user_id: userId },
+      data: { vehicle_number: vehicle_license }
+    });
+  }
+
+  return updatedUser;
+};
+
+export const activateAccount = async (userId) => {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new AppError('User not found', 404);
+
+  const account = new UserAccount(user);
+  account.changeState('activate');
+  await account.persist(prisma);
+
+  return { id: user.id, is_active: true, state: account.getStateName() };
+};
+
+export const suspendAccount = async (userId) => {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new AppError('User not found', 404);
+
+  const account = new UserAccount(user);
+  account.changeState('suspend');
+  await account.persist(prisma);
+
+  return { id: user.id, is_active: false, state: account.getStateName() };
+};
