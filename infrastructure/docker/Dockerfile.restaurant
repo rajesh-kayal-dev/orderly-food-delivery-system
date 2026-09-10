@@ -1,0 +1,9 @@
+﻿FROM node:20-alpine
+WORKDIR /app
+COPY services/restaurant-service/package*.json ./
+COPY services/restaurant-service/prisma ./prisma/
+RUN npm install --omit=dev
+RUN npx prisma generate
+COPY services/restaurant-service/ ./
+EXPOSE 5004
+CMD ["node", "server.js"]

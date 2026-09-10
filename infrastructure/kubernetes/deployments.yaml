@@ -1,0 +1,46 @@
+﻿apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orderly-gateway
+  labels:
+    app: orderly-gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: orderly-gateway
+  template:
+    metadata:
+      labels:
+        app: orderly-gateway
+    spec:
+      containers:
+      - name: gateway
+        image: orderly/gateway:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: GATEWAY_PORT
+          value: "8000"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orderly-identity-service
+  labels:
+    app: orderly-identity
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: orderly-identity
+  template:
+    metadata:
+      labels:
+        app: orderly-identity
+    spec:
+      containers:
+      - name: identity-service
+        image: orderly/identity-service:latest
+        ports:
+        - containerPort: 5003

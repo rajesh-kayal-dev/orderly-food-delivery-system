@@ -1,0 +1,81 @@
+﻿version: '3.8'
+
+services:
+  identity-service:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.identity
+    ports:
+      - "5003:5003"
+    environment:
+      - PORT=5003
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+    restart: unless-stopped
+
+  restaurant-service:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.restaurant
+    ports:
+      - "5004:5004"
+    environment:
+      - PORT=5004
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+    restart: unless-stopped
+
+  order-service:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.order
+    ports:
+      - "5002:5002"
+    environment:
+      - PORT=5002
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+    restart: unless-stopped
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.notification
+    ports:
+      - "5005:5005"
+    environment:
+      - PORT=5005
+      - MAIL_HOST=${MAIL_HOST}
+      - MAIL_PORT=${MAIL_PORT}
+      - MAIL_USER=${MAIL_USER}
+      - MAIL_PASS=${MAIL_PASS}
+    restart: unless-stopped
+
+  gateway:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - GATEWAY_PORT=8000
+      - IDENTITY_SERVICE_URL=http://identity-service:5003
+      - RESTAURANT_SERVICE_URL=http://restaurant-service:5004
+      - ORDER_SERVICE_URL=http://order-service:5002
+      - NOTIFICATION_SERVICE_URL=http://notification-service:5005
+    depends_on:
+      - identity-service
+      - restaurant-service
+      - order-service
+      - notification-service
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - gateway
+    restart: unless-stopped

@@ -1,0 +1,10 @@
+﻿{
+  "name": "@orderly/shared",
+  "version": "1.0.0",
+  "description": "Shared constants, enums, and utilities for Orderly Food Delivery Platform",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
