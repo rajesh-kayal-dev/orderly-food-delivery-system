@@ -2,9 +2,21 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import env from '../config/env.js';
+import { AppError } from './errorHandler.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const publicKeyPath = path.join(__dirname, '../certs/public.key');
+
+let publicKey = null;
+try {
+  if (fs.existsSync(publicKeyPath)) {
+    publicKey = fs.readFileSync(publicKeyPath, 'utf8');
+  }
+} catch (error) {
+  console.warn('[Order Service] Public key failed to load:', error.message);
+}
 
 export const protect = async (req, res, next) => {
   let token;
@@ -12,31 +24,24 @@ export const protect = async (req, res, next) => {
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     try {
       token = req.headers.authorization.split(' ')[1];
-      const publicKey = fs.readFileSync(path.join(__dirname, '../certs/public.key'), 'utf8');
+      const decoded = publicKey
+        ? jwt.verify(token, publicKey, { algorithms: ['RS256'] })
+        : jwt.verify(token, env.jwtSecret);
 
-      const decoded = jwt.verify(token, publicKey, { algorithms: ['RS256'] });
-
-      req.user = {
-        id: decoded.id,
-        email: decoded.email,
-        role: decoded.role,
-        full_name: decoded.full_name
-      };
-
+      req.user = decoded;
       next();
     } catch (error) {
-      console.error('Auth middleware error:', error.message);
-      return res.status(401).json({ success: false, message: 'Not authorized, token failed' });
+      return next(new AppError('Not authorized, token failed', 401));
     }
   } else {
-    return res.status(401).json({ success: false, message: 'Not authorized, no token' });
+    return next(new AppError('Not authorized, no token', 401));
   }
 };
 
 export const authorize = (...roles) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user?.role)) {
-      return res.status(403).json({ success: false, message: `User role ${req.user?.role} is not authorized` });
+    if (!req.user || !roles.includes(req.user.role)) {
+      return next(new AppError(`User role ${req.user?.role || 'Unknown'} is not authorized`, 403));
     }
     next();
   };
@@ -46,6 +51,6 @@ export const admin = (req, res, next) => {
   if (req.user && req.user.role === 'admin') {
     next();
   } else {
-    res.status(403).json({ success: false, message: 'Not authorized as an admin' });
+    return next(new AppError('Not authorized as an admin', 403));
   }
 };

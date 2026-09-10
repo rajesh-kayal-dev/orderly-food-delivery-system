@@ -1,39 +1,40 @@
-﻿import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import http from 'http';
+﻿import http from 'http';
+import app from './app.js';
+import env from './config/env.js';
 import prisma from './config/prisma.js';
-import orderRoutes from './routes/orderRoutes.js';
-import cartRoutes from './routes/cartRoutes.js';
-import adminRoutes from './routes/adminRoutes.js';
-import paymentRoutes from './routes/paymentRoutes.js';
 
-dotenv.config();
-
-const app = express();
 const server = http.createServer(app);
 
-app.use(cors({
-    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-    credentials: true
-}));
+const startServer = async () => {
+  try {
+    await prisma.$connect();
+    console.log('Orderly Order Service: Database connected (Neon PostgreSQL)');
 
-app.use(express.json());
-
-app.use('/api/orders', orderRoutes);
-app.use('/api/cart', cartRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/payments', paymentRoutes);
-
-const PORT = process.env.PORT || 5001;
-
-prisma.$connect().then(() => {
-    console.log('Orderly Order Service Database connected (Neon PostgreSQL)');
-    server.listen(PORT, () => {
-        console.log(`Orderly Order Microservice running on port ${PORT}`);
+    server.listen(env.port, () => {
+      console.log(`Orderly Order Microservice running on port ${env.port} [${env.nodeEnv}]`);
     });
-}).catch(err => {
-    console.error('Failed to connect database in Order Service:', err);
-});
+  } catch (error) {
+    console.error('Failed to start Order Service:', error);
+    process.exit(1);
+  }
+};
+
+const gracefulShutdown = async (signal) => {
+  console.log(`\nReceived ${signal}. Shutting down Order Service gracefully...`);
+  server.close(async () => {
+    console.log('HTTP server closed.');
+    try {
+      await prisma.$disconnect();
+      console.log('Prisma disconnected.');
+      process.exit(0);
+    } catch (err) {
+      console.error('Error during Prisma disconnect:', err);
+      process.exit(1);
+    }
+  });
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+startServer();
