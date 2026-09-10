@@ -1,7 +1,7 @@
 import OrderFilterHandler from './OrderFilterHandler.js';
 import { Op } from 'sequelize';
 
-class StatusFilterHandler extends OrderFilterHandler {
+export default class StatusFilterHandler extends OrderFilterHandler {
     handle(context) {
         if (context.filters.statusFilter && context.filters.statusFilter !== 'all') {
             if (context.filters.statusFilter === 'delivered') {
@@ -14,5 +14,3 @@ class StatusFilterHandler extends OrderFilterHandler {
         return super.handle(context);
     }
 }
-
-export default StatusFilterHandler;

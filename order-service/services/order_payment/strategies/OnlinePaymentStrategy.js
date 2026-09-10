@@ -1,7 +1,7 @@
 import PaymentStrategy from './PaymentStrategy.js';
 import PaymentResult from '../models/PaymentResult.js';
 
-class OnlinePaymentStrategy extends PaymentStrategy {
+export default class OnlinePaymentStrategy extends PaymentStrategy {
   constructor({ paymentService, paymentGatewayAdapter, gatewayName = 'vnpay' }) {
     super();
     this.paymentService = paymentService;
@@ -41,5 +41,3 @@ class OnlinePaymentStrategy extends PaymentStrategy {
     });
   }
 }
-
-export default OnlinePaymentStrategy;

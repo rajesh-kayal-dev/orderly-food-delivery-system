@@ -3,7 +3,7 @@ import EmailNotificationFactory from './factories/EmailNotificationFactory.js';
 import SmsNotificationFactory from './factories/SmsNotificationFactory.js';
 import PushNotificationFactory from './factories/PushNotificationFactory.js';
 
-class OrderNotificationManager {
+export default class OrderNotificationManager {
   constructor() {
     this.notificationFactory = new PushNotificationFactory();
   }
@@ -39,5 +39,3 @@ class OrderNotificationManager {
     return Promise.allSettled((messages || []).map((message) => this.dispatch(message)));
   }
 }
-
-export default OrderNotificationManager;

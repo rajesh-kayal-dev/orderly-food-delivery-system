@@ -1,6 +1,6 @@
 import RestaurantCommand from './RestaurantCommand.js';
 
-class ToggleAvailabilityCommand extends RestaurantCommand {
+export default class ToggleAvailabilityCommand extends RestaurantCommand {
     constructor(menuService, itemId, userId, io) {
         super();
         this.menuService = menuService;
@@ -13,5 +13,3 @@ class ToggleAvailabilityCommand extends RestaurantCommand {
         return await this.menuService.toggleAvailability(this.itemId, this.userId, this.io);
     }
 }
-
-export default ToggleAvailabilityCommand;

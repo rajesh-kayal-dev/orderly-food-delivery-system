@@ -1,6 +1,6 @@
 import CatalogComponent from './CatalogComponent.js';
 
-class MenuItemLeaf extends CatalogComponent {
+export default class MenuItemLeaf extends CatalogComponent {
   constructor(item) {
     super();
     this.id = item.id;
@@ -40,5 +40,3 @@ class MenuItemLeaf extends CatalogComponent {
     };
   }
 }
-
-export default MenuItemLeaf;

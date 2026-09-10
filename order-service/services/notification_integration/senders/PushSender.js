@@ -16,7 +16,7 @@ function getDefaultEventName(message) {
   }
 }
 
-class PushSender extends NotificationSender {
+export default class PushSender extends NotificationSender {
   async send(message) {
     if (!message?.recipient) {
       return {
@@ -45,5 +45,3 @@ class PushSender extends NotificationSender {
     };
   }
 }
-
-export default PushSender;

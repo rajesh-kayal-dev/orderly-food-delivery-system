@@ -1,4 +1,4 @@
-class RefundResult {
+export default class RefundResult {
   constructor({
     success = false,
     message = '',
@@ -17,5 +17,3 @@ class RefundResult {
     return this.success;
   }
 }
-
-export default RefundResult;

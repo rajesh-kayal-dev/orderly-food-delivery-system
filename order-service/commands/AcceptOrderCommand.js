@@ -1,6 +1,6 @@
 import RestaurantCommand from './RestaurantCommand.js';
 
-class AcceptOrderCommand extends RestaurantCommand {
+export default class AcceptOrderCommand extends RestaurantCommand {
     constructor(fulfillmentService, orderId, user, io) {
         super();
         this.fulfillmentService = fulfillmentService;
@@ -13,5 +13,3 @@ class AcceptOrderCommand extends RestaurantCommand {
         return await this.fulfillmentService.updateStatus(this.orderId, 'accepted', this.user, this.io);
     }
 }
-
-export default AcceptOrderCommand;

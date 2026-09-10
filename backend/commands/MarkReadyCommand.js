@@ -1,6 +1,6 @@
 import RestaurantCommand from './RestaurantCommand.js';
 
-class MarkReadyCommand extends RestaurantCommand {
+export default class MarkReadyCommand extends RestaurantCommand {
     constructor(fulfillmentService, orderId, user, io) {
         super();
         this.fulfillmentService = fulfillmentService;
@@ -13,5 +13,3 @@ class MarkReadyCommand extends RestaurantCommand {
         return await this.fulfillmentService.updateStatus(this.orderId, 'preparing', this.user, this.io);
     }
 }
-
-export default MarkReadyCommand;

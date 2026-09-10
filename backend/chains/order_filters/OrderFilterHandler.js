@@ -1,4 +1,4 @@
-class OrderFilterHandler {
+export default class OrderFilterHandler {
     constructor() {
         if (this.constructor === OrderFilterHandler) {
             throw new Error("Abstract classes can't be instantiated.");
@@ -18,5 +18,3 @@ class OrderFilterHandler {
         return context;
     }
 }
-
-export default OrderFilterHandler;

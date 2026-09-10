@@ -1,4 +1,4 @@
-class CatalogComponent {
+export default class CatalogComponent {
   display() {
     throw new Error('display() must be implemented by subclasses');
   }
@@ -11,5 +11,3 @@ class CatalogComponent {
     throw new Error(`${this.constructor.name} does not support remove()`);
   }
 }
-
-export default CatalogComponent;

@@ -1,6 +1,6 @@
 import OrderFilterHandler from './OrderFilterHandler.js';
 
-class PaginationFilterHandler extends OrderFilterHandler {
+export default class PaginationFilterHandler extends OrderFilterHandler {
     handle(context) {
         const { page, Math } = context.filters;
         const parsedPage = global.Math.max(parseInt(context.filters.page, 10) || 1, 1);
@@ -15,5 +15,3 @@ class PaginationFilterHandler extends OrderFilterHandler {
         return super.handle(context);
     }
 }
-
-export default PaginationFilterHandler;

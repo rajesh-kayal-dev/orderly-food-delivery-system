@@ -1,6 +1,6 @@
 import NotificationSender from './NotificationSender.js';
 
-class SmsSender extends NotificationSender {
+export default class SmsSender extends NotificationSender {
   async send(message) {
     console.log('[SMS placeholder]', {
       to: message?.recipient,
@@ -16,5 +16,3 @@ class SmsSender extends NotificationSender {
     };
   }
 }
-
-export default SmsSender;

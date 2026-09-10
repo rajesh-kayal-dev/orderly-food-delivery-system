@@ -2,7 +2,7 @@ import PaymentGatewayFactory from '../../../factories/paymentGatewayFactory.js';
 import PaymentResult from '../models/PaymentResult.js';
 import RefundResult from '../models/RefundResult.js';
 
-class PaymentGatewayStrategyAdapter {
+export default class PaymentGatewayStrategyAdapter {
   constructor(gatewayName = 'vnpay') {
     this.gatewayName = gatewayName;
   }
@@ -55,5 +55,3 @@ class PaymentGatewayStrategyAdapter {
     });
   }
 }
-
-export default PaymentGatewayStrategyAdapter;

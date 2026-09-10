@@ -1,7 +1,7 @@
 import PaymentStrategy from './PaymentStrategy.js';
 import PaymentResult from '../models/PaymentResult.js';
 
-class WalletPaymentStrategy extends PaymentStrategy {
+export default class WalletPaymentStrategy extends PaymentStrategy {
   async execute() {
     return new PaymentResult({
       success: false,
@@ -11,5 +11,3 @@ class WalletPaymentStrategy extends PaymentStrategy {
     });
   }
 }
-
-export default WalletPaymentStrategy;

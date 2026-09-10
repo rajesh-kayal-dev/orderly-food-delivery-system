@@ -3,7 +3,7 @@ import StatusFilterHandler from './StatusFilterHandler.js';
 import DateFilterHandler from './DateFilterHandler.js';
 import PaginationFilterHandler from './PaginationFilterHandler.js';
 
-class OrderFilterChain {
+export default class OrderFilterChain {
     static buildContext(filters) {
         const context = {
             filters,
@@ -25,5 +25,3 @@ class OrderFilterChain {
         return restaurantHandler.handle(context);
     }
 }
-
-export default OrderFilterChain;

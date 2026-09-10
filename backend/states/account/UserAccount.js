@@ -2,7 +2,7 @@ import ActiveState from './ActiveState.js';
 import PendingState from './PendingState.js';
 import SuspendedState from './SuspendedState.js';
 
-class UserAccount {
+export default class UserAccount {
   constructor(user) {
     this.user = user;
     this.state = this.resolveStateFromUser(user);
@@ -50,5 +50,3 @@ class UserAccount {
     return this.user;
   }
 }
-
-export default UserAccount;

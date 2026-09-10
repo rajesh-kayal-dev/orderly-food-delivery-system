@@ -1,6 +1,6 @@
 import VNPayAdapter from '../adapters/VNPayAdapter.js';
 
-class PaymentGatewayFactory {
+export default class PaymentGatewayFactory {
   static create(gatewayName) {
     const normalized = String(gatewayName || '').toLowerCase();
 
@@ -12,5 +12,3 @@ class PaymentGatewayFactory {
     }
   }
 }
-
-export default PaymentGatewayFactory;

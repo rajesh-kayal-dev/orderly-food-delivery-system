@@ -1,4 +1,4 @@
-class NotificationFactory {
+export default class NotificationFactory {
   createSender() {
     throw new Error('createSender() must be implemented by concrete factory');
   }
@@ -8,5 +8,3 @@ class NotificationFactory {
     return sender.send(message);
   }
 }
-
-export default NotificationFactory;

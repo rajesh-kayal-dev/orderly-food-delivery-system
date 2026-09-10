@@ -3,7 +3,7 @@ import { vnpay, ProductCode, VnpLocale, dateFormat } from '../config/vnpay.js';
 import axios from 'axios';
 import crypto from 'crypto';
 
-class VNPayAdapter extends IPaymentGatewayAdapter {
+export default class VNPayAdapter extends IPaymentGatewayAdapter {
   getGatewayName() {
     return 'vnpay';
   }
@@ -203,5 +203,3 @@ class VNPayAdapter extends IPaymentGatewayAdapter {
     };
   }
 }
-
-export default VNPayAdapter;

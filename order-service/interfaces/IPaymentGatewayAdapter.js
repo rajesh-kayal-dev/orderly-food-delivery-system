@@ -1,4 +1,4 @@
-class IPaymentGatewayAdapter {
+export default class IPaymentGatewayAdapter {
   getGatewayName() {
     throw new Error('getGatewayName() must be implemented');
   }
@@ -27,5 +27,3 @@ class IPaymentGatewayAdapter {
     throw new Error('refund() must be implemented');
   }
 }
-
-export default IPaymentGatewayAdapter;

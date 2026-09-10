@@ -1,7 +1,7 @@
 import OrderFilterHandler from './OrderFilterHandler.js';
 import { Op } from 'sequelize';
 
-class DateFilterHandler extends OrderFilterHandler {
+export default class DateFilterHandler extends OrderFilterHandler {
     handle(context) {
         const { month, year } = context.filters;
         if (month && year) {
@@ -20,5 +20,3 @@ class DateFilterHandler extends OrderFilterHandler {
         return super.handle(context);
     }
 }
-
-export default DateFilterHandler;

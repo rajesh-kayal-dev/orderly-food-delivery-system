@@ -1,4 +1,4 @@
-class PaymentRequest {
+export default class PaymentRequest {
   constructor({
     orderId = null,
     transactionId = null,
@@ -27,5 +27,3 @@ class PaymentRequest {
     this.metadata = metadata;
   }
 }
-
-export default PaymentRequest;

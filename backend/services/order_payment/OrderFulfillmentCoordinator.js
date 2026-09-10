@@ -3,7 +3,7 @@ import CodPaymentStrategy from './strategies/CodPaymentStrategy.js';
 import OnlinePaymentStrategy from './strategies/OnlinePaymentStrategy.js';
 import WalletPaymentStrategy from './strategies/WalletPaymentStrategy.js';
 
-class OrderFulfillmentCoordinator {
+export default class OrderFulfillmentCoordinator {
   constructor({ paymentService, sequelize, models }) {
     this.paymentStrategy = null;
     this.strategies = {
@@ -62,5 +62,3 @@ class OrderFulfillmentCoordinator {
     };
   }
 }
-
-export default OrderFulfillmentCoordinator;

@@ -1,6 +1,6 @@
 import CatalogComponent from './CatalogComponent.js';
 
-class ContentArticleLeaf extends CatalogComponent {
+export default class ContentArticleLeaf extends CatalogComponent {
   constructor(article) {
     super();
     this.id = article.id;
@@ -21,5 +21,3 @@ class ContentArticleLeaf extends CatalogComponent {
     };
   }
 }
-
-export default ContentArticleLeaf;

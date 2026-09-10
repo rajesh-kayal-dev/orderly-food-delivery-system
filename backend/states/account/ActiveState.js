@@ -1,6 +1,6 @@
 import AccountState from './AccountState.js';
 
-class ActiveState extends AccountState {
+export default class ActiveState extends AccountState {
   constructor() {
     super('ACTIVE');
   }
@@ -21,5 +21,3 @@ class ActiveState extends AccountState {
     return account;
   }
 }
-
-export default ActiveState;

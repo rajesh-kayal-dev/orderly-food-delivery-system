@@ -1,4 +1,4 @@
-class CheckoutRequest {
+export default class CheckoutRequest {
     constructor() {
         this.userId = null;
         this.customerId = null;
@@ -28,5 +28,3 @@ class CheckoutRequest {
         return !!(this.customerId && this.restaurantId && this.addressId && this.items.length > 0);
     }
 }
-
-export default CheckoutRequest;

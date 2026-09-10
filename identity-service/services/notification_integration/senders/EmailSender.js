@@ -60,7 +60,7 @@ function renderGenericHtml({ subject, content, orderId }) {
   `;
 }
 
-class EmailSender extends NotificationSender {
+export default class EmailSender extends NotificationSender {
   async send(message) {
     if (!message?.recipient) {
       return {
@@ -116,5 +116,3 @@ class EmailSender extends NotificationSender {
     });
   }
 }
-
-export default EmailSender;

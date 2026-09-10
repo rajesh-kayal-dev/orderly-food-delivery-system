@@ -1,6 +1,6 @@
 import CatalogComponent from './CatalogComponent.js';
 
-class MenuCategoryComposite extends CatalogComponent {
+export default class MenuCategoryComposite extends CatalogComponent {
   constructor({ id, name }) {
     super();
     this.id = id;
@@ -27,5 +27,3 @@ class MenuCategoryComposite extends CatalogComponent {
     };
   }
 }
-
-export default MenuCategoryComposite;

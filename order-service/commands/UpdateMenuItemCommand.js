@@ -1,6 +1,6 @@
 import RestaurantCommand from './RestaurantCommand.js';
 
-class UpdateMenuItemCommand extends RestaurantCommand {
+export default class UpdateMenuItemCommand extends RestaurantCommand {
     constructor(menuService, itemId, userId, itemData, io) {
         super();
         this.menuService = menuService;
@@ -14,5 +14,3 @@ class UpdateMenuItemCommand extends RestaurantCommand {
         return await this.menuService.updateMenuItem(this.itemId, this.userId, this.itemData, this.io);
     }
 }
-
-export default UpdateMenuItemCommand;

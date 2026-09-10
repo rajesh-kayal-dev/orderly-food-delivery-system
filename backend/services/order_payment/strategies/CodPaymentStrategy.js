@@ -1,7 +1,7 @@
 import PaymentStrategy from './PaymentStrategy.js';
 import PaymentResult from '../models/PaymentResult.js';
 
-class CodPaymentStrategy extends PaymentStrategy {
+export default class CodPaymentStrategy extends PaymentStrategy {
   constructor({ sequelize, models }) {
     super();
     this.sequelize = sequelize;
@@ -73,5 +73,3 @@ class CodPaymentStrategy extends PaymentStrategy {
     }
   }
 }
-
-export default CodPaymentStrategy;

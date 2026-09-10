@@ -1,4 +1,4 @@
-class RefundRequest {
+export default class RefundRequest {
   constructor({
     transactionId = null,
     refundAmount = 0,
@@ -17,5 +17,3 @@ class RefundRequest {
     this.createBy = createBy;
   }
 }
-
-export default RefundRequest;

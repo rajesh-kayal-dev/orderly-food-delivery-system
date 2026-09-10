@@ -1,4 +1,4 @@
-class RestaurantCommand {
+export default class RestaurantCommand {
     constructor() {
         if (this.constructor === RestaurantCommand) {
             throw new Error("Abstract classes can't be instantiated.");
@@ -9,5 +9,3 @@ class RestaurantCommand {
         throw new Error("Method 'execute()' must be implemented.");
     }
 }
-
-export default RestaurantCommand;

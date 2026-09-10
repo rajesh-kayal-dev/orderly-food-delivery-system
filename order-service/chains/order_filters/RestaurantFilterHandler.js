@@ -1,6 +1,6 @@
 import OrderFilterHandler from './OrderFilterHandler.js';
 
-class RestaurantFilterHandler extends OrderFilterHandler {
+export default class RestaurantFilterHandler extends OrderFilterHandler {
     handle(context) {
         if (context.filters.restaurantId) {
             context.where.restaurant_id = context.filters.restaurantId;
@@ -9,5 +9,3 @@ class RestaurantFilterHandler extends OrderFilterHandler {
         return super.handle(context);
     }
 }
-
-export default RestaurantFilterHandler;

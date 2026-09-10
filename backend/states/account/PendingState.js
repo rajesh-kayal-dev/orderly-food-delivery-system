@@ -1,6 +1,6 @@
 import AccountState from './AccountState.js';
 
-class PendingState extends AccountState {
+export default class PendingState extends AccountState {
   constructor() {
     super('PENDING');
   }
@@ -23,5 +23,3 @@ class PendingState extends AccountState {
     return account;
   }
 }
-
-export default PendingState;

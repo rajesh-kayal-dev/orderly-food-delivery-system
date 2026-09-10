@@ -1,4 +1,4 @@
-class NotificationMessage {
+export default class NotificationMessage {
   constructor({
     recipient = '',
     channel = 'push',
@@ -41,5 +41,3 @@ class NotificationMessage {
     return this.channel;
   }
 }
-
-export default NotificationMessage;

@@ -1,7 +1,5 @@
-class PaymentStrategy {
+export default class PaymentStrategy {
   async execute(_orderContext) {
     throw new Error('execute(orderContext) must be implemented by concrete PaymentStrategy');
   }
 }
-
-export default PaymentStrategy;

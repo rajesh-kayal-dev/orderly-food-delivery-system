@@ -1,6 +1,6 @@
 import AccountState from './AccountState.js';
 
-class SuspendedState extends AccountState {
+export default class SuspendedState extends AccountState {
   constructor() {
     super('SUSPENDED');
   }
@@ -21,5 +21,3 @@ class SuspendedState extends AccountState {
     return account;
   }
 }
-
-export default SuspendedState;

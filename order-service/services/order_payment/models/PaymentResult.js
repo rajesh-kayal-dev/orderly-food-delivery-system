@@ -1,4 +1,4 @@
-class PaymentResult {
+export default class PaymentResult {
   constructor({
     success = false,
     transactionId = null,
@@ -25,5 +25,3 @@ class PaymentResult {
     return this.success;
   }
 }
-
-export default PaymentResult;
