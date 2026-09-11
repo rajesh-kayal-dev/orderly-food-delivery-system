@@ -7,7 +7,8 @@ import { message } from 'antd';
 import { 
   StarFilled, 
   PlusOutlined, 
-  SearchOutlined
+  SearchOutlined,
+  ShopOutlined
 } from '@ant-design/icons';
 
 const categoriesList = [
@@ -21,15 +22,15 @@ const categoriesList = [
 ];
 
 const fallbackMenuItems = [
-  { id: 1, name: "Classic Cheeseburger", category: "Burgers", price: 12.99, image_url: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=600", description: "Angus beef patty, cheddar, lettuce, tomato, house sauce.", rating: 4.9 },
-  { id: 2, name: "Pepperoni Pizza", category: "Pizza", price: 15.50, image_url: "https://images.unsplash.com/photo-1628840042765-356cda07504e?auto=format&fit=crop&q=80&w=600", description: "Crispy crust, tomato sauce, mozzarella, double pepperoni.", rating: 4.9 },
-  { id: 3, name: "Dragon Roll Sushi", category: "Sushi", price: 18.00, image_url: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&q=80&w=600", description: "Eel, cucumber, avocado, topped with tobiko and unagi sauce.", rating: 4.9 },
-  { id: 4, name: "Chicken Caesar Salad", category: "Healthy", price: 11.00, image_url: "https://images.unsplash.com/photo-1550304943-4f24f54ddde9?auto=format&fit=crop&q=80&w=600", description: "Romaine lettuce, croutons, parmesan, grilled chicken breast.", rating: 4.9 },
-  { id: 5, name: "Spicy Ramen", category: "Asian", price: 14.50, image_url: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&q=80&w=600", description: "Rich pork broth, soft egg, nori, spicy miso paste.", rating: 4.9 },
-  { id: 6, name: "Margherita Pizza", category: "Pizza", price: 13.00, image_url: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&q=80&w=600", description: "Tomato sauce, fresh mozzarella, basil, olive oil.", rating: 4.9 },
-  { id: 7, name: "Avocado Toast", category: "Healthy", price: 9.50, image_url: "https://images.unsplash.com/photo-1588137372308-15f75323ca8d?auto=format&fit=crop&q=80&w=600", description: "Sourdough bread, smashed avocado, poached egg, chili flakes.", rating: 4.8 },
-  { id: 8, name: "Double Bacon Burger", category: "Burgers", price: 16.00, image_url: "https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&q=80&w=600", description: "Two patties, crispy bacon, caramelized onions, BBQ sauce.", rating: 4.9 },
-  { id: 9, name: "Pesto Pasta", category: "Pasta", price: 13.50, image_url: "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&q=80&w=600", description: "Fresh basil pesto, pine nuts, parmesan, fusilli pasta.", rating: 4.8 },
+  { id: 1, name: "Classic Cheeseburger", category: "Burgers", price: 12.99, image_url: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=600", description: "Angus beef patty, cheddar, lettuce, tomato, house sauce.", rating: 4.9, restaurantName: "Orderly Gourmet Hub" },
+  { id: 2, name: "Pepperoni Pizza", category: "Pizza", price: 15.50, image_url: "https://images.unsplash.com/photo-1628840042765-356cda07504e?auto=format&fit=crop&q=80&w=600", description: "Crispy crust, tomato sauce, mozzarella, double pepperoni.", rating: 4.9, restaurantName: "Abhishek's Restaurant" },
+  { id: 3, name: "Dragon Roll Sushi", category: "Sushi", price: 18.00, image_url: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&q=80&w=600", description: "Eel, cucumber, avocado, topped with tobiko and unagi sauce.", rating: 4.9, restaurantName: "Orderly Gourmet Hub" },
+  { id: 4, name: "Chicken Caesar Salad", category: "Healthy", price: 11.00, image_url: "https://images.unsplash.com/photo-1550304943-4f24f54ddde9?auto=format&fit=crop&q=80&w=600", description: "Romaine lettuce, croutons, parmesan, grilled chicken breast.", rating: 4.9, restaurantName: "Abhishek's Restaurant" },
+  { id: 5, name: "Spicy Ramen", category: "Asian", price: 14.50, image_url: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&q=80&w=600", description: "Rich pork broth, soft egg, nori, spicy miso paste.", rating: 4.9, restaurantName: "Orderly Gourmet Hub" },
+  { id: 6, name: "Margherita Pizza", category: "Pizza", price: 13.00, image_url: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&q=80&w=600", description: "Tomato sauce, fresh mozzarella, basil, olive oil.", rating: 4.9, restaurantName: "Abhishek's Restaurant" },
+  { id: 7, name: "Avocado Toast", category: "Healthy", price: 9.50, image_url: "https://images.unsplash.com/photo-1588137372308-15f75323ca8d?auto=format&fit=crop&q=80&w=600", description: "Sourdough bread, smashed avocado, poached egg, chili flakes.", rating: 4.8, restaurantName: "Orderly Gourmet Hub" },
+  { id: 8, name: "Double Bacon Burger", category: "Burgers", price: 16.00, image_url: "https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&q=80&w=600", description: "Two patties, crispy bacon, caramelized onions, BBQ sauce.", rating: 4.9, restaurantName: "Abhishek's Restaurant" },
+  { id: 9, name: "Pesto Pasta", category: "Pasta", price: 13.50, image_url: "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&q=80&w=600", description: "Fresh basil pesto, pine nuts, parmesan, fusilli pasta.", rating: 4.8, restaurantName: "Orderly Gourmet Hub" },
 ];
 
 export default function MenuList() {
@@ -237,12 +238,20 @@ export default function MenuList() {
                       </div>
 
                       <div className="p-5 flex flex-col flex-grow">
+                        {/* Restaurant Name Badge */}
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-50/90 text-orange-600 text-[11px] font-extrabold border border-orange-200/80 mb-2.5 self-start">
+                          <ShopOutlined className="text-xs text-orange-500 shrink-0" />
+                          <span className="truncate max-w-[200px]">
+                            {item.Restaurant?.name || item.restaurant?.name || item.restaurantName || 'Orderly Restaurant'}
+                          </span>
+                        </div>
+
                         <div className="flex justify-between items-start mb-2 gap-2">
                           <h3 className="font-semibold text-neutral-900 text-lg tracking-tight leading-snug group-hover:text-orange-600 transition-colors">
                             {item.name}
                           </h3>
-                          <span className="font-medium text-neutral-900 whitespace-nowrap">
-                            ${displayPrice}
+                          <span className="font-bold text-neutral-900 whitespace-nowrap">
+                            ₹{displayPrice}
                           </span>
                         </div>
 

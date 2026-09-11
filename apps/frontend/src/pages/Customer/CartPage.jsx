@@ -25,7 +25,8 @@ import {
   CustomerServiceOutlined,
   CarOutlined,
   CloseOutlined,
-  FireOutlined
+  FireOutlined,
+  ShopOutlined
 } from '@ant-design/icons';
 
 const defaultFallbackRecs = [
@@ -510,7 +511,11 @@ export default function CartPage() {
                           <h4 className="font-bold text-neutral-900 text-xs sm:text-sm leading-snug line-clamp-1">
                             {rec.name}
                           </h4>
-                          <p className="text-neutral-500 font-bold text-xs mt-1">₹{rec.price.toFixed(2)}</p>
+                          <p className="text-[10px] font-extrabold text-orange-600 flex items-center gap-1 truncate mt-0.5">
+                            <ShopOutlined className="text-[10px] text-orange-500 shrink-0" />
+                            <span className="truncate">{rec.restaurantName || rec.restaurant?.name || rec.Restaurant?.name || 'Orderly Restaurant'}</span>
+                          </p>
+                          <p className="text-neutral-900 font-extrabold text-xs mt-1">₹{rec.price.toFixed(2)}</p>
                         </div>
 
                         <button

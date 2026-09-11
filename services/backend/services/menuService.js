@@ -8,10 +8,10 @@ class MenuService {
         });
     }
 
-    async getMenuItems({ restaurantId, categoryId, page = 1, limit = 9, search = '' }) {
+    async getMenuItems({ restaurantId, categoryId, page = 1, limit = 50, search = '' }) {
         const offset = (page - 1) * limit;
-        const where = { restaurant_id: restaurantId };
-
+        const where = {};
+        if (restaurantId) where.restaurant_id = restaurantId;
         if (categoryId) where.category_id = categoryId;
         if (search) {
             where.name = { [Op.like]: `%${search}%` };
@@ -19,7 +19,10 @@ class MenuService {
 
         const { count, rows } = await MenuItem.findAndCountAll({
             where,
-            include: [{ model: MenuCategory, attributes: ['name'] }],
+            include: [
+                { model: MenuCategory, attributes: ['id', 'name'] },
+                { model: Restaurant, attributes: ['id', 'name', 'address', 'image_url', 'cuisine_type'] }
+            ],
             limit: parseInt(limit),
             offset: parseInt(offset),
             order: [['created_at', 'DESC']]
