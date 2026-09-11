@@ -40,8 +40,8 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Proxy routes mapped to specialized microservices
-app.use('/api/auth', createServiceProxy('identity-service', env.services.identity));
+// Proxy routes mapped to microservices
+app.use('/api/auth', createServiceProxy('identity-service', env.services.backend));
 
 app.use('/api/admin/orders', createServiceProxy('order-service', env.services.order));
 app.use('/api/admin', createServiceProxy('identity-service', env.services.identity));

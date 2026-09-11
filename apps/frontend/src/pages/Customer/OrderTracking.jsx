@@ -21,7 +21,8 @@ import {
   StarFilled,
   CheckOutlined,
   CheckCircleFilled,
-  RadarChartOutlined
+  RadarChartOutlined,
+  CompassOutlined
 } from '@ant-design/icons';
 
 // Custom Leaflet Icons for Map
