@@ -12,7 +12,7 @@ export const env = {
   services: {
     backend: process.env.BACKEND_URL || 'http://localhost:5001',
     order: process.env.ORDER_SERVICE_URL || 'http://localhost:5002',
-    identity: process.env.IDENTITY_SERVICE_URL || 'http://localhost:5003',
+    identity: process.env.IDENTITY_SERVICE_URL || 'http://localhost:5001',
     restaurant: process.env.RESTAURANT_SERVICE_URL || 'http://localhost:5004',
     notification: process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:5005',
     payment: process.env.PAYMENT_SERVICE_URL || 'http://localhost:5006'
