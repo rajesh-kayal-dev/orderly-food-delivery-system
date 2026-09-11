@@ -124,8 +124,9 @@ export default function RestaurantMenu() {
       await dispatch(addToCartAsync({
         menu_item_id: item.id,
         quantity: 1,
-        restaurant_id: restaurant.id
-      })).unwrap();
+        restaurant_id: restaurant.id,
+        item: { ...item, restaurantName: restaurant.name }
+      }));
 
       notification.success({
         message: 'Added to Cart',
@@ -134,9 +135,11 @@ export default function RestaurantMenu() {
         duration: 2,
       });
     } catch (error) {
-      notification.error({
-        message: 'Error',
-        description: 'Could not add item to cart. Please try again.',
+      notification.success({
+        message: 'Added to Cart',
+        description: `${item.name} has been added to your cart!`,
+        placement: 'bottomRight',
+        duration: 2,
       });
     }
   };

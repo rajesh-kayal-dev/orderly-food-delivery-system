@@ -4,6 +4,7 @@ import {
     getCustomerOrders,
     getOrderDetails,
     updateOrderStatus,
+    updatePaymentStatus,
     cancelOrder,
     getRestaurantOrders,
     getAvailableDeliveries,
@@ -25,6 +26,7 @@ router.get('/driver-deliveries', protect, authorize('delivery_partner'), getDriv
 router.get('/driver-history', protect, authorize('delivery_partner'), getDriverHistory);
 router.get('/:id', protect, getOrderDetails);
 router.put('/:id/status', protect, updateOrderStatus);
+router.put('/:id/payment-status', protect, updatePaymentStatus);
 router.post('/:id/cancel', protect, authorize('customer'), cancelOrder);
 
 export default router;

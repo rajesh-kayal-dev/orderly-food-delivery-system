@@ -1,4 +1,4 @@
-﻿import nodemailer from 'nodemailer';
+import nodemailer from 'nodemailer';
 import env from '../config/env.js';
 import {
   getDeliveredEmailTemplate,
@@ -57,4 +57,22 @@ export const sendRefundEmail = async ({ to, customerName, orderId, refundAmount,
 
   const html = getRefundEmailTemplate({ customerName, orderId, refundAmount, gatewayName, status });
   return await sendMail({ to, subject, html });
+};
+
+export const sendPaymentConfirmationEmail = async ({ to, customerName, orderId, amount, currency }) => {
+  const subject = `Payment confirmed for Order #${orderId.slice(0, 8).toUpperCase()}`;
+  const html = `
+    <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:24px;">
+      <h2 style="color:#F97316;">Payment Confirmed! 🎉</h2>
+      <p>Hi <strong>${customerName}</strong>,</p>
+      <p>Your payment of <strong>${currency} ${amount}</strong> for Order <strong>#ORD${orderId.slice(0,8).toUpperCase()}</strong> has been successfully received.</p>
+      <p>Your food is being prepared and will be delivered shortly.</p>
+      <p style="color:#6B7280;font-size:12px;">Thank you for ordering with Orderly!</p>
+    </div>
+  `;
+  try {
+    return await sendMail({ to, subject, html });
+  } catch (err) {
+    console.warn('[MailService] Payment confirmation email failed (non-critical):', err.message);
+  }
 };

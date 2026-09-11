@@ -1,4 +1,4 @@
-﻿version: '3.8'
+version: '3.8'
 
 services:
   identity-service:
@@ -51,6 +51,26 @@ services:
       - MAIL_PASS=${MAIL_PASS}
     restart: unless-stopped
 
+  payment-service:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.payment
+    ports:
+      - "5006:5006"
+    environment:
+      - PORT=5006
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID}
+      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET}
+      - RAZORPAY_WEBHOOK_SECRET=${RAZORPAY_WEBHOOK_SECRET}
+      - ORDER_SERVICE_URL=http://order-service:5002
+      - NOTIFICATION_SERVICE_URL=http://notification-service:5005
+    depends_on:
+      - order-service
+      - notification-service
+    restart: unless-stopped
+
   gateway:
     build:
       context: .
@@ -63,11 +83,13 @@ services:
       - RESTAURANT_SERVICE_URL=http://restaurant-service:5004
       - ORDER_SERVICE_URL=http://order-service:5002
       - NOTIFICATION_SERVICE_URL=http://notification-service:5005
+      - PAYMENT_SERVICE_URL=http://payment-service:5006
     depends_on:
       - identity-service
       - restaurant-service
       - order-service
       - notification-service
+      - payment-service
     restart: unless-stopped
 
   frontend:

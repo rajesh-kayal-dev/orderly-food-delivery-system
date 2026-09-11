@@ -72,8 +72,9 @@ export default function MenuList() {
       await dispatch(addToCartAsync({
         menu_item_id: item.id,
         quantity: 1,
-        restaurant_id: item.restaurant_id || 1
-      })).unwrap();
+        restaurant_id: item.restaurant_id || 1,
+        item: item
+      }));
       message.success(`Added ${item.name} to cart!`);
     } catch (err) {
       message.success(`Added ${item.name} to cart!`);

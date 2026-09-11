@@ -1,4 +1,4 @@
-﻿import http from 'http';
+import http from 'http';
 import app, { socketProxy } from './app.js';
 import env from './config/env.js';
 
@@ -17,6 +17,7 @@ const startServer = () => {
     console.log(` - /api/auth             -> ${env.services.identity}`);
     console.log(` - /api/admin            -> ${env.services.identity}`);
     console.log(` - /api/restaurants,/menu -> ${env.services.restaurant}`);
+    console.log(` - /api/payments         -> ${env.services.payment}`);
     console.log(` - /api/orders,/cart     -> ${env.services.order}`);
     console.log(` - /api/notifications    -> ${env.services.notification}`);
     console.log(` - /socket.io            -> ${env.services.notification}`);

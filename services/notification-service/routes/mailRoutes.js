@@ -1,8 +1,9 @@
-﻿import express from 'express';
+import express from 'express';
 import {
   sendApprovalStatusEmail,
   sendOrderDeliveredEmail,
-  sendRefundEmail
+  sendRefundEmail,
+  sendPaymentConfirmationEmail
 } from '../services/mailService.js';
 
 const router = express.Router();
@@ -32,6 +33,16 @@ router.post('/send-refund', async (req, res, next) => {
     const { to, customerName, orderId, refundAmount, gatewayName, status } = req.body;
     await sendRefundEmail({ to, customerName, orderId, refundAmount, gatewayName, status });
     return res.json({ success: true, message: 'Refund email sent' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/send-payment-confirmation', async (req, res, next) => {
+  try {
+    const { to, customerName, orderId, amount, currency } = req.body;
+    await sendPaymentConfirmationEmail({ to, customerName, orderId, amount, currency });
+    return res.json({ success: true, message: 'Payment confirmation email sent' });
   } catch (error) {
     next(error);
   }

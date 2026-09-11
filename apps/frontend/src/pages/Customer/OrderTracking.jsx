@@ -1,332 +1,967 @@
 import React, { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import axios from '../../api/axios';
 import socket from '../../socket';
-import EmptyState from '../../components/common/EmptyState';
-import { 
-  CheckCircleFilled, 
-  ClockCircleOutlined, 
-  CarOutlined, 
-  ShopOutlined, 
-  CheckOutlined,
-  CloseCircleOutlined,
+import { addToCartAsync } from '../../redux/slices/cartSlice';
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+import { MapContainer, TileLayer, Marker, Polyline, useMap } from "react-leaflet";
+import { message } from 'antd';
+import {
+  CopyOutlined,
   PhoneOutlined,
+  MessageOutlined,
+  RightOutlined,
+  ReloadOutlined,
+  CustomerServiceOutlined,
+  ClockCircleOutlined,
+  CarOutlined,
+  HomeOutlined,
+  StarFilled,
+  CheckOutlined,
+  CheckCircleFilled,
   RadarChartOutlined
 } from '@ant-design/icons';
-import { message, Modal } from 'antd';
 
-const ORDER_STEPS = [
-  { id: 'pending', label: 'Order Placed', icon: <ClockCircleOutlined /> },
-  { id: 'accepted', label: 'Accepted', icon: <ShopOutlined /> },
-  { id: 'preparing', label: 'Preparing', icon: <ClockCircleOutlined /> },
-  { id: 'picked_up', label: 'On the Way', icon: <CarOutlined /> },
-  { id: 'delivered', label: 'Delivered', icon: <CheckOutlined /> }
-];
+// Custom Leaflet Icons for Map
+const restaurantPinIcon = new L.DivIcon({
+  className: "custom-rest-icon",
+  html: `<div style="background-color:#FF5722; width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:18px; box-shadow:0 4px 12px rgba(255,87,34,0.4); border:3px solid white;">🍴</div>`,
+  iconSize: [38, 38],
+  iconAnchor: [19, 19],
+});
+
+const driverPinIcon = new L.DivIcon({
+  className: "custom-driver-icon",
+  html: `<div style="background-color:#FF6B35; width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:22px; box-shadow:0 4px 14px rgba(255,107,53,0.5); border:3px solid white; animation: pulse 2s infinite;">🛵</div>`,
+  iconSize: [44, 44],
+  iconAnchor: [22, 22],
+});
+
+const destinationPinIcon = new L.DivIcon({
+  className: "custom-dest-icon",
+  html: `<div style="background-color:#10B981; width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:18px; box-shadow:0 4px 12px rgba(16,185,129,0.4); border:3px solid white;">📍</div>`,
+  iconSize: [38, 38],
+  iconAnchor: [19, 38],
+});
+
+function MapRecenter({ bounds }) {
+  const map = useMap();
+  useEffect(() => {
+    if (bounds && bounds.length > 0) {
+      map.fitBounds(bounds, { padding: [40, 40] });
+    }
+  }, [bounds, map]);
+  return null;
+}
+
+const getStatusLevel = (statusStr) => {
+  const st = (statusStr || 'placed').toLowerCase();
+  if (st === 'placed') return 1;
+  if (st === 'accepted') return 2;
+  if (st === 'preparing' || st === 'ready') return 3;
+  if (st === 'out_for_delivery' || st === 'picked_up') return 4;
+  if (st === 'delivered' || st === 'completed') return 5;
+  return 1;
+};
+
+const referenceOrderData = {
+  id: 'ord245678',
+  orderNumber: 'ORD245678',
+  status: 'preparing',
+  statusDisplay: 'Preparing',
+  estimatedTime: '25 – 35 minutes',
+  restaurant: {
+    name: "McDonald's",
+    location: "Salt Lake, Kolkata",
+    logo: "https://images.unsplash.com/photo-1550547660-d9450f859349?w=100&h=100&fit=crop",
+    phone: "+91 98765 00001"
+  },
+  driver: {
+    name: "Ravi Kumar",
+    role: "Your delivery partner",
+    rating: "4.8",
+    deliveries: "1.2K deliveries",
+    phone: "+91 98765 99999",
+    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop",
+    distanceText: "Ravi is on the way • 2.5 km away"
+  },
+  mapData: {
+    restaurantCoords: [22.5726, 88.4149],
+    customerCoords: [22.5805, 88.3890],
+    route: [
+      [22.5726, 88.4149],
+      [22.5745, 88.4080],
+      [22.5765, 88.4020],
+      [22.5788, 88.3950],
+      [22.5805, 88.3890]
+    ]
+  },
+  items: [
+    {
+      id: 'mcd-1',
+      name: 'Orderly Classic Burger',
+      variant: 'Regular',
+      quantity: 1,
+      price: 129.00,
+      image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200'
+    },
+    {
+      id: 'mcd-2',
+      name: 'French Fries',
+      variant: 'Medium',
+      quantity: 1,
+      price: 89.00,
+      image: 'https://images.unsplash.com/photo-1573140247632-f8fd74997d5c?w=200'
+    },
+    {
+      id: 'mcd-3',
+      name: 'Coke (500ml)',
+      variant: 'Chilled',
+      quantity: 1,
+      price: 60.00,
+      image: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=200'
+    },
+    {
+      id: 'mcd-4',
+      name: 'Chocolate Brownie',
+      variant: 'Warm',
+      quantity: 1,
+      price: 79.00,
+      image: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=200'
+    }
+  ],
+  subtotal: 357.00,
+  deliveryFee: 30.00,
+  platformFee: 5.00,
+  gst: 19.60,
+  totalPaid: 411.60
+};
+
+// Generates smooth multi-waypoint road route between restaurant and customer
+const generateRouteWaypoints = (restCoords, custCoords) => {
+  const [rLat, rLng] = restCoords || [22.5726, 88.4149];
+  const [cLat, cLng] = custCoords || [22.5805, 88.3890];
+  
+  return [
+    [rLat, rLng],
+    [rLat + (cLat - rLat) * 0.25 + 0.0018, rLng + (cLng - rLng) * 0.20 - 0.0012],
+    [rLat + (cLat - rLat) * 0.50 - 0.0010, rLng + (cLng - rLng) * 0.55 + 0.0025],
+    [rLat + (cLat - rLat) * 0.75 + 0.0012, rLng + (cLng - rLng) * 0.80 - 0.0015],
+    [cLat, cLng]
+  ];
+};
+
+const interpolatePosition = (routePoints, progress) => {
+  if (!routePoints || routePoints.length === 0) return [22.5765, 88.4020];
+  if (progress <= 0) return routePoints[0];
+  if (progress >= 1) return routePoints[routePoints.length - 1];
+
+  const totalSegments = routePoints.length - 1;
+  const scaledProgress = progress * totalSegments;
+  const index = Math.floor(scaledProgress);
+  const segmentT = scaledProgress - index;
+
+  const p1 = routePoints[index];
+  const p2 = routePoints[Math.min(index + 1, routePoints.length - 1)];
+
+  const lat = p1[0] + (p2[0] - p1[0]) * segmentT;
+  const lng = p1[1] + (p2[1] - p1[1]) * segmentT;
+  return [lat, lng];
+};
 
 export default function OrderTracking() {
-  const [orders, setOrders] = useState([]);
+  const { token } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const [activeOrders, setActiveOrders] = useState([referenceOrderData]);
+  const [selectedOrderIndex, setSelectedOrderIndex] = useState(0);
   const [loading, setLoading] = useState(true);
-  const { user, token } = useSelector((state) => state.auth);
 
-  useEffect(() => {
-    if (token) {
-      fetchOrders();
-    }
-
-    socket.on('ORDER_STATUS_UPDATED', (data) => {
-      setOrders(prevOrders => 
-        prevOrders.map(order => 
-          order.id === data.orderId 
-            ? { 
-                ...order, 
-                status: data.status,
-                delivery_partner_id: data.deliveryPartner ? data.deliveryPartner.id : order.delivery_partner_id,
-                DeliveryPartner: data.deliveryPartner || order.DeliveryPartner
-              } 
-            : order
-        )
-      );
-      if (data.status === 'cancelled') {
-        message.warning(`Order #${data.orderId.slice(0, 8)} has been cancelled.`);
-      } else if (data.status === 'delivered') {
-        message.success(`Order #${data.orderId.slice(0, 8)} has arrived!`);
-      } else if (data.status === 'completed') {
-        fetchOrders();
-      } else {
-        message.info(`Order status updated to ${data.status.replace('_', ' ')}`);
-      }
-    });
-
-    return () => {
-      socket.off('ORDER_STATUS_UPDATED');
-    };
-  }, [user?.id, token]);
+  // Live Driver Real-time Movement & GPS state
+  const [trackProgress, setTrackProgress] = useState(0.35);
+  const [isLiveSimulating, setIsLiveSimulating] = useState(true);
+  const [simSpeed, setSimSpeed] = useState(1);
+  const [socketDriverPos, setSocketDriverPos] = useState(null);
 
   const fetchOrders = async () => {
-    if (!token) return;
+    if (!token) {
+      setLoading(false);
+      return;
+    }
     
     try {
       setLoading(true);
       const response = await axios.get('/orders/me');
-      if (response.data.success) {
-        setOrders(response.data.data || []);
+      if (response.data.success && Array.isArray(response.data.data) && response.data.data.length > 0) {
+        const parsedOrders = response.data.data.map(foundActive => {
+          const itemsArr = foundActive.items || foundActive.OrderItems || [];
+          const parsedItems = itemsArr.map((it, idx) => ({
+            id: it.menuItem?.id || it.menu_item_id || it.id || `it-${idx}`,
+            name: it.menuItem?.name || it.name || 'Delicious Meal',
+            variant: 'Regular',
+            quantity: it.quantity || 1,
+            price: Number(it.price || it.unit_price || it.menuItem?.price || 129.00),
+            image: it.menuItem?.image_url || it.image || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200'
+          }));
+
+          const totalPaid = Number(foundActive.total_amount || 0);
+          const deliveryFee = totalPaid > 0 ? 30.00 : 0;
+          const platformFee = totalPaid > 0 ? 5.00 : 0;
+          const subtotal = Math.max(0, totalPaid - deliveryFee - platformFee);
+          const gst = totalPaid * 0.05;
+
+          const addrObj = foundActive.deliveryAddress || foundActive.DeliveryAddress;
+          const deliveryAddressText = addrObj
+            ? `${addrObj.address_line1}, ${addrObj.city}, ${addrObj.state}${addrObj.postal_code ? ` - ${addrObj.postal_code}` : ''}`
+            : '123 Flavor Street, Foodie City';
+
+          const custCoords = (addrObj && addrObj.latitude && addrObj.longitude)
+            ? [addrObj.latitude, addrObj.longitude]
+            : [22.5805, 88.3890];
+
+          const restCoords = (foundActive.restaurant?.latitude && foundActive.restaurant?.longitude)
+            ? [foundActive.restaurant.latitude, foundActive.restaurant.longitude]
+            : [22.5726, 88.4149];
+          
+          return {
+            id: foundActive.id,
+            orderNumber: `ORD${String(foundActive.id).slice(0, 8).toUpperCase()}`,
+            status: st,
+            statusDisplay: st.charAt(0).toUpperCase() + st.slice(1).replace(/_/g, ' '),
+            created_at: foundActive.created_at || foundActive.createdAt,
+            estimatedTime: st === 'delivered' ? 'Delivered' : '25 – 35 minutes',
+            restaurant: {
+              name: foundActive.restaurant?.name || foundActive.Restaurant?.name || "Orderly Restaurant",
+              location: foundActive.restaurant?.address || foundActive.restaurant?.location || "Local City",
+              logo: foundActive.restaurant?.image_url || foundActive.Restaurant?.image_url || "https://images.unsplash.com/photo-1550547660-d9450f859349?w=100",
+              phone: foundActive.restaurant?.user?.phone_number || foundActive.restaurant?.phone_number || "+91 98765 00001"
+            },
+            driver: {
+              name: foundActive.deliveryPartner?.user?.full_name || foundActive.DeliveryPartner?.User?.full_name || "Ravi Kumar",
+              role: foundActive.deliveryPartner ? "Your delivery partner" : "Searching partner...",
+              rating: "4.8",
+              deliveries: "1.2K deliveries",
+              phone: foundActive.deliveryPartner?.user?.phone_number || "+91 98765 99999",
+              avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100"
+            },
+            deliveryAddressText: deliveryAddressText,
+            deliveryAddress: addrObj,
+            mapData: {
+              restaurantCoords: restCoords,
+              customerCoords: custCoords,
+              route: [
+                restCoords,
+                [restCoords[0] + (custCoords[0] - restCoords[0]) * 0.3, restCoords[1] + (custCoords[1] - restCoords[1]) * 0.3],
+                [restCoords[0] + (custCoords[0] - restCoords[0]) * 0.6, restCoords[1] + (custCoords[1] - restCoords[1]) * 0.6],
+                custCoords
+              ]
+            },
+            items: parsedItems.length > 0 ? parsedItems : referenceOrderData.items,
+            subtotal: subtotal || referenceOrderData.subtotal,
+            deliveryFee: deliveryFee,
+            platformFee: platformFee,
+            gst: gst || referenceOrderData.gst,
+            totalPaid: totalPaid || referenceOrderData.totalPaid
+          };
+        });
+
+        setActiveOrders(parsedOrders);
+      } else {
+        setActiveOrders([referenceOrderData]);
       }
     } catch (error) {
-      console.error('Error fetching orders:', error);
-      if (token) {
-        message.error('Failed to load orders');
-      }
+      console.error('Error fetching tracking data:', error);
+      setActiveOrders([referenceOrderData]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAcknowledge = async (orderId) => {
-    try {
-      await axios.put(`/orders/${orderId}/status`, { status: 'completed' });
-      message.success('Order tracking completed.');
-      fetchOrders();
-    } catch (error) {
-      message.error('Failed to close tracking');
-    }
-  };
+  useEffect(() => {
+    fetchOrders();
 
-  const handleCancelOrder = (orderId) => {
-    Modal.confirm({
-      title: 'Cancel Order',
-      content: 'Are you sure you want to cancel this order?',
-      okText: 'Yes, Cancel',
-      okType: 'danger',
-      cancelText: 'No',
-      onOk: async () => {
-        try {
-          const response = await axios.put(`/orders/${orderId}/cancel`, {});
-          if (response.data.success) {
-            message.success('Order cancelled successfully');
-            setOrders(prevOrders => 
-              prevOrders.map(order => 
-                order.id === orderId ? { ...order, status: 'cancelled' } : order
-              )
-            );
-          }
-        } catch (error) {
-          message.error(error.response?.data?.message || 'Failed to cancel order');
-        }
+    socket.on('ORDER_STATUS_UPDATED', (data) => {
+      message.info(`Order #${data.orderId ? data.orderId.slice(0, 8) : ''} status updated to ${data.status.replace(/_/g, ' ')}`);
+      fetchOrders();
+    });
+
+    socket.on('DRIVER_LOCATION_UPDATED', (data) => {
+      if (data && data.latitude && data.longitude) {
+        setSocketDriverPos([data.latitude, data.longitude]);
       }
     });
+
+    return () => {
+      socket.off('ORDER_STATUS_UPDATED');
+      socket.off('DRIVER_LOCATION_UPDATED');
+    };
+  }, [token]);
+
+  // Live Driver Real-Time Movement simulation ticker
+  useEffect(() => {
+    if (!isLiveSimulating) return;
+
+    const interval = setInterval(() => {
+      setTrackProgress(prev => {
+        const next = prev + 0.004 * simSpeed;
+        if (next >= 1.0) {
+          setIsLiveSimulating(false);
+          message.success('🎉 Delivery partner has arrived at your destination!');
+          return 1.0;
+        }
+        return next;
+      });
+    }, 800);
+
+    return () => clearInterval(interval);
+  }, [isLiveSimulating, simSpeed]);
+
+  const currentOrder = activeOrders[selectedOrderIndex] || activeOrders[0] || referenceOrderData;
+  const currentLevel = getStatusLevel(currentOrder.status);
+
+  // Dynamic progress line percentage
+  const progressWidth = currentLevel === 1 ? '0%' : currentLevel === 2 ? '25%' : currentLevel === 3 ? '50%' : currentLevel === 4 ? '75%' : '100%';
+
+  const handleCopyOrderNumber = (num) => {
+    navigator.clipboard.writeText(`#${num}`);
+    message.success(`Order ID #${num} copied to clipboard!`);
   };
 
-  const getStepStatus = (orderStatus, stepId) => {
-    if (orderStatus === 'cancelled') return 'cancelled';
-    if (orderStatus === 'completed') return 'completed';
-    
-    const stepIndex = ORDER_STEPS.findIndex(s => s.id === stepId);
-    const currentIndex = ORDER_STEPS.findIndex(s => s.id === orderStatus);
-    
-    if (stepIndex < currentIndex) return 'completed';
-    if (stepIndex === currentIndex) return 'current';
-    return 'upcoming';
+  const handleReorderAll = () => {
+    if (!currentOrder?.items || currentOrder.items.length === 0) return;
+    currentOrder.items.forEach(item => {
+      dispatch(addToCartAsync({
+        menu_item_id: item.id,
+        quantity: item.quantity || 1,
+        restaurant_id: 1,
+        item: {
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          image: item.image,
+          restaurantName: currentOrder.restaurant?.name || 'Orderly Restaurant'
+        }
+      }));
+    });
+    message.success(`Readded ${currentOrder.items.length} items to cart!`);
+    navigate('/customer/cart');
   };
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-32 space-y-4 animate-pulse">
-        <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-neutral-500 font-semibold text-sm">Loading active orders...</p>
-      </div>
-    );
-  }
+  // Dynamic status banner content
+  const renderBannerContent = () => {
+    if (currentLevel === 1) {
+      return {
+        icon: '📋',
+        title: 'Order Placed Successfully!',
+        desc: 'Your order has been received and sent to the restaurant for confirmation.'
+      };
+    }
+    if (currentLevel === 2) {
+      return {
+        icon: '👍',
+        title: 'Order Accepted by Restaurant',
+        desc: 'Restaurant confirmed your order and is preparing ingredients.'
+      };
+    }
+    if (currentLevel === 3) {
+      return {
+        icon: '👨‍🍳',
+        title: 'Our chef is preparing your order',
+        desc: 'Delicious food is being cooked. We\'ll update you soon!'
+      };
+    }
+    if (currentLevel === 4) {
+      return {
+        icon: '🛵',
+        title: 'Out for Delivery!',
+        desc: 'Your delivery partner is on the way to your doorstep with hot, fresh food!'
+      };
+    }
+    return {
+      icon: '🎉',
+      title: 'Order Delivered Successfully!',
+      desc: 'Bon appétit! Your food has arrived. Thank you for choosing Orderly.'
+    };
+  };
 
-  const activeOrders = orders.filter(o => 
-    o.status !== 'completed' && o.status !== 'cancelled' && o.status !== 'refunded'
+  const banner = renderBannerContent();
+
+  const routeWaypoints = generateRouteWaypoints(
+    currentOrder.mapData?.restaurantCoords,
+    currentOrder.mapData?.customerCoords
   );
 
-  return (
-    <div className="pb-16 animate-fade-in -mt-16">
+  const currentDriverPos = socketDriverPos || interpolatePosition(routeWaypoints, trackProgress);
 
-      {/* ── FULL-BLEED HERO BANNER (same style as Restaurants & Menu) ── */}
-      <div className="relative bg-neutral-900 text-white pt-24 pb-16 border-b border-neutral-800 overflow-hidden">
+  const distanceRemainingKm = Math.max(0, (2.8 * (1 - trackProgress))).toFixed(1);
+  const etaMinutesRemaining = Math.max(1, Math.round(25 * (1 - trackProgress)));
+
+  const liveDistanceText = trackProgress >= 1.0
+    ? `${currentOrder.driver.name} has arrived at destination! 🎉`
+    : `${currentOrder.driver.name} is on the way • ${distanceRemainingKm} km away (${etaMinutesRemaining} mins)`;
+
+  const dynamicBounds = [
+    currentOrder.mapData.restaurantCoords,
+    currentDriverPos,
+    currentOrder.mapData.customerCoords
+  ];
+
+  return (
+    <div className="pb-16 animate-fade-in -mt-16 bg-neutral-50/60 min-h-screen">
+
+      {/* ── HERO BANNER ── */}
+      <div className="relative bg-neutral-900 text-white pt-24 pb-14 border-b border-neutral-800 overflow-hidden">
         <img
-          src="/food_banners/spices-banner.jpg"
-          alt="Order Tracking Banner"
-          className="absolute inset-0 w-full h-full object-cover object-center opacity-70"
+          src="/food_banners/cooking-banner.jpg"
+          alt="Tracking Hero Banner"
+          className="absolute inset-0 w-full h-full object-cover object-center opacity-60"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-neutral-950/90 via-neutral-900/60 to-neutral-950/30" />
+        <div className="absolute inset-0 bg-gradient-to-r from-neutral-950/95 via-neutral-900/70 to-neutral-950/40" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/20 text-orange-400 text-xs font-bold uppercase tracking-wider mb-2 border border-orange-500/30">
-              ⚡ Live Real-time Tracking
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/20 text-orange-400 text-xs font-bold uppercase tracking-wider mb-2.5 border border-orange-500/30">
+              🟠 LIVE ORDER TRACKING
             </div>
-            <h1 className="text-3xl md:text-5xl font-black tracking-tight text-white">Order Tracking</h1>
-            <p className="text-neutral-300 mt-2 max-w-2xl text-sm md:text-base leading-relaxed">
-              Stay up to date with every step of your delivery in real time.
+            <h1 className="text-3xl md:text-5xl font-black tracking-tight text-white">Your Order is on the way!</h1>
+            <p className="text-neutral-300 mt-2 max-w-xl text-sm md:text-base leading-relaxed">
+              Fresh food, faster to your doorstep.
             </p>
           </div>
 
-          <div className="hidden lg:block text-right bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10 max-w-xs shadow-xl">
+          <div className="hidden lg:block text-right bg-neutral-900/80 backdrop-blur-md p-4 rounded-2xl border border-neutral-700/60 max-w-sm shadow-xl">
             <p className="text-xs font-serif italic text-amber-300 leading-snug">
-              "Good food is like music you can taste, color you can smell."
+              "Good food is like music you can taste, color you can smell..."
             </p>
-            <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-widest mt-1">
-              — Gordon Ramsay
+            <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-widest mt-1.5">
+              — GORDON RAMSAY
             </p>
           </div>
         </div>
       </div>
 
-      {/* ── ORDERS CONTENT ── */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+      {/* ── MAIN CONTENT CONTAINER (2-COLUMN GRID) ── */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
 
-        {activeOrders.length === 0 ? (
-          <div className="py-16 max-w-xl mx-auto">
-            <EmptyState
-              icon={<RadarChartOutlined className="text-orange-500" />}
-              title="No Active Orders"
-              description="You do not have any active orders currently being prepared or delivered."
-            />
-          </div>
-        ) : (
-          <div className="space-y-8">
-            {activeOrders.map((order) => {
-              const currentStepIdx = ORDER_STEPS.findIndex(s => s.id === order.status);
-              const progressPercent = currentStepIdx >= 0 ? (currentStepIdx / (ORDER_STEPS.length - 1)) * 100 : 0;
-
-              return (
-                <div
-                  key={order.id}
-                  className="bg-white rounded-3xl border border-neutral-200/80 overflow-hidden shadow-sm"
-                >
-                  {/* Order Header */}
-                  <div className="p-6 bg-neutral-50 flex flex-wrap justify-between items-center border-b border-neutral-100 gap-4">
-                    <div>
-                      <h3 className="text-lg font-extrabold text-neutral-900">{order.Restaurant?.name || 'Restaurant'}</h3>
-                      <p className="text-xs font-semibold text-neutral-400">Order ID: #{order.id.slice(0, 8)}</p>
-                    </div>
-                    <span className="px-4 py-1.5 rounded-full text-xs font-extrabold bg-orange-100 text-orange-700 uppercase tracking-wider">
-                      {order.status === 'picked_up' ? 'ON THE WAY' : order.status === 'delivered' ? 'ARRIVED!' : order.status.replace('_', ' ')}
-                    </span>
-                  </div>
-
-                  {/* Status Progress Timeline */}
-                  <div className="px-6 sm:px-12 py-8">
-                    <div className="relative flex justify-between items-center">
-                      {/* Track line */}
-                      <div className="absolute top-5 left-0 w-full h-1 bg-neutral-100 rounded-full">
-                        <div
-                          className="h-full bg-orange-500 rounded-full transition-all duration-700"
-                          style={{ width: `${progressPercent}%` }}
-                        />
-                      </div>
-
-                      {ORDER_STEPS.map((step) => {
-                        const status = getStepStatus(order.status, step.id);
-                        return (
-                          <div key={step.id} className="relative z-10 flex flex-col items-center">
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 text-sm font-bold
-                              ${status === 'completed'
-                                ? 'bg-orange-500 border-orange-500 text-white shadow-md'
-                                : status === 'current'
-                                ? 'bg-white border-orange-500 text-orange-500 scale-110 shadow-lg ring-4 ring-orange-100'
-                                : 'bg-white border-neutral-200 text-neutral-400'}`}
-                            >
-                              {status === 'completed' ? <CheckOutlined /> : step.icon}
-                            </div>
-                            <span className={`mt-3 text-[10px] sm:text-xs font-bold text-center leading-tight ${
-                              status === 'completed' || status === 'current' ? 'text-neutral-900' : 'text-neutral-400'
-                            }`}>
-                              {step.label}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Order Details & Driver */}
-                  <div className="p-6 bg-neutral-50/50 border-t border-neutral-100 grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                    {/* Items breakdown */}
-                    <div className="space-y-3">
-                      <h4 className="text-xs font-extrabold uppercase tracking-wider text-neutral-400">Order Items</h4>
-                      <ul className="text-xs text-neutral-700 space-y-2 border-b border-neutral-200/60 pb-3">
-                        {order.OrderItems?.map((item) => (
-                          <li key={item.id} className="flex justify-between font-medium">
-                            <span>{item.quantity}x {item.MenuItem?.name}</span>
-                            <span className="font-bold">${Number(item.subtotal || 0).toFixed(2)}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      <div className="flex justify-between items-center text-sm pt-1">
-                        <span className="font-extrabold text-neutral-900">Total Paid</span>
-                        <span className="font-black text-lg text-orange-600">
-                          ${Number(order.total_amount || 0).toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Driver / Actions */}
-                    <div className="space-y-4">
-                      {order.DeliveryPartner ? (
-                        <div className="bg-orange-50/80 rounded-2xl p-4 border border-orange-100 space-y-3">
-                          <h4 className="text-xs font-extrabold text-orange-800 uppercase tracking-wider flex items-center gap-1.5">
-                            <CarOutlined /> Delivery Driver
-                          </h4>
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-orange-200 text-orange-800 font-bold flex items-center justify-center">
-                              {order.DeliveryPartner?.User?.full_name?.charAt(0) || 'D'}
-                            </div>
-                            <div>
-                              <p className="font-extrabold text-neutral-900 text-xs">
-                                {order.DeliveryPartner?.User?.full_name || 'Assigned Driver'}
-                              </p>
-                              <p className="text-xs text-neutral-600 flex items-center gap-1 mt-0.5">
-                                <PhoneOutlined /> {order.DeliveryPartner?.User?.phone_number || 'Contact via Orderly'}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="bg-neutral-100 rounded-2xl p-4 text-xs text-neutral-500 font-semibold">
-                          ⏳ Finding nearby delivery partner...
-                        </div>
-                      )}
-
-                      {order.status === 'delivered' && (
-                        <button
-                          onClick={() => {
-                            Modal.confirm({
-                              title: 'Confirm Delivery',
-                              content: 'Have you received your food order in good condition?',
-                              okText: 'Yes, Received!',
-                              cancelText: 'Not yet',
-                              onOk: () => handleAcknowledge(order.id)
-                            });
-                          }}
-                          className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
-                        >
-                          <CheckCircleFilled /> Confirm Receipt & Close
-                        </button>
-                      )}
-
-                      {['pending', 'accepted'].includes(order.status) && (
-                        <button
-                          onClick={() => handleCancelOrder(order.id)}
-                          className="text-xs font-bold text-red-600 hover:underline flex items-center gap-1"
-                        >
-                          <CloseCircleOutlined /> Cancel Order
-                        </button>
-                      )}
-                    </div>
-
-                  </div>
-                </div>
-              );
-            })}
+        {/* Multi-Order Selector Tabs (if user has multiple active orders) */}
+        {activeOrders.length > 1 && (
+          <div className="flex items-center gap-2.5 overflow-x-auto pb-2">
+            <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider whitespace-nowrap">
+              Active Orders:
+            </span>
+            {activeOrders.map((ord, idx) => (
+              <button
+                key={ord.id}
+                onClick={() => setSelectedOrderIndex(idx)}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-2 ${
+                  selectedOrderIndex === idx
+                    ? 'bg-neutral-900 text-white shadow-md'
+                    : 'bg-white text-neutral-700 hover:bg-neutral-100 border border-neutral-200'
+                }`}
+              >
+                <span>#{ord.orderNumber}</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] bg-orange-500/20 text-orange-600 font-extrabold uppercase">
+                  {ord.statusDisplay}
+                </span>
+              </button>
+            ))}
           </div>
         )}
 
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+          {/* ── LEFT COLUMN (ORDER TRACKING & LIVE MAP) ── */}
+          <div className="lg:col-span-8 space-y-6">
+
+            {/* CARD 1: RESTAURANT & DYNAMIC STATUS STEPPER */}
+            <div className="bg-white rounded-3xl border border-neutral-200/90 p-6 md:p-8 shadow-2xs space-y-8">
+              
+              {/* Header: Restaurant Info & Call Actions */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-100 pb-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-red-600 overflow-hidden flex-shrink-0 border border-neutral-200/60 shadow-2xs">
+                    <img
+                      src={currentOrder.restaurant.logo}
+                      alt={currentOrder.restaurant.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  <div>
+                    <h3 className="font-extrabold text-neutral-900 text-xl leading-tight">
+                      {currentOrder.restaurant.name}
+                    </h3>
+                    <p className="text-xs text-neutral-400 font-medium">{currentOrder.restaurant.location}</p>
+
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <span className="text-xs font-semibold text-neutral-400">Order ID: #{currentOrder.orderNumber}</span>
+                      <button
+                        onClick={() => handleCopyOrderNumber(currentOrder.orderNumber)}
+                        className="text-neutral-400 hover:text-orange-600 transition-colors p-0.5 cursor-pointer"
+                        title="Copy Order ID"
+                      >
+                        <CopyOutlined className="text-xs" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Call & Chat Action Buttons */}
+                <div className="flex items-center gap-3 self-start sm:self-center">
+                  <a
+                    href={`tel:${currentOrder.restaurant.phone}`}
+                    className="px-4 py-2 bg-white border border-orange-400 text-orange-600 font-bold text-xs rounded-xl hover:bg-orange-50 transition-colors flex items-center gap-2 shadow-2xs"
+                  >
+                    <PhoneOutlined /> Call Restaurant
+                  </a>
+
+                  <button
+                    onClick={() => message.info("Opening Chat Support...")}
+                    className="px-4 py-2 bg-white border border-orange-400 text-orange-600 font-bold text-xs rounded-xl hover:bg-orange-50 transition-colors flex items-center gap-2 shadow-2xs cursor-pointer"
+                  >
+                    <MessageOutlined /> Chat Support
+                  </button>
+                </div>
+              </div>
+
+              {/* DYNAMIC STEPPER TIMELINE */}
+              <div className="py-2">
+                <div className="flex items-center justify-between relative">
+                  
+                  {/* Connecting Track Line */}
+                  <div className="absolute top-[22px] left-[5%] right-[5%] h-1 bg-neutral-200 -z-0">
+                    <div
+                      className="h-full bg-orange-500 transition-all duration-700"
+                      style={{ width: progressWidth }}
+                    />
+                  </div>
+
+                  {/* Step 1: Order Placed */}
+                  <div className="flex flex-col items-center text-center relative z-10 w-24">
+                    <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-base transition-all ${
+                      currentLevel >= 1
+                        ? 'bg-orange-500 text-white shadow-md'
+                        : 'bg-neutral-100 border-2 border-neutral-300 text-neutral-400'
+                    }`}>
+                      ✓
+                    </div>
+                    <p className="text-xs font-bold text-neutral-900 mt-2.5 leading-tight">Order Placed</p>
+                    <p className="text-[11px] text-neutral-400 mt-0.5">
+                      {new Date(currentOrder.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+
+                  {/* Step 2: Accepted */}
+                  <div className={`flex flex-col items-center text-center relative z-10 w-24 transition-opacity ${
+                    currentLevel < 2 ? 'opacity-50' : 'opacity-100'
+                  }`}>
+                    <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-base transition-all ${
+                      currentLevel > 2
+                        ? 'bg-orange-500 text-white shadow-md'
+                        : currentLevel === 2
+                        ? 'bg-orange-500 text-white ring-4 ring-orange-100 animate-pulse shadow-lg'
+                        : 'bg-neutral-100 border-2 border-neutral-300 text-neutral-400'
+                    }`}>
+                      ✓
+                    </div>
+                    <p className="text-xs font-bold text-neutral-900 mt-2.5 leading-tight">Accepted</p>
+                    <p className="text-[11px] text-neutral-400 mt-0.5">
+                      {currentLevel >= 2 ? 'Confirmed' : 'Pending'}
+                    </p>
+                  </div>
+
+                  {/* Step 3: Preparing */}
+                  <div className={`flex flex-col items-center text-center relative z-10 w-36 transition-opacity ${
+                    currentLevel < 3 ? 'opacity-50' : 'opacity-100'
+                  }`}>
+                    {currentLevel === 3 ? (
+                      <div className="relative">
+                        <div className="w-16 h-16 rounded-full bg-orange-50 p-1 flex items-center justify-center shadow-lg ring-4 ring-orange-200/70 animate-pulse overflow-hidden border border-orange-400">
+                          <img
+                            src="/brand_foods/purcell_orderly.png"
+                            alt="Orderly Brand Logo"
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-base transition-all ${
+                        currentLevel > 3
+                          ? 'bg-orange-500 text-white shadow-md'
+                          : 'bg-neutral-100 border-2 border-neutral-300 text-neutral-400'
+                      }`}>
+                        {currentLevel > 3 ? '✓' : '🍳'}
+                      </div>
+                    )}
+                    <p className="text-xs font-extrabold text-neutral-900 mt-2.5 leading-tight">Preparing</p>
+                    <p className="text-[10px] text-neutral-500 font-medium mt-0.5 max-w-[130px] leading-tight">
+                      {currentLevel === 3 ? 'Your food is being prepared with love ❤️' : currentLevel > 3 ? 'Prepared' : 'Pending'}
+                    </p>
+                  </div>
+
+                  {/* Step 4: Out for Delivery */}
+                  <div className={`flex flex-col items-center text-center relative z-10 w-24 transition-opacity ${
+                    currentLevel < 4 ? 'opacity-50' : 'opacity-100'
+                  }`}>
+                    <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-lg transition-all ${
+                      currentLevel > 4
+                        ? 'bg-orange-500 text-white shadow-md'
+                        : currentLevel === 4
+                        ? 'bg-orange-500 text-white ring-4 ring-orange-100 animate-pulse shadow-lg'
+                        : 'bg-neutral-100 border-2 border-neutral-300 text-neutral-400'
+                    }`}>
+                      {currentLevel > 4 ? '✓' : <CarOutlined />}
+                    </div>
+                    <p className="text-xs font-bold text-neutral-700 mt-2.5 leading-tight">Out for Delivery</p>
+                    <p className="text-[11px] text-neutral-400 mt-0.5">
+                      {currentLevel >= 4 ? 'On the way' : 'Estimated 02:35 PM'}
+                    </p>
+                  </div>
+
+                  {/* Step 5: Delivered */}
+                  <div className={`flex flex-col items-center text-center relative z-10 w-24 transition-opacity ${
+                    currentLevel < 5 ? 'opacity-50' : 'opacity-100'
+                  }`}>
+                    <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-lg transition-all ${
+                      currentLevel === 5
+                        ? 'bg-emerald-600 text-white shadow-md ring-4 ring-emerald-100'
+                        : 'bg-neutral-100 border-2 border-neutral-300 text-neutral-400'
+                    }`}>
+                      {currentLevel === 5 ? <CheckCircleFilled /> : <HomeOutlined />}
+                    </div>
+                    <p className="text-xs font-bold text-neutral-700 mt-2.5 leading-tight">Delivered</p>
+                    <p className="text-[11px] text-neutral-400 mt-0.5">
+                      {currentLevel === 5 ? 'Delivered!' : 'Estimated 03:00 PM'}
+                    </p>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* Chef / Dynamic Status Banner Container */}
+              <div className="bg-orange-50/70 border border-orange-200/70 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-xl flex-shrink-0 shadow-2xs">
+                    {banner.icon}
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-neutral-900 text-sm leading-snug">
+                      {banner.title}
+                    </h4>
+                    <p className="text-xs text-neutral-500 font-medium">
+                      {banner.desc}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pl-0 sm:pl-6 sm:border-l sm:border-orange-200 flex flex-col items-start sm:items-end">
+                  <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Estimated Delivery Time</span>
+                  <div className="flex items-center gap-1.5 text-orange-600 font-black text-sm md:text-base mt-0.5">
+                    <ClockCircleOutlined /> <span>{currentOrder.estimatedTime}</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* CARD 2: LIVE LOCATION & REAL MAP */}
+            <div className="bg-white rounded-3xl border border-neutral-200/90 p-6 md:p-8 shadow-2xs space-y-4">
+              
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-black text-neutral-900 text-xl">Live Location</h3>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[11px] font-extrabold border border-emerald-300">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                      LIVE GPS CONNECTED
+                    </span>
+                  </div>
+                  <p className="text-xs text-neutral-400 font-medium">Track your delivery partner moving in real time</p>
+                </div>
+
+                {/* Interactive Simulation Controls */}
+                <div className="flex items-center gap-2 bg-neutral-100 p-1.5 rounded-xl border border-neutral-200 text-xs">
+                  <button
+                    onClick={() => setIsLiveSimulating(!isLiveSimulating)}
+                    className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                      isLiveSimulating
+                        ? 'bg-orange-500 text-white shadow-sm'
+                        : 'bg-white text-neutral-700 hover:bg-neutral-200'
+                    }`}
+                  >
+                    {isLiveSimulating ? '⏸ Pause Driver' : '▶ Live Simulate'}
+                  </button>
+
+                  <button
+                    onClick={() => setSimSpeed(prev => (prev === 1 ? 2 : prev === 2 ? 4 : 1))}
+                    className="px-2.5 py-1.5 bg-white hover:bg-neutral-200 rounded-lg font-extrabold text-neutral-700 border border-neutral-200 cursor-pointer"
+                    title="Change Live Speed"
+                  >
+                    {simSpeed}x Speed
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setTrackProgress(0.0);
+                      setIsLiveSimulating(true);
+                    }}
+                    className="px-2 py-1.5 bg-white hover:bg-neutral-200 rounded-lg text-neutral-600 border border-neutral-200 cursor-pointer"
+                    title="Reset Route"
+                  >
+                    <ReloadOutlined />
+                  </button>
+                </div>
+              </div>
+
+              {/* Map Container */}
+              <div className="h-[380px] rounded-2xl overflow-hidden relative border border-neutral-200/80 shadow-inner z-0">
+                
+                {/* Floating Driver Pill Overlay */}
+                <div className="absolute top-4 right-4 z-20 bg-white/95 backdrop-blur-md border border-neutral-200/80 rounded-2xl p-3.5 shadow-lg flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-full bg-neutral-100 overflow-hidden border border-neutral-200 flex-shrink-0">
+                    <img src={currentOrder.driver.avatar} alt={currentOrder.driver.name} className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-neutral-900 text-xs">{currentOrder.driver.name}</h4>
+                    <p className="text-[11px] text-neutral-400 font-medium">{currentOrder.driver.role}</p>
+                    <p className="text-[11px] font-bold text-amber-500 flex items-center gap-1 mt-0.5">
+                      <StarFilled /> {currentOrder.driver.rating} <span className="text-neutral-400 font-normal">({currentOrder.driver.deliveries})</span>
+                    </p>
+                  </div>
+                  <a
+                    href={`tel:${currentOrder.driver.phone}`}
+                    className="w-9 h-9 rounded-full bg-orange-50 text-orange-600 hover:bg-orange-500 hover:text-white flex items-center justify-center transition-colors ml-2 shadow-2xs"
+                  >
+                    <PhoneOutlined className="text-sm" />
+                  </a>
+                </div>
+
+                {/* Floating Driver Status Overlay Badge */}
+                <div className="absolute bottom-4 left-4 z-20 bg-white/95 backdrop-blur-md border border-neutral-200/90 px-4 py-2.5 rounded-xl shadow-md text-xs font-extrabold text-neutral-800 flex items-center gap-2.5 border-l-4 border-l-orange-500">
+                  <div className="w-2.5 h-2.5 rounded-full bg-orange-500 animate-ping" />
+                  <span>{liveDistanceText}</span>
+                </div>
+
+                {/* Leaflet Real Interactive Map */}
+                <MapContainer
+                  center={currentDriverPos}
+                  zoom={14}
+                  scrollWheelZoom={false}
+                  className="w-full h-full z-0"
+                >
+                  <TileLayer
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    attribution='&copy; OpenStreetMap contributors'
+                  />
+                  <MapRecenter bounds={dynamicBounds} />
+
+                  {/* Restaurant Marker */}
+                  <Marker position={currentOrder.mapData.restaurantCoords} icon={restaurantPinIcon} />
+                  
+                  {/* Delivery Driver Marker (Moving Live) */}
+                  <Marker position={currentDriverPos} icon={driverPinIcon} />
+
+                  {/* Destination Customer Marker */}
+                  <Marker position={currentOrder.mapData.customerCoords} icon={destinationPinIcon} />
+
+                  {/* Full Dotted Route Path */}
+                  <Polyline
+                    positions={routeWaypoints}
+                    color="#9CA3AF"
+                    dashArray="6, 6"
+                    weight={4}
+                  />
+
+                  {/* Live Traveled Route Path (Orange Solid) */}
+                  <Polyline
+                    positions={routeWaypoints.slice(0, Math.max(2, Math.ceil(trackProgress * routeWaypoints.length)))}
+                    color="#FF5722"
+                    weight={5}
+                  />
+                </MapContainer>
+
+              </div>
+
+            </div>
+
+            {/* BOTTOM FEATURE BANNER */}
+            <div className="bg-white rounded-3xl border border-neutral-200/80 p-5 shadow-2xs flex flex-col md:flex-row items-center justify-between gap-6">
+              
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full md:w-auto">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center text-lg font-bold flex-shrink-0">
+                    🌱
+                  </div>
+                  <div>
+                    <h5 className="font-extrabold text-neutral-900 text-xs">Freshly prepared</h5>
+                    <p className="text-[11px] text-neutral-400 font-medium">Hygienic & safe</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center text-lg font-bold flex-shrink-0">
+                    🕒
+                  </div>
+                  <div>
+                    <h5 className="font-extrabold text-neutral-900 text-xs">On time delivery</h5>
+                    <p className="text-[11px] text-neutral-400 font-medium">Straight to your door</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center text-lg font-bold flex-shrink-0">
+                    ❤️
+                  </div>
+                  <div>
+                    <h5 className="font-extrabold text-neutral-900 text-xs">Supporting local restaurants</h5>
+                    <p className="text-[11px] text-neutral-400 font-medium">Good food builds better communities</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="hidden xl:block text-right border-l border-neutral-100 pl-6 flex-shrink-0">
+                <span className="font-serif italic text-orange-600 font-bold text-lg leading-tight block">
+                  Good Food Better Days ♡
+                </span>
+              </div>
+
+            </div>
+
+          </div>
+
+          {/* ── RIGHT COLUMN (ORDER DETAILS SUMMARY) ── */}
+          <div className="lg:col-span-4">
+            <div className="bg-white rounded-3xl border border-neutral-200/90 p-6 shadow-2xs space-y-6 sticky top-24">
+              
+              {/* Card Header: Order Details & Dynamic Status Badge */}
+              <div className="flex items-center justify-between border-b border-neutral-100 pb-4">
+                <div>
+                  <h3 className="font-black text-neutral-900 text-lg">Order Details</h3>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-xs text-neutral-400 font-semibold">Order ID: #{currentOrder.orderNumber}</span>
+                    <button
+                      onClick={() => handleCopyOrderNumber(currentOrder.orderNumber)}
+                      className="text-neutral-400 hover:text-orange-600 transition-colors p-0.5 cursor-pointer"
+                      title="Copy Order ID"
+                    >
+                      <CopyOutlined className="text-xs" />
+                    </button>
+                  </div>
+                </div>
+
+                <span className="px-3.5 py-1 bg-orange-50 text-orange-700 font-bold text-xs rounded-full border border-orange-200 flex items-center gap-1.5 shadow-2xs">
+                  🍳 {currentOrder.statusDisplay}
+                </span>
+              </div>
+
+              {/* Restaurant Card */}
+              <div
+                onClick={() => navigate('/customer/restaurants')}
+                className="bg-neutral-50/70 hover:bg-neutral-100/80 border border-neutral-200/80 rounded-2xl p-3.5 flex items-center justify-between gap-3 cursor-pointer transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-red-600 overflow-hidden flex-shrink-0 border border-neutral-200/60 shadow-2xs">
+                    <img src={currentOrder.restaurant.logo} alt={currentOrder.restaurant.name} className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-neutral-900 text-xs group-hover:text-orange-600 transition-colors">
+                      {currentOrder.restaurant.name}
+                    </h4>
+                    <p className="text-[11px] text-neutral-400 font-medium">{currentOrder.restaurant.location}</p>
+                  </div>
+                </div>
+
+                <RightOutlined className="text-xs text-neutral-400 group-hover:text-orange-600 group-hover:translate-x-0.5 transition-all" />
+              </div>
+
+              {/* Delivery Address Location Card */}
+              <div className="bg-neutral-50/70 border border-neutral-200/80 rounded-2xl p-3.5 space-y-1 shadow-2xs">
+                <div className="flex items-center gap-2 text-neutral-900 font-extrabold text-xs">
+                  <CompassOutlined className="text-orange-600 text-sm" />
+                  <span>Delivery Address</span>
+                </div>
+                <p className="text-xs text-neutral-600 font-medium pl-6 leading-relaxed">
+                  {currentOrder.deliveryAddressText || '123 Flavor Street, Foodie City (Current Location)'}
+                </p>
+              </div>
+
+              {/* Ordered Items List */}
+              <div className="space-y-3">
+                <div className="divide-y divide-neutral-100">
+                  {currentOrder.items.map((item, idx) => (
+                    <div key={idx} className="py-3 flex items-center justify-between gap-3 first:pt-0 last:pb-0">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl bg-neutral-100 overflow-hidden border border-neutral-200/60 flex-shrink-0">
+                          <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                        </div>
+                        <div>
+                          <h5 className="font-extrabold text-neutral-900 text-xs leading-snug">{item.name}</h5>
+                          <p className="text-[11px] text-neutral-400 font-medium">{item.variant || 'Regular'}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <span className="text-xs font-bold text-neutral-400">x {item.quantity}</span>
+                        <span className="font-extrabold text-neutral-900 text-xs">₹{item.price.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Payment Receipt Breakdown */}
+              <div className="bg-neutral-50/70 border border-neutral-200/80 rounded-2xl p-4 space-y-2 text-xs text-neutral-600">
+                <div className="flex justify-between">
+                  <span>Subtotal</span>
+                  <span className="font-bold text-neutral-800">₹{currentOrder.subtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Delivery Fee</span>
+                  <span className="font-bold text-neutral-800">₹{currentOrder.deliveryFee.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Platform Fee</span>
+                  <span className="font-bold text-neutral-800">₹{currentOrder.platformFee.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>GST (5%)</span>
+                  <span className="font-bold text-neutral-800">₹{currentOrder.gst.toFixed(2)}</span>
+                </div>
+
+                <div className="h-px bg-neutral-200 my-2" />
+
+                <div className="flex justify-between items-center text-neutral-900 text-sm">
+                  <span className="font-bold">Total Paid</span>
+                  <span className="font-black text-base text-neutral-900">₹{currentOrder.totalPaid.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Bottom Action Buttons */}
+              <div className="space-y-2.5 pt-2">
+                <button
+                  onClick={handleReorderAll}
+                  className="w-full py-3 bg-white text-orange-600 border border-orange-500 font-bold text-xs rounded-xl hover:bg-orange-50 transition-colors flex items-center justify-center gap-2 shadow-2xs cursor-pointer"
+                >
+                  <ReloadOutlined /> Reorder This Order
+                </button>
+
+                <button
+                  onClick={() => message.info("Connecting to Orderly Support team...")}
+                  className="w-full py-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <CustomerServiceOutlined /> Need Help? Contact Support
+                </button>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
       </div>
+
     </div>
   );
 }

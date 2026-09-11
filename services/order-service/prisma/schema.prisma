@@ -229,3 +229,21 @@ model Notification {
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
+
+// Payment table owned by payment-service — stored in the shared DB
+model Payment {
+  id                  String   @id @default(uuid())
+  order_id            String                        // internal Orderly order UUID
+  user_id             String                        // user UUID from JWT
+  razorpay_order_id   String   @unique              // Razorpay order_id (e.g. order_xxxxxxxx)
+  razorpay_payment_id String?                       // Razorpay payment_id (after capture)
+  razorpay_signature  String?                       // verified HMAC signature
+  amount              Int                           // amount in paise
+  currency            String   @default("INR")
+  payment_method      String?                       // card / upi / netbanking / wallet etc.
+  status              String   @default("CREATED")  // CREATED / PENDING / SUCCESS / FAILED / REFUNDED
+  failure_reason      String?                       // Razorpay error on failure
+  webhook_processed   Boolean  @default(false)      // idempotency guard
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+}
