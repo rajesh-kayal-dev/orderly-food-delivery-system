@@ -342,13 +342,19 @@ export const getApprovedDeliveryPartners = async () => {
 
   return users.map((user, idx) => {
     const dp = user.deliveryPartner || {};
+    const isOnline = dp.is_available !== undefined && dp.is_available !== null
+      ? Boolean(dp.is_available)
+      : (dp.status === 'available' || dp.status === 'Online');
+
     return {
       id: user.id,
       name: user.full_name || 'Delivery Partner',
-      status: user.is_active ? 'Online' : 'Offline',
+      status: isOnline ? 'Online' : 'Offline',
+      is_online: isOnline,
+      is_available: isOnline,
       rating: dp.rating || 4.9,
       reviewsCount: 150 + (idx * 25),
-      area: 'Salt Lake',
+      area: dp.operating_zone || 'Salt Lake',
       city: 'Kolkata',
       deliveries: `${600 + (idx * 140)}+`,
       avatar: sampleAvatars[idx % sampleAvatars.length],
@@ -358,4 +364,5 @@ export const getApprovedDeliveryPartners = async () => {
     };
   });
 };
+
 

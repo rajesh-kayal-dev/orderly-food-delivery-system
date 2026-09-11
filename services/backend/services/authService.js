@@ -244,86 +244,51 @@ class AuthService {
 
   async getApprovedDeliveryPartners() {
     try {
-      const users = await prisma.user.findMany({
+      const users = await User.findAll({
         where: {
           role: 'delivery_partner',
           is_active: true
         },
-        include: {
-          deliveryPartner: true
-        }
+        include: [{ model: DeliveryPartner }]
       });
 
       if (!users || users.length === 0) {
-        return this.getFallbackPartners();
+        return [];
       }
 
+      const sampleAvatars = [
+        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
+        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400',
+        'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=400',
+        'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&q=80&w=400',
+        'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&q=80&w=400'
+      ];
+
       return users.map((user, idx) => {
-        const dp = user.deliveryPartner || {};
-        const sampleAvatars = [
-          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
-          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400',
-          'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=400',
-          'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&q=80&w=400',
-          'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&q=80&w=400'
-        ];
+        const dp = user.DeliveryPartner || user.deliveryPartner || {};
+        const isOnline = dp.is_available !== undefined && dp.is_available !== null
+          ? Boolean(dp.is_available)
+          : (dp.status === 'available' || dp.status === 'Online');
 
         return {
           id: user.id,
           name: user.full_name || 'Delivery Partner',
-          status: user.is_active ? 'Online' : 'Offline',
+          status: isOnline ? 'Online' : 'Offline',
+          is_online: isOnline,
+          is_available: isOnline,
           rating: dp.rating || 4.9,
           reviewsCount: 150 + (idx * 25),
-          area: 'Salt Lake',
+          area: dp.operating_zone || 'Salt Lake',
           city: 'Kolkata',
           deliveries: `${600 + (idx * 140)}+`,
           avatar: sampleAvatars[idx % sampleAvatars.length],
-          vehicle: `${dp.vehicle_type || 'Scooter'} (${dp.vehicle_number || 'WB-02-AK-9821'})`,
+          vehicle: `${dp.vehicle_type || 'Scooter'} (${dp.vehicle_license || dp.vehicle_number || 'WB-02-AK-9821'})`,
           joinDate: 'Jan 2024',
           phone: user.phone_number || '+91 98301 23456'
         };
       });
     } catch (error) {
       console.error('Error fetching approved delivery partners:', error);
-      return this.getFallbackPartners();
-    }
-  }
-
-  getFallbackPartners() {
-    return [
-      {
-        id: 'dp-1',
-        name: 'Alex Express',
-        status: 'Online',
-        rating: 4.9,
-        reviewsCount: 210,
-        area: 'Salt Lake',
-        city: 'Kolkata',
-        deliveries: '850+',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
-        vehicle: 'Ather 450X EV (WB-01-EV-9999)',
-        joinDate: 'Jan 2024',
-        phone: '+91 98301 11111'
-      },
-      {
-        id: 'dp-2',
-        name: 'Amit Sharma',
-        status: 'Online',
-        rating: 4.8,
-        reviewsCount: 185,
-        area: 'Salt Lake',
-        city: 'Kolkata',
-        deliveries: '640+',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400',
-        vehicle: 'Honda Activa 6G (WB-02-AK-9821)',
-        joinDate: 'Mar 2024',
-        phone: '+91 98301 23456'
-      },
-      {
-        id: 'dp-3',
-        name: 'Rahul Das',
-        status: 'Online',
-        rating: 4.9,
         reviewsCount: 310,
         area: 'New Town',
         city: 'Kolkata',
