@@ -128,7 +128,7 @@ export default function Navbar({ activeOrdersCount = 0 }) {
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-white border-b border-neutral-100 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
 
           {/* ── Logo ── */}

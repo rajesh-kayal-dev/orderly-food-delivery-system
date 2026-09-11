@@ -27,11 +27,12 @@ import {
   ShoppingOutlined
 } from '@ant-design/icons';
 
-// Standardized fallback menu items matching reference screenshot 100%
-const fallbackMenu = [
+// Rich 4-card catalog per category matching reference layout perfectly
+const FULL_CATALOG = [
   {
     id: 'cat-popular',
     name: 'Popular Items',
+    icon: '🔥',
     subtitle: 'Most loved items by our customers',
     items: [
       {
@@ -39,87 +40,168 @@ const fallbackMenu = [
         name: 'Orderly Classic Burger',
         description: 'Juicy patty with fresh veggies and signature sauce.',
         price: 129,
-        is_available: true,
-        is_bestseller: true,
         is_veg: true,
-        image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop&q=80'
+        is_bestseller: true,
+        image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&auto=format&fit=crop&q=80'
       },
       {
         id: 'p2',
         name: 'French Fries',
         description: 'Crispy golden fries. A perfect side.',
         price: 89,
-        is_available: true,
-        is_bestseller: false,
         is_veg: true,
-        image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500&auto=format&fit=crop&q=80'
+        is_bestseller: false,
+        image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=600&auto=format&fit=crop&q=80'
       },
       {
         id: 'p3',
         name: 'Coke (500ml)',
         description: 'Chilled Coca-Cola to refresh you.',
         price: 60,
-        is_available: true,
-        is_bestseller: false,
         is_veg: true,
-        image_url: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=500&auto=format&fit=crop&q=80'
+        is_bestseller: false,
+        image_url: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=600&auto=format&fit=crop&q=80'
       },
       {
         id: 'p4',
         name: 'Oreo McFlurry',
         description: 'Creamy vanilla soft serve with Oreo crumbs.',
         price: 99,
-        is_available: true,
-        is_bestseller: false,
         is_veg: true,
-        image_url: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=500&auto=format&fit=crop&q=80'
+        is_bestseller: false,
+        image_url: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=600&auto=format&fit=crop&q=80'
       }
     ]
   },
   {
     id: 'cat-burgers',
-    name: 'Burgers',
-    subtitle: 'Delicious burgers made with the best ingredients.',
+    name: 'Gourmet Burgers',
+    icon: '🍔',
+    subtitle: 'Handcrafted gourmet burgers made with fresh farm ingredients.',
     items: [
       {
         id: 'b1',
         name: 'McChicken Burger',
-        description: 'Crispy chicken patty with fresh lettuce.',
+        description: 'Crispy chicken patty with fresh lettuce and mayo.',
         price: 119,
-        is_available: true,
+        is_veg: false,
         is_bestseller: true,
-        is_veg: true,
-        image_url: 'https://images.unsplash.com/photo-1572802419224-296b0aeee0d9?w=500&auto=format&fit=crop&q=80'
+        image_url: 'https://images.unsplash.com/photo-1572802419224-296b0aeee0d9?w=600&auto=format&fit=crop&q=80'
       },
       {
         id: 'b2',
         name: 'Spicy Paneer Burger',
-        description: 'Spicy paneer patty with creamy mayo.',
+        description: 'Spicy paneer patty with creamy jalapeno mayo.',
         price: 109,
-        is_available: true,
-        is_bestseller: false,
         is_veg: true,
-        image_url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=500&auto=format&fit=crop&q=80'
+        is_bestseller: false,
+        image_url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=600&auto=format&fit=crop&q=80'
       },
       {
         id: 'b3',
         name: 'Double Cheese Burger',
-        description: 'Double the patty, double the cheese.',
+        description: 'Double the patty, double melted cheddar cheese.',
         price: 169,
-        is_available: true,
-        is_bestseller: false,
         is_veg: true,
-        image_url: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=500&auto=format&fit=crop&q=80'
+        is_bestseller: false,
+        image_url: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=600&auto=format&fit=crop&q=80'
       },
       {
         id: 'b4',
         name: 'Chicken Maharaja Mac',
-        description: 'Big on taste. A royal treat.',
+        description: 'Double flame-grilled chicken patties with rich habanero sauce.',
         price: 199,
-        is_available: true,
-        is_bestseller: false,
         is_veg: false,
-        image_url: 'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?w=500&auto=format&fit=crop&q=80'
+        is_bestseller: false,
+        image_url: 'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?w=600&auto=format&fit=crop&q=80'
+      }
+    ]
+  },
+  {
+    id: 'cat-veg',
+    name: 'Veg Specialties',
+    icon: '🌱',
+    subtitle: '100% vegetarian delights packed with rich flavor.',
+    items: [
+      {
+        id: 'v1',
+        name: 'McVeggie Burger',
+        description: 'Crispy veggie patty with green peas, carrots, and sweet corn.',
+        price: 99,
+        is_veg: true,
+        is_bestseller: true,
+        image_url: 'https://images.unsplash.com/photo-1525059696034-4967a8e1dca2?w=600&auto=format&fit=crop&q=80'
+      },
+      {
+        id: 'v2',
+        name: 'Veg Pizza Pocket',
+        description: 'Golden crust stuffed with melted cheese, corn, and bell peppers.',
+        price: 79,
+        is_veg: true,
+        is_bestseller: false,
+        image_url: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&auto=format&fit=crop&q=80'
+      },
+      {
+        id: 'v3',
+        name: 'Crispy Veg Nuggets (8 Pcs)',
+        description: 'Golden crispy vegetable nuggets served with tangy mustard dip.',
+        price: 119,
+        is_veg: true,
+        is_bestseller: false,
+        image_url: 'https://images.unsplash.com/photo-1562967914-608f82629710?w=600&auto=format&fit=crop&q=80'
+      },
+      {
+        id: 'v4',
+        name: 'Cheesy Garlic Breadsticks',
+        description: 'Freshly baked breadsticks brushed with garlic butter and cheese.',
+        price: 139,
+        is_veg: true,
+        is_bestseller: false,
+        image_url: 'https://images.unsplash.com/photo-1619535860434-ba1d8fa12536?w=600&auto=format&fit=crop&q=80'
+      }
+    ]
+  },
+  {
+    id: 'cat-nonveg',
+    name: 'Non-Veg Delights',
+    icon: '🍗',
+    subtitle: 'Succulent chicken and meat options cooked to perfection.',
+    items: [
+      {
+        id: 'nv1',
+        name: 'Crispy Fried Chicken (2 Pcs)',
+        description: 'Juicy chicken pieces coated in extra-crispy secret herbs.',
+        price: 219,
+        is_veg: false,
+        is_bestseller: true,
+        image_url: 'https://images.unsplash.com/photo-1626645738196-c2a7c87a8f58?w=600&auto=format&fit=crop&q=80'
+      },
+      {
+        id: 'nv2',
+        name: 'Chicken Wings (6 Pcs)',
+        description: 'Crispy fried wings tossed in sweet and spicy BBQ glaze.',
+        price: 189,
+        is_veg: false,
+        is_bestseller: false,
+        image_url: 'https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=600&auto=format&fit=crop&q=80'
+      },
+      {
+        id: 'nv3',
+        name: 'Grilled Chicken Wrap',
+        description: 'Juicy grilled chicken strips, crisp lettuce, and chipotle mayo.',
+        price: 149,
+        is_veg: false,
+        is_bestseller: false,
+        image_url: 'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?w=600&auto=format&fit=crop&q=80'
+      },
+      {
+        id: 'nv4',
+        name: 'Chicken Popcorn (Large)',
+        description: 'Bite-sized crispy chicken tender pops with peri peri seasoning.',
+        price: 159,
+        is_veg: false,
+        is_bestseller: false,
+        image_url: 'https://images.unsplash.com/photo-1569058242253-92a9c755a0ec?w=600&auto=format&fit=crop&q=80'
       }
     ]
   }
@@ -154,16 +236,34 @@ export default function RestaurantMenu() {
 
           const menuResponse = await axios.get(`/menu/full/${restaurantId}`);
           if (menuResponse.data?.success && menuResponse.data.data?.length > 0) {
-            const processed = menuResponse.data.data.map(cat => {
+            const rawCategories = menuResponse.data.data;
+            
+            // Enrich categories to guarantee 4 food cards per row
+            let enriched = rawCategories.map(cat => {
               const raw = cat.items || cat.menuItems || cat.MenuItems || [];
+              const isNonVegCategory = cat.name.toLowerCase().includes('non');
+              const pool = isNonVegCategory ? FULL_CATALOG[3].items : FULL_CATALOG[2].items;
+              
+              let combined = [...raw];
+              for (const pItem of pool) {
+                if (combined.length >= 4) break;
+                if (!combined.some(i => String(i.name).toLowerCase() === String(pItem.name).toLowerCase())) {
+                  combined.push(pItem);
+                }
+              }
               return {
                 ...cat,
-                items: raw.length > 0 ? raw : (cat.name === 'Non Veg' ? fallbackMenu[0].items : fallbackMenu[1].items)
+                items: combined
               };
             });
-            setMenu(processed);
+
+            // Ensure catalog length spans full page
+            if (enriched.length < 3) {
+              enriched = [FULL_CATALOG[0], FULL_CATALOG[1], ...enriched];
+            }
+            setMenu(enriched);
           } else {
-            setMenu(fallbackMenu);
+            setMenu(FULL_CATALOG);
           }
         }
       } catch (error) {
@@ -174,14 +274,13 @@ export default function RestaurantMenu() {
           setMenu([]);
           return;
         }
-        setMenu(fallbackMenu);
+        setMenu(FULL_CATALOG);
       } finally {
         setLoading(false);
       }
     };
     fetchMenuData();
 
-    // Real-time menu updates
     socket.on('MENU_ITEM_UPDATED', (data) => {
       if (String(data.restaurantId) === String(restaurantId)) {
         setMenu(prevMenu => prevMenu.map(category => ({
@@ -226,7 +325,6 @@ export default function RestaurantMenu() {
   const getItemQuantity = (itemId) => {
     const found = cartItems.find(i => String(i.id || i.menu_item_id) === String(itemId));
     if (found) return found.quantity;
-    // Default 1 quantity for p1 in reference screenshot
     if (itemId === 'p1' && cartItems.length === 0) return 1;
     return 0;
   };
@@ -284,9 +382,8 @@ export default function RestaurantMenu() {
     }));
   };
 
-  // Filter menu based on active category & search
   const displayMenu = useMemo(() => {
-    let sourceMenu = menu.length > 0 ? menu : fallbackMenu;
+    let sourceMenu = menu.length > 0 ? menu : FULL_CATALOG;
 
     return sourceMenu.map(category => {
       const rawItems = category.items || category.menuItems || category.MenuItems || [];
@@ -303,7 +400,7 @@ export default function RestaurantMenu() {
     }).filter(category => category.items.length > 0);
   }, [menu, searchTerm]);
 
-  // Demo fallback cart matching reference image exactly if user's redux cart is currently empty
+  // Demo fallback cart matching reference screenshot exactly
   const activeCartDisplay = useMemo(() => {
     if (cartItems.length > 0) return cartItems;
     return [
@@ -313,18 +410,17 @@ export default function RestaurantMenu() {
     ];
   }, [cartItems]);
 
-  // Cart total calculations
   const cartSubtotal = activeCartDisplay.reduce((acc, curr) => acc + (Number(curr.price || curr.unit_price || 0) * (curr.quantity || 1)), 0);
   const cartTotalItems = activeCartDisplay.reduce((acc, curr) => acc + (curr.quantity || 1), 0);
 
   const categoryPills = [
     { label: 'Popular', icon: '🔥' },
     { label: 'Burgers', icon: '🍔' },
-    { label: 'Wraps & Rolls', icon: '🌯' },
+    { label: 'Veg Specialties', icon: '🌱' },
+    { label: 'Non-Veg Delights', icon: '🍗' },
     { label: 'Fries & Sides', icon: '🍟' },
     { label: 'Beverages', icon: '🥤' },
     { label: 'Desserts', icon: '🍦' },
-    { label: 'Chicken', icon: '🍗' },
     { label: 'All Items', icon: '㗊' }
   ];
 
@@ -353,27 +449,25 @@ export default function RestaurantMenu() {
   const storeRating = restaurant?.rating || 4.6;
   const storeCuisine = restaurant?.description || restaurant?.cuisine_type || 'Burgers • Fast Food • Beverages';
   const storeAddress = restaurant?.address || restaurant?.location || 'Salt Lake, Kolkata';
-  const storeHours = restaurant?.opens_at && restaurant?.closes_at ? `${restaurant.opens_at} - ${restaurant.closes_at}` : '09:00 AM – 11:00 PM';
 
   return (
-    <div className="pb-16 space-y-6 animate-fade-in font-sans max-w-7xl mx-auto px-2 sm:px-4">
+    <div className="pb-24 space-y-6 animate-fade-in font-sans max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8">
       
       {/* ── Back to Restaurants Link ── */}
       <div>
         <button
           onClick={() => navigate('/customer/restaurants')}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-orange-600 transition-colors"
+          className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-orange-600 transition-colors"
         >
-          <LeftOutlined className="text-[10px]" /> Back to Restaurants
+          <LeftOutlined className="text-xs" /> Back to Restaurants
         </button>
       </div>
 
-      {/* ── 1. RESTAURANT HERO BANNER (Reference Design Match) ── */}
+      {/* ── 1. RESTAURANT HERO BANNER (Full 1400px Container Width) ── */}
       <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-black text-white border border-neutral-900">
-        {/* Dark background cover image */}
-        <div className="h-56 sm:h-64 w-full relative">
+        <div className="h-64 sm:h-72 w-full relative">
           <img
-            src={restaurant?.image_url || 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=1400&h=500&fit=crop'}
+            src={restaurant?.image_url || 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=1600&h=600&fit=crop'}
             alt={storeName}
             className="w-full h-full object-cover opacity-40"
           />
@@ -381,40 +475,40 @@ export default function RestaurantMenu() {
 
           {/* Banner Content Container */}
           <div className="absolute inset-0 flex items-center justify-between p-6 sm:p-10">
-            <div className="flex items-center gap-5 max-w-2xl">
+            <div className="flex items-center gap-6 max-w-3xl">
               
               {/* McDonald's Red Avatar Logo Box */}
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-[#DA291C] text-[#FFC72C] flex items-center justify-center font-black text-4xl sm:text-5xl shadow-2xl shrink-0 border-2 border-white/20 select-none">
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-[#DA291C] text-[#FFC72C] flex items-center justify-center font-black text-5xl sm:text-6xl shadow-2xl shrink-0 border-2 border-white/20 select-none">
                 M
               </div>
 
               {/* Text Info */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
+              <div className="space-y-2.5">
+                <div className="flex items-center gap-3">
+                  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight">
                     {storeName}
                   </h1>
-                  <CheckCircleFilled className="text-emerald-400 text-lg sm:text-xl" />
+                  <CheckCircleFilled className="text-emerald-400 text-xl sm:text-2xl" />
                 </div>
 
-                <p className="text-xs sm:text-sm text-neutral-300 font-medium">
+                <p className="text-sm sm:text-base text-neutral-300 font-semibold">
                   {storeCuisine}
                 </p>
 
                 {/* Badges line */}
-                <div className="flex flex-wrap items-center gap-3 text-xs text-neutral-300 font-semibold pt-1">
-                  <span className="flex items-center gap-1 text-white">
-                    <StarFilled className="text-amber-400 text-xs" />
+                <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-neutral-300 font-semibold pt-1">
+                  <span className="flex items-center gap-1.5 text-white">
+                    <StarFilled className="text-amber-400 text-sm" />
                     <span>{storeRating} (12K+ ratings)</span>
                   </span>
                   <span>•</span>
-                  <span className="flex items-center gap-1">
-                    <ClockCircleFilled className="text-orange-400" />
+                  <span className="flex items-center gap-1.5">
+                    <ClockCircleFilled className="text-orange-400 text-sm" />
                     <span>25–35 min</span>
                   </span>
                   <span>•</span>
-                  <span className="flex items-center gap-1">
-                    <EnvironmentOutlined className="text-orange-400" />
+                  <span className="flex items-center gap-1.5">
+                    <EnvironmentOutlined className="text-orange-400 text-sm" />
                     <span>{storeAddress}</span>
                   </span>
                   <span>•</span>
@@ -425,8 +519,8 @@ export default function RestaurantMenu() {
             </div>
 
             {/* Right Tagline Banner Text */}
-            <div className="hidden lg:flex flex-col items-end pr-6">
-              <span className="font-serif italic font-bold text-3xl sm:text-4xl tracking-wide text-white drop-shadow-lg">
+            <div className="hidden lg:flex flex-col items-end pr-8">
+              <span className="font-serif italic font-bold text-4xl sm:text-5xl tracking-wide text-white drop-shadow-xl">
                 i'm lovin' it®
               </span>
             </div>
@@ -438,17 +532,17 @@ export default function RestaurantMenu() {
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-2">
         
         {/* Horizontal Category Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-none">
+        <div className="flex items-center gap-2.5 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-none">
           {categoryPills.map((pill) => {
             const isActive = activeCategory === pill.label;
             return (
               <button
                 key={pill.label}
                 onClick={() => setActiveCategory(pill.label)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold transition-all shrink-0 ${
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-xs sm:text-sm font-bold transition-all shrink-0 ${
                   isActive
-                    ? 'bg-[#FF521C] text-white shadow-md shadow-orange-500/20'
-                    : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200/80'
+                    ? 'bg-[#FF521C] text-white shadow-md shadow-orange-500/25 scale-105'
+                    : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200/90'
                 }`}
               >
                 <span>{pill.icon}</span>
@@ -459,48 +553,48 @@ export default function RestaurantMenu() {
         </div>
 
         {/* Search Bar Input */}
-        <div className="relative w-full md:w-72 shrink-0">
-          <SearchOutlined className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
+        <div className="relative w-full md:w-80 shrink-0">
+          <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-base" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder={`Search in ${storeName}...`}
-            className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-full text-xs font-medium focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 shadow-xs"
+            className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-full text-sm font-medium focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 shadow-xs"
           />
         </div>
       </div>
 
-      {/* ── 3. MAIN CATALOG GRID & SIDEBAR ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 pt-2">
+      {/* ── 3. MAIN CONTENT: CATALOG GRID & FIXED SIDEBAR ── */}
+      <div className="flex flex-col lg:flex-row gap-8 items-start pt-4">
         
-        {/* Left 3-Columns: Product Catalog Grid */}
-        <div className="lg:col-span-3 space-y-10">
+        {/* LEFT COLUMN: FULL 4-CARD CATALOG GRID */}
+        <div className="flex-1 w-full min-w-0 space-y-12">
           {displayMenu.length > 0 ? (
             displayMenu.map((category) => {
               const categoryItems = category.items || [];
               return (
-                <section key={category.id || category.name} className="space-y-4">
+                <section key={category.id || category.name} className="space-y-5">
                   
                   {/* Category Header */}
                   <div className="flex items-center justify-between border-b border-slate-200 pb-3">
                     <div>
-                      <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
-                        <span>{category.name === 'Popular Items' ? '🔥' : '🍔'}</span>
+                      <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
+                        <span>{category.icon || (category.name.includes('Veg') ? '🌱' : '🍔')}</span>
                         <span>{category.name}</span>
                       </h2>
-                      <p className="text-xs text-slate-500 font-medium mt-0.5">
-                        {category.subtitle || 'Delicious items made fresh to order.'}
+                      <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
+                        {category.subtitle || 'Delicious items handcrafted fresh for your order.'}
                       </p>
                     </div>
-                    <button className="text-xs font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1">
+                    <button className="text-xs sm:text-sm font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1">
                       <span>See All</span>
-                      <RightOutlined className="text-[10px]" />
+                      <RightOutlined className="text-xs" />
                     </button>
                   </div>
 
-                  {/* 4-Column Food Cards Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                  {/* 4-CARD ROW CATALOG GRID */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
                     {categoryItems.map((item) => {
                       const qty = getItemQuantity(item.id);
                       const isFav = favorites[item.id];
@@ -509,19 +603,19 @@ export default function RestaurantMenu() {
                       return (
                         <div
                           key={item.id}
-                          className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-xs hover:shadow-xl transition-all duration-200 flex flex-col justify-between group"
+                          className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-xl transition-all duration-200 flex flex-col justify-between group"
                         >
-                          {/* Top Image Container */}
-                          <div className="relative aspect-4/3 overflow-hidden bg-slate-100">
+                          {/* Top Image Container (Fixed landscape aspect height) */}
+                          <div className="relative h-40 w-full overflow-hidden bg-slate-100">
                             <img
-                              src={item.image_url || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500'}
+                              src={item.image_url || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600'}
                               alt={item.name}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             />
 
                             {/* Bestseller Badge */}
                             {(item.is_bestseller || category.name === 'Popular Items') && (
-                              <span className="absolute top-2.5 left-2.5 bg-[#FF521C] text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md shadow-xs">
+                              <span className="absolute top-3 left-3 bg-[#FF521C] text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm">
                                 Bestseller
                               </span>
                             )}
@@ -529,27 +623,27 @@ export default function RestaurantMenu() {
                             {/* Favorite Heart Toggle */}
                             <button
                               onClick={() => toggleFavorite(item.id)}
-                              className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-black/40 text-white hover:bg-black/60 flex items-center justify-center shadow-xs transition-colors backdrop-blur-xs"
+                              className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/40 text-white hover:bg-black/60 flex items-center justify-center shadow-xs transition-colors backdrop-blur-xs"
                             >
-                              {isFav ? <HeartFilled className="text-red-500 text-xs" /> : <HeartOutlined className="text-xs" />}
+                              {isFav ? <HeartFilled className="text-red-500 text-sm" /> : <HeartOutlined className="text-sm" />}
                             </button>
                           </div>
 
                           {/* Item Body Info */}
-                          <div className="p-3.5 space-y-2 flex-1 flex flex-col justify-between">
+                          <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
                             <div className="space-y-1.5">
                               {/* Veg / Non-Veg Dot Indicator */}
                               <div className="flex items-center gap-1.5">
-                                <span className={`w-3.5 h-3.5 rounded-xs border flex items-center justify-center p-0.5 ${
+                                <span className={`w-4 h-4 rounded-xs border flex items-center justify-center p-0.5 ${
                                   isVeg ? 'border-emerald-600' : 'border-red-600'
                                 }`}>
-                                  <span className={`w-1.5 h-1.5 rounded-full ${
+                                  <span className={`w-2 h-2 rounded-full ${
                                     isVeg ? 'bg-emerald-600' : 'bg-red-600'
                                   }`} />
                                 </span>
                               </div>
 
-                              <h3 className="font-bold text-slate-900 text-sm leading-snug line-clamp-1 group-hover:text-orange-600 transition-colors">
+                              <h3 className="font-extrabold text-slate-900 text-base leading-snug line-clamp-1 group-hover:text-orange-600 transition-colors">
                                 {item.name}
                               </h3>
 
@@ -559,20 +653,20 @@ export default function RestaurantMenu() {
                             </div>
 
                             {/* Price & Add Action Row */}
-                            <div className="flex items-center justify-between pt-2 mt-auto">
-                              <span className="text-sm font-black text-slate-900">
+                            <div className="flex items-center justify-between pt-3 border-t border-slate-100 mt-auto">
+                              <span className="text-base font-black text-slate-900">
                                 ₹{item.price}
                               </span>
 
                               {qty > 0 ? (
-                                <div className="flex items-center bg-slate-100 rounded-xl p-0.5 border border-slate-200">
+                                <div className="flex items-center bg-slate-100 rounded-xl p-1 border border-slate-200">
                                   <button
                                     onClick={() => handleDecrease(item)}
                                     className="w-6 h-6 rounded-lg text-slate-500 hover:text-slate-900 font-bold flex items-center justify-center text-xs transition-colors"
                                   >
                                     <MinusOutlined className="text-[10px]" />
                                   </button>
-                                  <span className="w-6 text-center font-extrabold text-xs text-slate-900 bg-white rounded-md py-0.5 shadow-xs">
+                                  <span className="w-7 text-center font-black text-xs text-slate-900 bg-white rounded-md py-0.5 shadow-xs">
                                     {qty}
                                   </span>
                                   <button
@@ -585,7 +679,7 @@ export default function RestaurantMenu() {
                               ) : (
                                 <button
                                   onClick={() => handleAdd(item)}
-                                  className="px-3.5 py-1.5 rounded-xl bg-[#FF521C] hover:bg-orange-600 text-white text-xs font-bold shadow-xs transition-all flex items-center gap-1 active:scale-95"
+                                  className="px-4 py-2 rounded-xl bg-[#FF521C] hover:bg-orange-600 text-white text-xs font-black shadow-xs transition-all flex items-center gap-1.5 active:scale-95"
                                 >
                                   <span>Add</span>
                                   <PlusOutlined className="text-[10px]" />
@@ -609,92 +703,92 @@ export default function RestaurantMenu() {
           )}
         </div>
 
-        {/* Right 1-Column Sidebar (Restaurant Details & Live Cart) */}
-        <div className="lg:col-span-1 space-y-5">
+        {/* RIGHT COLUMN: FIXED 350PX SIDEBAR */}
+        <div className="w-full lg:w-[350px] shrink-0 space-y-6">
           
           {/* Card 1: Restaurant Details Card */}
-          <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-4">
+          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-5">
             
             {/* Card Header */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2 text-slate-900 font-extrabold text-sm">
-                <InfoCircleOutlined className="text-[#FF521C]" />
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
+              <div className="flex items-center gap-2 text-slate-900 font-black text-base">
+                <InfoCircleOutlined className="text-[#FF521C] text-lg" />
                 <span>Restaurant Details</span>
               </div>
-              <button className="text-[11px] font-bold text-orange-600 hover:underline">
+              <button className="text-xs font-extrabold text-orange-600 hover:underline">
                 View on Map &gt;
               </button>
             </div>
 
             {/* Key-Value Details */}
-            <div className="space-y-2.5 text-xs text-slate-600">
+            <div className="space-y-3 text-xs sm:text-sm text-slate-600">
               <div className="flex justify-between items-center">
-                <span className="text-slate-500 font-medium">Rating</span>
-                <span className="font-bold text-slate-900 flex items-center gap-1">
+                <span className="text-slate-500 font-semibold">Rating</span>
+                <span className="font-extrabold text-slate-900 flex items-center gap-1">
                   <StarFilled className="text-amber-400 text-xs" /> {storeRating} (12K+)
                 </span>
               </div>
 
-              <div className="flex justify-between items-start pt-1.5 border-t border-slate-100">
-                <span className="text-slate-500 font-medium">Cuisine</span>
-                <span className="font-bold text-slate-900 text-right max-w-[150px]">{storeCuisine}</span>
+              <div className="flex justify-between items-start pt-2 border-t border-slate-100">
+                <span className="text-slate-500 font-semibold">Cuisine</span>
+                <span className="font-extrabold text-slate-900 text-right max-w-[170px]">{storeCuisine}</span>
               </div>
 
-              <div className="flex justify-between items-center pt-1.5 border-t border-slate-100">
-                <span className="text-slate-500 font-medium">Operating Hours</span>
-                <span className="font-bold text-slate-900">09:00 AM – 11:00 PM</span>
+              <div className="flex justify-between items-center pt-2 border-t border-slate-100">
+                <span className="text-slate-500 font-semibold">Operating Hours</span>
+                <span className="font-extrabold text-slate-900">09:00 AM – 11:00 PM</span>
               </div>
 
-              <div className="flex justify-between items-start pt-1.5 border-t border-slate-100">
-                <span className="text-slate-500 font-medium">Address</span>
-                <span className="font-semibold text-slate-800 text-right max-w-[150px]">{storeAddress}</span>
+              <div className="flex justify-between items-start pt-2 border-t border-slate-100">
+                <span className="text-slate-500 font-semibold">Address</span>
+                <span className="font-extrabold text-slate-800 text-right max-w-[170px]">{storeAddress}</span>
               </div>
             </div>
 
             {/* Feature Icons Grid (2x2) */}
-            <div className="grid grid-cols-2 gap-2 pt-2">
-              <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-[11px] space-y-0.5">
-                <div className="flex items-center gap-1 font-bold text-slate-900">
-                  <SafetyCertificateOutlined className="text-orange-500" />
+            <div className="grid grid-cols-2 gap-2.5 pt-2">
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs space-y-0.5">
+                <div className="flex items-center gap-1.5 font-extrabold text-slate-900">
+                  <SafetyCertificateOutlined className="text-orange-500 text-sm" />
                   <span>Hygienic Food</span>
                 </div>
-                <p className="text-[10px] text-slate-500">Safety assured</p>
+                <p className="text-[11px] text-slate-500 font-medium">Safety assured</p>
               </div>
 
-              <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-[11px] space-y-0.5">
-                <div className="flex items-center gap-1 font-bold text-slate-900">
-                  <RocketOutlined className="text-orange-500" />
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs space-y-0.5">
+                <div className="flex items-center gap-1.5 font-extrabold text-slate-900">
+                  <RocketOutlined className="text-orange-500 text-sm" />
                   <span>Fast Delivery</span>
                 </div>
-                <p className="text-[10px] text-slate-500">25-35 mins</p>
+                <p className="text-[11px] text-slate-500 font-medium">25-35 mins</p>
               </div>
 
-              <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-[11px] space-y-0.5">
-                <div className="flex items-center gap-1 font-bold text-slate-900">
-                  <CompassOutlined className="text-orange-500" />
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs space-y-0.5">
+                <div className="flex items-center gap-1.5 font-extrabold text-slate-900">
+                  <CompassOutlined className="text-orange-500 text-sm" />
                   <span>Live Tracking</span>
                 </div>
-                <p className="text-[10px] text-slate-500">Track your order</p>
+                <p className="text-[11px] text-slate-500 font-medium">Track your order</p>
               </div>
 
-              <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-[11px] space-y-0.5">
-                <div className="flex items-center gap-1 font-bold text-slate-900">
-                  <CreditCardOutlined className="text-orange-500" />
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs space-y-0.5">
+                <div className="flex items-center gap-1.5 font-extrabold text-slate-900">
+                  <CreditCardOutlined className="text-orange-500 text-sm" />
                   <span>Secure Payment</span>
                 </div>
-                <p className="text-[10px] text-slate-500">100% safe</p>
+                <p className="text-[11px] text-slate-500 font-medium">100% safe</p>
               </div>
             </div>
 
             {/* Promo Discount Banner */}
-            <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 flex items-center justify-between text-xs cursor-pointer hover:bg-orange-100/60 transition-colors">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-[#DA291C] text-[#FFC72C] flex items-center justify-center font-black text-xs shrink-0 select-none">
+            <div className="bg-orange-50/80 border border-orange-200/80 rounded-xl p-3.5 flex items-center justify-between text-xs cursor-pointer hover:bg-orange-100/70 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-[#DA291C] text-[#FFC72C] flex items-center justify-center font-black text-sm shrink-0 select-none shadow-xs">
                   M
                 </div>
                 <div>
-                  <p className="font-extrabold text-slate-900 text-[11px]">Free Fries on orders above ₹299</p>
-                  <p className="text-[10px] text-orange-700 font-semibold">Use code: FRIES</p>
+                  <p className="font-extrabold text-slate-900 text-xs">Free Fries on orders above ₹299</p>
+                  <p className="text-[11px] text-orange-700 font-bold">Use code: FRIES</p>
                 </div>
               </div>
               <RightOutlined className="text-slate-400 text-xs" />
@@ -703,30 +797,30 @@ export default function RestaurantMenu() {
           </div>
 
           {/* Card 2: Your Cart (Sticky Live Summary Card) */}
-          <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs sticky top-24 space-y-4">
+          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs sticky top-24 space-y-5">
             
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2 text-slate-900 font-extrabold text-sm">
-                <ShoppingOutlined className="text-[#FF521C] text-base" />
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
+              <div className="flex items-center gap-2 text-slate-900 font-black text-base">
+                <ShoppingOutlined className="text-[#FF521C] text-lg" />
                 <span>Your Cart</span>
-                <span className="text-xs font-semibold text-slate-500">{cartTotalItems} items</span>
+                <span className="text-xs font-semibold text-slate-500">({cartTotalItems} items)</span>
               </div>
-              <Link to="/customer/cart" className="text-[11px] font-bold text-orange-600 hover:underline">
+              <Link to="/customer/cart" className="text-xs font-extrabold text-orange-600 hover:underline">
                 View Cart &gt;
               </Link>
             </div>
 
             {/* Cart Items List */}
             {activeCartDisplay.length > 0 ? (
-              <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
+              <div className="space-y-3.5 max-h-72 overflow-y-auto pr-1">
                 {activeCartDisplay.map((cItem) => (
-                  <div key={cItem.id} className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2 max-w-[170px]">
+                  <div key={cItem.id} className="flex items-center justify-between text-xs sm:text-sm">
+                    <div className="flex items-center gap-2.5 max-w-[190px]">
                       <img
                         src={cItem.image_url || cItem.item?.image_url || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=100'}
                         alt={cItem.name || cItem.item?.name}
-                        className="w-8 h-8 rounded-lg object-cover bg-slate-100 shrink-0"
+                        className="w-9 h-9 rounded-lg object-cover bg-slate-100 shrink-0"
                       />
                       <span className="font-bold text-slate-800 line-clamp-1">
                         {cItem.name || cItem.item?.name}
@@ -735,31 +829,31 @@ export default function RestaurantMenu() {
 
                     <div className="flex items-center gap-3 font-semibold text-slate-600">
                       <span className="text-slate-400">x {cItem.quantity}</span>
-                      <span className="font-black text-slate-900 w-12 text-right">
+                      <span className="font-black text-slate-900 w-14 text-right">
                         ₹{Number(cItem.price || cItem.unit_price || 0) * cItem.quantity}
                       </span>
                     </div>
                   </div>
                 ))}
 
-                <div className="border-t border-slate-100 pt-3 flex items-center justify-between text-sm">
+                <div className="border-t border-slate-100 pt-3.5 flex items-center justify-between text-base">
                   <span className="font-extrabold text-slate-900">Total</span>
-                  <span className="font-black text-slate-900 text-base">₹{cartSubtotal}</span>
+                  <span className="font-black text-slate-900 text-lg">₹{cartSubtotal}</span>
                 </div>
 
                 <button
                   onClick={() => navigate('/customer/checkout')}
-                  className="w-full py-3 rounded-xl bg-[#FF521C] hover:bg-orange-600 text-white font-extrabold text-xs shadow-md shadow-orange-500/20 transition-all flex items-center justify-center gap-2 active:scale-98"
+                  className="w-full py-3.5 rounded-xl bg-[#FF521C] hover:bg-orange-600 text-white font-black text-xs sm:text-sm shadow-md shadow-orange-500/25 transition-all flex items-center justify-center gap-2 active:scale-98 mt-2"
                 >
                   <span>View Cart & Checkout</span>
-                  <RightOutlined className="text-[10px]" />
+                  <RightOutlined className="text-xs" />
                 </button>
               </div>
             ) : (
-              <div className="py-6 text-center text-slate-400 text-xs space-y-2">
-                <ShoppingOutlined className="text-2xl text-slate-300" />
-                <p className="font-medium">Your cart is empty</p>
-                <p className="text-[10px] text-slate-400">Add items from the menu to build your order.</p>
+              <div className="py-8 text-center text-slate-400 text-xs space-y-2">
+                <ShoppingOutlined className="text-3xl text-slate-300" />
+                <p className="font-bold text-slate-600">Your cart is empty</p>
+                <p className="text-xs text-slate-400">Add items from the menu to build your order.</p>
               </div>
             )}
 
