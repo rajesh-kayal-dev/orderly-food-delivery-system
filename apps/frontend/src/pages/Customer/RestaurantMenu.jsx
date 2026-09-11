@@ -26,7 +26,7 @@ import {
   CompassOutlined,
   CreditCardOutlined,
   RightOutlined,
-  ShoppingBagOutlined
+  ShoppingOutlined
 } from '@ant-design/icons';
 
 // Standardized fallback mock menu items matching reference design perfectly
@@ -700,7 +700,7 @@ export default function RestaurantMenu() {
             {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2 text-slate-900 font-extrabold text-sm">
-                <ShoppingBagOutlined className="text-[#FF521C] text-base" />
+                <ShoppingOutlined className="text-[#FF521C] text-base" />
                 <span>Your Cart</span>
                 <span className="text-xs font-semibold text-slate-500">({cartTotalItems} items)</span>
               </div>
@@ -749,7 +749,7 @@ export default function RestaurantMenu() {
               </div>
             ) : (
               <div className="py-6 text-center text-slate-400 text-xs space-y-2">
-                <ShoppingBagOutlined className="text-2xl text-slate-300" />
+                <ShoppingOutlined className="text-2xl text-slate-300" />
                 <p className="font-medium">Your cart is empty</p>
                 <p className="text-[10px] text-slate-400">Add items from the menu to build your order.</p>
               </div>
