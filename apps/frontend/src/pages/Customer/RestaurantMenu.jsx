@@ -451,7 +451,7 @@ export default function RestaurantMenu() {
   const storeAddress = restaurant?.address || restaurant?.location || 'Salt Lake, Kolkata';
 
   return (
-    <div className="pb-24 space-y-6 animate-fade-in font-sans max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="pb-24 space-y-6 animate-fade-in font-sans max-w-[1500px] w-full mx-auto px-4 sm:px-6 lg:px-8">
       
       {/* ── Back to Restaurants Link ── */}
       <div>
@@ -463,7 +463,7 @@ export default function RestaurantMenu() {
         </button>
       </div>
 
-      {/* ── 1. RESTAURANT HERO BANNER (Full 1400px Container Width) ── */}
+      {/* ── 1. RESTAURANT HERO BANNER (Full 1500px Container Width) ── */}
       <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-black text-white border border-neutral-900">
         <div className="h-64 sm:h-72 w-full relative">
           <img
@@ -565,11 +565,11 @@ export default function RestaurantMenu() {
         </div>
       </div>
 
-      {/* ── 3. MAIN CONTENT: CATALOG GRID & FIXED SIDEBAR ── */}
-      <div className="flex flex-col lg:flex-row gap-8 items-start pt-4">
+      {/* ── 3. MAIN CONTENT: 75% MENU (9 COLS) vs 25% SIDEBAR (3 COLS) ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 pt-4 items-start">
         
-        {/* LEFT COLUMN: FULL 4-CARD CATALOG GRID */}
-        <div className="flex-1 w-full min-w-0 space-y-12">
+        {/* LEFT COLUMN: 75% WIDTH MENU (9 out of 12 columns) */}
+        <div className="lg:col-span-9 space-y-12">
           {displayMenu.length > 0 ? (
             displayMenu.map((category) => {
               const categoryItems = category.items || [];
@@ -593,8 +593,8 @@ export default function RestaurantMenu() {
                     </button>
                   </div>
 
-                  {/* 4-CARD ROW CATALOG GRID */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
+                  {/* 4 FOOD CARDS PER ROW GRID ON DESKTOP (lg:grid-cols-4) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {categoryItems.map((item) => {
                       const qty = getItemQuantity(item.id);
                       const isFav = favorites[item.id];
@@ -606,7 +606,7 @@ export default function RestaurantMenu() {
                           className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-xl transition-all duration-200 flex flex-col justify-between group"
                         >
                           {/* Top Image Container (Fixed landscape aspect height) */}
-                          <div className="relative h-40 w-full overflow-hidden bg-slate-100">
+                          <div className="relative h-36 sm:h-40 w-full overflow-hidden bg-slate-100">
                             <img
                               src={item.image_url || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600'}
                               alt={item.name}
@@ -615,7 +615,7 @@ export default function RestaurantMenu() {
 
                             {/* Bestseller Badge */}
                             {(item.is_bestseller || category.name === 'Popular Items') && (
-                              <span className="absolute top-3 left-3 bg-[#FF521C] text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm">
+                              <span className="absolute top-2.5 left-2.5 bg-[#FF521C] text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md shadow-sm">
                                 Bestseller
                               </span>
                             )}
@@ -623,27 +623,27 @@ export default function RestaurantMenu() {
                             {/* Favorite Heart Toggle */}
                             <button
                               onClick={() => toggleFavorite(item.id)}
-                              className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/40 text-white hover:bg-black/60 flex items-center justify-center shadow-xs transition-colors backdrop-blur-xs"
+                              className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-black/40 text-white hover:bg-black/60 flex items-center justify-center shadow-xs transition-colors backdrop-blur-xs"
                             >
-                              {isFav ? <HeartFilled className="text-red-500 text-sm" /> : <HeartOutlined className="text-sm" />}
+                              {isFav ? <HeartFilled className="text-red-500 text-xs" /> : <HeartOutlined className="text-xs" />}
                             </button>
                           </div>
 
                           {/* Item Body Info */}
-                          <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
-                            <div className="space-y-1.5">
+                          <div className="p-3.5 space-y-2 flex-1 flex flex-col justify-between">
+                            <div className="space-y-1">
                               {/* Veg / Non-Veg Dot Indicator */}
                               <div className="flex items-center gap-1.5">
-                                <span className={`w-4 h-4 rounded-xs border flex items-center justify-center p-0.5 ${
+                                <span className={`w-3.5 h-3.5 rounded-xs border flex items-center justify-center p-0.5 ${
                                   isVeg ? 'border-emerald-600' : 'border-red-600'
                                 }`}>
-                                  <span className={`w-2 h-2 rounded-full ${
+                                  <span className={`w-1.5 h-1.5 rounded-full ${
                                     isVeg ? 'bg-emerald-600' : 'bg-red-600'
                                   }`} />
                                 </span>
                               </div>
 
-                              <h3 className="font-extrabold text-slate-900 text-base leading-snug line-clamp-1 group-hover:text-orange-600 transition-colors">
+                              <h3 className="font-bold text-slate-900 text-sm leading-snug line-clamp-1 group-hover:text-orange-600 transition-colors">
                                 {item.name}
                               </h3>
 
@@ -653,25 +653,23 @@ export default function RestaurantMenu() {
                             </div>
 
                             {/* Price & Add Action Row */}
-                            <div className="flex items-center justify-between pt-3 border-t border-slate-100 mt-auto">
-                              <span className="text-base font-black text-slate-900">
+                            <div className="flex items-center justify-between pt-2 border-t border-slate-100 mt-auto">
+                              <span className="text-sm sm:text-base font-black text-slate-900">
                                 ₹{item.price}
                               </span>
 
                               {qty > 0 ? (
-                                <div className="flex items-center bg-slate-100 rounded-xl p-1 border border-slate-200">
+                                <div className="flex items-center bg-slate-100 rounded-xl p-0.5 border border-slate-200">
                                   <button
                                     onClick={() => handleDecrease(item)}
-                                    className="w-6 h-6 rounded-lg text-slate-500 hover:text-slate-900 font-bold flex items-center justify-center text-xs transition-colors"
+                                    className="w-5 h-5 rounded-md bg-white text-slate-700 font-bold flex items-center justify-center shadow-xs text-xs hover:bg-slate-50"
                                   >
                                     <MinusOutlined className="text-[10px]" />
                                   </button>
-                                  <span className="w-7 text-center font-black text-xs text-slate-900 bg-white rounded-md py-0.5 shadow-xs">
-                                    {qty}
-                                  </span>
+                                  <span className="text-xs font-black text-slate-900 px-1.5">{qty}</span>
                                   <button
                                     onClick={() => handleAdd(item)}
-                                    className="w-6 h-6 rounded-lg bg-[#FF521C] text-white hover:bg-orange-600 font-bold flex items-center justify-center text-xs transition-colors shadow-xs"
+                                    className="w-5 h-5 rounded-md bg-[#FF521C] text-white font-bold flex items-center justify-center shadow-xs text-xs hover:bg-orange-600"
                                   >
                                     <PlusOutlined className="text-[10px]" />
                                   </button>
@@ -679,7 +677,7 @@ export default function RestaurantMenu() {
                               ) : (
                                 <button
                                   onClick={() => handleAdd(item)}
-                                  className="px-4 py-2 rounded-xl bg-[#FF521C] hover:bg-orange-600 text-white text-xs font-black shadow-xs transition-all flex items-center gap-1.5 active:scale-95"
+                                  className="px-3.5 py-1.5 rounded-xl bg-[#FF521C] hover:bg-orange-600 text-white text-xs font-bold shadow-xs transition-all flex items-center gap-1 active:scale-95"
                                 >
                                   <span>Add</span>
                                   <PlusOutlined className="text-[10px]" />
@@ -703,8 +701,8 @@ export default function RestaurantMenu() {
           )}
         </div>
 
-        {/* RIGHT COLUMN: FIXED 350PX SIDEBAR */}
-        <div className="w-full lg:w-[350px] shrink-0 space-y-6">
+        {/* RIGHT COLUMN: 25% WIDTH SIDEBAR (3 out of 12 columns) */}
+        <div className="lg:col-span-3 space-y-6">
           
           {/* Card 1: Restaurant Details Card */}
           <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-5">
