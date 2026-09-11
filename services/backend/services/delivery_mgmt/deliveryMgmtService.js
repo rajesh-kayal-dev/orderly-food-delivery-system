@@ -102,38 +102,48 @@ class DeliveryMgmtService {
     }
 
     async getDriverDeliveries(userId) {
-        const driver = await DeliveryPartner.findOne({ where: { user_id: userId } });
-        if (!driver) throw new Error('Driver profile not found');
+        try {
+            const driver = await DeliveryPartner.findOne({ where: { user_id: userId } });
+            if (!driver) return [];
 
-        return await Order.findAll({
-            where: {
-                delivery_partner_id: driver.id,
-                status: { [Op.in]: ['assigned', 'picked_up'] }
-            },
-            include: [
-                { model: Restaurant, attributes: ['name', 'user_id', 'location', 'latitude', 'longitude'] },
-                { model: Address, attributes: ['street', 'city', 'latitude', 'longitude'] },
-                { model: Customer, include: [{ model: User, attributes: ['full_name', 'phone_number'] }] }
-            ],
-            order: [['updated_at', 'DESC']]
-        });
+            return await Order.findAll({
+                where: {
+                    delivery_partner_id: driver.id,
+                    status: { [Op.in]: ['assigned', 'picked_up'] }
+                },
+                include: [
+                    { model: Restaurant, attributes: ['name', 'user_id', 'location', 'latitude', 'longitude'] },
+                    { model: Address, attributes: ['street', 'city', 'latitude', 'longitude'] },
+                    { model: Customer, include: [{ model: User, attributes: ['full_name', 'phone_number'] }] }
+                ],
+                order: [['updated_at', 'DESC']]
+            });
+        } catch (err) {
+            console.error('[getDriverDeliveries Error]:', err.message);
+            return [];
+        }
     }
 
     async getDriverHistory(userId) {
-        const driver = await DeliveryPartner.findOne({ where: { user_id: userId } });
-        if (!driver) throw new Error('Driver profile not found');
+        try {
+            const driver = await DeliveryPartner.findOne({ where: { user_id: userId } });
+            if (!driver) return [];
 
-        return await Order.findAll({
-            where: {
-                delivery_partner_id: driver.id,
-                status: { [Op.in]: ['delivered', 'completed'] }
-            },
-            include: [
-                { model: Restaurant, attributes: ['name', 'user_id', 'location'] },
-                { model: Address, attributes: ['street', 'city'] }
-            ],
-            order: [['updated_at', 'DESC']]
-        });
+            return await Order.findAll({
+                where: {
+                    delivery_partner_id: driver.id,
+                    status: { [Op.in]: ['delivered', 'completed'] }
+                },
+                include: [
+                    { model: Restaurant, attributes: ['name', 'user_id', 'location'] },
+                    { model: Address, attributes: ['street', 'city'] }
+                ],
+                order: [['updated_at', 'DESC']]
+            });
+        } catch (err) {
+            console.error('[getDriverHistory Error]:', err.message);
+            return [];
+        }
     }
 }
 

@@ -71,37 +71,47 @@ export const acceptByDriver = async (orderId, userId, io) => {
 };
 
 export const getDriverDeliveries = async (userId) => {
-  const driver = await prisma.deliveryPartner.findUnique({ where: { user_id: userId } });
-  if (!driver) throw new AppError('Driver profile not found', 404);
+  try {
+    const driver = await prisma.deliveryPartner.findUnique({ where: { user_id: userId } });
+    if (!driver) return [];
 
-  return await prisma.order.findMany({
-    where: {
-      delivery_partner_id: driver.id,
-      status: { in: ['assigned', 'picked_up'] }
-    },
-    include: {
-      restaurant: { select: { name: true, user_id: true, address: true } },
-      deliveryAddress: true,
-      customer: { include: { user: { select: { full_name: true, phone_number: true } } } },
-      items: { include: { menuItem: true } }
-    },
-    orderBy: { updated_at: 'desc' }
-  });
+    return await prisma.order.findMany({
+      where: {
+        delivery_partner_id: driver.id,
+        status: { in: ['assigned', 'picked_up'] }
+      },
+      include: {
+        restaurant: { select: { name: true, user_id: true, address: true } },
+        deliveryAddress: true,
+        customer: { include: { user: { select: { full_name: true, phone_number: true } } } },
+        items: { include: { menuItem: true } }
+      },
+      orderBy: { updated_at: 'desc' }
+    });
+  } catch (err) {
+    console.error('[getDriverDeliveries Error]:', err.message);
+    return [];
+  }
 };
 
 export const getDriverHistory = async (userId) => {
-  const driver = await prisma.deliveryPartner.findUnique({ where: { user_id: userId } });
-  if (!driver) throw new AppError('Driver profile not found', 404);
+  try {
+    const driver = await prisma.deliveryPartner.findUnique({ where: { user_id: userId } });
+    if (!driver) return [];
 
-  return await prisma.order.findMany({
-    where: {
-      delivery_partner_id: driver.id,
-      status: { in: ['delivered', 'completed'] }
-    },
-    include: {
-      restaurant: { select: { name: true, user_id: true, address: true } },
-      deliveryAddress: true
-    },
-    orderBy: { updated_at: 'desc' }
-  });
+    return await prisma.order.findMany({
+      where: {
+        delivery_partner_id: driver.id,
+        status: { in: ['delivered', 'completed'] }
+      },
+      include: {
+        restaurant: { select: { name: true, user_id: true, address: true } },
+        deliveryAddress: true
+      },
+      orderBy: { updated_at: 'desc' }
+    });
+  } catch (err) {
+    console.error('[getDriverHistory Error]:', err.message);
+    return [];
+  }
 };

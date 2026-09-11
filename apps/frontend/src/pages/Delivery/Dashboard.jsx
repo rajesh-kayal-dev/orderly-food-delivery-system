@@ -47,11 +47,12 @@ export default function DeliveryDashboard() {
       try {
         setLoading(true);
         const { data } = await axios.get('/orders/driver/me/history');
-        if (data.success) {
+        if (data?.success) {
           setHistory(data.data || []);
         }
       } catch (error) {
         console.error('Error fetching driver history:', error);
+        setHistory([]);
       } finally {
         setLoading(false);
       }
