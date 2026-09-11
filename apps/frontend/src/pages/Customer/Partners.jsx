@@ -73,10 +73,20 @@ export default function Partners() {
     };
   }, []);
 
+  const checkIsOnline = (partner) => {
+    if (partner.is_available !== undefined && partner.is_available !== null) {
+      return Boolean(partner.is_available);
+    }
+    if (partner.is_online !== undefined && partner.is_online !== null) {
+      return Boolean(partner.is_online);
+    }
+    return partner.status === 'Online' || partner.status === 'available';
+  };
+
   // Filtering Logic
   const filteredPartners = useMemo(() => {
     return partnersList.filter(partner => {
-      const isOnline = partner.status === 'Online' || partner.is_online || partner.is_available;
+      const isOnline = checkIsOnline(partner);
 
       const matchesSearch = (partner.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                             (partner.area || '').toLowerCase().includes(searchTerm.toLowerCase());
@@ -294,7 +304,7 @@ export default function Partners() {
             ) : filteredPartners.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
                 {filteredPartners.map((partner) => {
-                  const isOnline = partner.status === 'Online' || partner.is_online || partner.is_available;
+                  const isOnline = checkIsOnline(partner);
 
                   return (
                     <div
