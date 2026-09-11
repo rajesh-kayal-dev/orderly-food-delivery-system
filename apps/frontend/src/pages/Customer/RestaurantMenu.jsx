@@ -51,7 +51,11 @@ export default function RestaurantMenu() {
         const resResponse = await axios.get(`/restaurants/${restaurantId}`);
 
         if (resResponse.data?.success) {
-          setRestaurant(resResponse.data.data);
+          const storeData = resResponse.data.data;
+          setRestaurant(storeData);
+          if (storeData?.name) {
+            document.title = `${storeData.name} - Menu | Orderly`;
+          }
           setRestaurantClosed(false);
 
           const menuResponse = await axios.get(`/menu/full/${restaurantId}`);
