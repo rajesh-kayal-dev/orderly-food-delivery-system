@@ -1,4 +1,4 @@
-﻿# Orderly (FoodFlow) - Modern Food Delivery Microservices Platform
+﻿# Orderly - Modern Food Delivery Microservices Platform
 
 Orderly is a production-grade, microservices-based online food delivery system built with **Node.js**, **Express (ES Modules)**, **Prisma ORM**, **Neon PostgreSQL**, **Socket.IO**, and **React 19 + Vite**.
 
