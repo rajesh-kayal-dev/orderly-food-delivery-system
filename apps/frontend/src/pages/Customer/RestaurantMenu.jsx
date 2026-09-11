@@ -27,182 +27,6 @@ import {
   ShoppingOutlined
 } from '@ant-design/icons';
 
-// Clean catalog without emojis
-const FULL_CATALOG = [
-  {
-    id: 'cat-popular',
-    name: 'Popular Items',
-    subtitle: 'Most loved items by our customers',
-    items: [
-      {
-        id: 'p1',
-        name: 'Orderly Classic Burger',
-        description: 'Juicy patty with fresh veggies and signature sauce.',
-        price: 129,
-        is_veg: true,
-        is_bestseller: true,
-        image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&auto=format&fit=crop&q=80'
-      },
-      {
-        id: 'p2',
-        name: 'French Fries',
-        description: 'Crispy golden fries. A perfect side.',
-        price: 89,
-        is_veg: true,
-        is_bestseller: false,
-        image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=600&auto=format&fit=crop&q=80'
-      },
-      {
-        id: 'p3',
-        name: 'Coke (500ml)',
-        description: 'Chilled Coca-Cola to refresh you.',
-        price: 60,
-        is_veg: true,
-        is_bestseller: false,
-        image_url: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=600&auto=format&fit=crop&q=80'
-      },
-      {
-        id: 'p4',
-        name: 'Oreo McFlurry',
-        description: 'Creamy vanilla soft serve with Oreo crumbs.',
-        price: 99,
-        is_veg: true,
-        is_bestseller: false,
-        image_url: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=600&auto=format&fit=crop&q=80'
-      }
-    ]
-  },
-  {
-    id: 'cat-burgers',
-    name: 'Gourmet Burgers',
-    subtitle: 'Handcrafted gourmet burgers made with fresh farm ingredients.',
-    items: [
-      {
-        id: 'b1',
-        name: 'McChicken Burger',
-        description: 'Crispy chicken patty with fresh lettuce and mayo.',
-        price: 119,
-        is_veg: false,
-        is_bestseller: true,
-        image_url: 'https://images.unsplash.com/photo-1572802419224-296b0aeee0d9?w=600&auto=format&fit=crop&q=80'
-      },
-      {
-        id: 'b2',
-        name: 'Spicy Paneer Burger',
-        description: 'Spicy paneer patty with creamy jalapeno mayo.',
-        price: 109,
-        is_veg: true,
-        is_bestseller: false,
-        image_url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=600&auto=format&fit=crop&q=80'
-      },
-      {
-        id: 'b3',
-        name: 'Double Cheese Burger',
-        description: 'Double the patty, double melted cheddar cheese.',
-        price: 169,
-        is_veg: true,
-        is_bestseller: false,
-        image_url: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=600&auto=format&fit=crop&q=80'
-      },
-      {
-        id: 'b4',
-        name: 'Chicken Maharaja Mac',
-        description: 'Double flame-grilled chicken patties with rich habanero sauce.',
-        price: 199,
-        is_veg: false,
-        is_bestseller: false,
-        image_url: 'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?w=600&auto=format&fit=crop&q=80'
-      }
-    ]
-  },
-  {
-    id: 'cat-veg',
-    name: 'Veg Specialties',
-    subtitle: '100% vegetarian delights packed with rich flavor.',
-    items: [
-      {
-        id: 'v1',
-        name: 'McVeggie Burger',
-        description: 'Crispy veggie patty with green peas, carrots, and sweet corn.',
-        price: 99,
-        is_veg: true,
-        is_bestseller: true,
-        image_url: 'https://images.unsplash.com/photo-1525059696034-4967a8e1dca2?w=600&auto=format&fit=crop&q=80'
-      },
-      {
-        id: 'v2',
-        name: 'Veg Pizza Pocket',
-        description: 'Golden crust stuffed with melted cheese, corn, and bell peppers.',
-        price: 79,
-        is_veg: true,
-        is_bestseller: false,
-        image_url: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&auto=format&fit=crop&q=80'
-      },
-      {
-        id: 'v3',
-        name: 'Crispy Veg Nuggets (8 Pcs)',
-        description: 'Golden crispy vegetable nuggets served with tangy mustard dip.',
-        price: 119,
-        is_veg: true,
-        is_bestseller: false,
-        image_url: 'https://images.unsplash.com/photo-1562967914-608f82629710?w=600&auto=format&fit=crop&q=80'
-      },
-      {
-        id: 'v4',
-        name: 'Cheesy Garlic Breadsticks',
-        description: 'Freshly baked breadsticks brushed with garlic butter and cheese.',
-        price: 139,
-        is_veg: true,
-        is_bestseller: false,
-        image_url: 'https://images.unsplash.com/photo-1619535860434-ba1d8fa12536?w=600&auto=format&fit=crop&q=80'
-      }
-    ]
-  },
-  {
-    id: 'cat-nonveg',
-    name: 'Non-Veg Delights',
-    subtitle: 'Succulent chicken and meat options cooked to perfection.',
-    items: [
-      {
-        id: 'nv1',
-        name: 'Crispy Fried Chicken (2 Pcs)',
-        description: 'Juicy chicken pieces coated in extra-crispy secret herbs.',
-        price: 219,
-        is_veg: false,
-        is_bestseller: true,
-        image_url: 'https://images.unsplash.com/photo-1626645738196-c2a7c87a8f58?w=600&auto=format&fit=crop&q=80'
-      },
-      {
-        id: 'nv2',
-        name: 'Chicken Wings (6 Pcs)',
-        description: 'Crispy fried wings tossed in sweet and spicy BBQ glaze.',
-        price: 189,
-        is_veg: false,
-        is_bestseller: false,
-        image_url: 'https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=600&auto=format&fit=crop&q=80'
-      },
-      {
-        id: 'nv3',
-        name: 'Grilled Chicken Wrap',
-        description: 'Juicy grilled chicken strips, crisp lettuce, and chipotle mayo.',
-        price: 149,
-        is_veg: false,
-        is_bestseller: false,
-        image_url: 'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?w=600&auto=format&fit=crop&q=80'
-      },
-      {
-        id: 'nv4',
-        name: 'Chicken Popcorn (Large)',
-        description: 'Bite-sized crispy chicken tender pops with peri peri seasoning.',
-        price: 159,
-        is_veg: false,
-        is_bestseller: false,
-        image_url: 'https://images.unsplash.com/photo-1569058242253-92a9c755a0ec?w=600&auto=format&fit=crop&q=80'
-      }
-    ]
-  }
-];
-
 export default function RestaurantMenu() {
   const { restaurantId } = useParams();
   const navigate = useNavigate();
@@ -234,30 +58,18 @@ export default function RestaurantMenu() {
           if (menuResponse.data?.success && menuResponse.data.data?.length > 0) {
             const rawCategories = menuResponse.data.data;
             
-            let enriched = rawCategories.map(cat => {
-              const raw = cat.items || cat.menuItems || cat.MenuItems || [];
-              const isNonVegCategory = cat.name.toLowerCase().includes('non');
-              const pool = isNonVegCategory ? FULL_CATALOG[3].items : FULL_CATALOG[2].items;
-              
-              let combined = [...raw];
-              for (const pItem of pool) {
-                if (combined.length >= 4) break;
-                if (!combined.some(i => String(i.name).toLowerCase() === String(pItem.name).toLowerCase())) {
-                  combined.push(pItem);
-                }
-              }
+            // Process real categories and items for this specific restaurant
+            const processed = rawCategories.map(cat => {
+              const rawItems = cat.items || cat.menuItems || cat.MenuItems || [];
               return {
                 ...cat,
-                items: combined
+                items: rawItems
               };
-            });
+            }).filter(cat => cat.items && cat.items.length > 0);
 
-            if (enriched.length < 3) {
-              enriched = [FULL_CATALOG[0], FULL_CATALOG[1], ...enriched];
-            }
-            setMenu(enriched);
+            setMenu(processed);
           } else {
-            setMenu(FULL_CATALOG);
+            setMenu([]);
           }
         }
       } catch (error) {
@@ -268,7 +80,7 @@ export default function RestaurantMenu() {
           setMenu([]);
           return;
         }
-        setMenu(FULL_CATALOG);
+        setMenu([]);
       } finally {
         setLoading(false);
       }
@@ -318,9 +130,7 @@ export default function RestaurantMenu() {
 
   const getItemQuantity = (itemId) => {
     const found = cartItems.find(i => String(i.id || i.menu_item_id) === String(itemId));
-    if (found) return found.quantity;
-    if (itemId === 'p1' && cartItems.length === 0) return 1;
-    return 0;
+    return found ? found.quantity : 0;
   };
 
   const handleAdd = async (item) => {
@@ -348,7 +158,7 @@ export default function RestaurantMenu() {
         menu_item_id: item.id,
         quantity: 1,
         restaurant_id: restaurant?.id || restaurantId,
-        item: { ...item, restaurantName: restaurant?.name || "McDonald's" }
+        item: { ...item, restaurantName: restaurant?.name || 'Restaurant' }
       }));
 
       notification.success({
@@ -376,26 +186,25 @@ export default function RestaurantMenu() {
     }));
   };
 
-  // Category filtering logic: All Items shows all categories, otherwise only the selected category
+  // Dynamically generate category pills based ONLY on real categories present in this restaurant
+  const categoryPills = useMemo(() => {
+    const pills = [{ label: 'All Items' }];
+    menu.forEach(cat => {
+      if (cat.name && !pills.some(p => p.label === cat.name)) {
+        pills.push({ label: cat.name });
+      }
+    });
+    return pills;
+  }, [menu]);
+
+  // Filter real menu items by selected category pill and search query
   const displayMenu = useMemo(() => {
-    let sourceMenu = menu.length > 0 ? menu : FULL_CATALOG;
-    let filteredCategories = sourceMenu;
+    let filteredCategories = menu;
 
     if (activeCategory !== 'All' && activeCategory !== 'All Items') {
-      filteredCategories = sourceMenu.filter(category => {
-        const catName = (category.name || '').toLowerCase();
-        const actName = (activeCategory || '').toLowerCase();
-
-        if (actName.includes('popular') && catName.includes('popular')) return true;
-        if (actName.includes('burger') && catName.includes('burger')) return true;
-        if (actName.includes('veg') && !actName.includes('non') && catName.includes('veg') && !catName.includes('non')) return true;
-        if (actName.includes('non') && catName.includes('non')) return true;
-        if (actName.includes('fries') && (catName.includes('fries') || catName.includes('side'))) return true;
-        if (actName.includes('beverage') && catName.includes('beverage')) return true;
-        if (actName.includes('dessert') && catName.includes('dessert')) return true;
-
-        return catName.includes(actName) || actName.includes(catName);
-      });
+      filteredCategories = menu.filter(category => 
+        String(category.name || '').toLowerCase() === String(activeCategory || '').toLowerCase()
+      );
     }
 
     return filteredCategories.map(category => {
@@ -413,34 +222,13 @@ export default function RestaurantMenu() {
     }).filter(category => category.items.length > 0);
   }, [menu, searchTerm, activeCategory]);
 
-  const activeCartDisplay = useMemo(() => {
-    if (cartItems.length > 0) return cartItems;
-    return [
-      { id: 'p1', name: 'Orderly Classic Burger', quantity: 1, price: 129, image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=100' },
-      { id: 'p2', name: 'French Fries', quantity: 1, price: 89, image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=100' },
-      { id: 'p3', name: 'Coke (500ml)', quantity: 1, price: 60, image_url: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=100' },
-    ];
-  }, [cartItems]);
-
-  const cartSubtotal = activeCartDisplay.reduce((acc, curr) => acc + (Number(curr.price || curr.unit_price || 0) * (curr.quantity || 1)), 0);
-  const cartTotalItems = activeCartDisplay.reduce((acc, curr) => acc + (curr.quantity || 1), 0);
-
-  // Clean category pills without emojis
-  const categoryPills = [
-    { label: 'All Items' },
-    { label: 'Popular' },
-    { label: 'Burgers' },
-    { label: 'Veg Specialties' },
-    { label: 'Non-Veg Delights' },
-    { label: 'Fries & Sides' },
-    { label: 'Beverages' },
-    { label: 'Desserts' }
-  ];
+  const cartSubtotal = cartItems.reduce((acc, curr) => acc + (Number(curr.price || curr.unit_price || 0) * (curr.quantity || 1)), 0);
+  const cartTotalItems = cartItems.reduce((acc, curr) => acc + (curr.quantity || 1), 0);
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center py-32 space-y-4 animate-pulse">
       <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-      <p className="text-slate-500 font-semibold text-sm">Loading restaurant store & menu catalog...</p>
+      <p className="text-slate-500 font-semibold text-sm">Loading restaurant menu...</p>
     </div>
   );
 
@@ -458,10 +246,11 @@ export default function RestaurantMenu() {
     );
   }
 
-  const storeName = restaurant?.name || "McDonald's";
-  const storeRating = restaurant?.rating || 4.6;
-  const storeCuisine = restaurant?.description || restaurant?.cuisine_type || 'Burgers • Fast Food • Beverages';
-  const storeAddress = restaurant?.address || restaurant?.location || 'Salt Lake, Kolkata';
+  const storeName = restaurant?.name || 'Restaurant';
+  const storeFirstLetter = storeName.charAt(0).toUpperCase();
+  const storeRating = restaurant?.rating || 4.5;
+  const storeCuisine = restaurant?.description || restaurant?.cuisine_type || 'Fast Food • Multi-Cuisine';
+  const storeAddress = restaurant?.address || restaurant?.location || 'City Center';
 
   return (
     <div className="pb-24 space-y-6 animate-fade-in font-sans max-w-[1500px] w-full mx-auto px-4 sm:px-6 lg:px-8">
@@ -476,22 +265,22 @@ export default function RestaurantMenu() {
         </button>
       </div>
 
-      {/* ── 1. RESTAURANT HERO BANNER ── */}
-      <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-black text-white border border-neutral-900">
+      {/* ── 1. RESTAURANT HERO BANNER (Dynamic based on real restaurant name) ── */}
+      <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-slate-950 text-white border border-slate-800">
         <div className="h-64 sm:h-72 w-full relative">
           <img
-            src={restaurant?.image_url || 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=1600&h=600&fit=crop'}
+            src={restaurant?.image_url || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1600&h=600&fit=crop'}
             alt={storeName}
             className="w-full h-full object-cover opacity-40"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/85 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/85 to-transparent" />
 
           <div className="absolute inset-0 flex items-center justify-between p-6 sm:p-10">
             <div className="flex items-center gap-6 max-w-3xl">
               
-              {/* McDonald's Red Avatar Logo Box */}
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-[#DA291C] text-[#FFC72C] flex items-center justify-center font-black text-5xl sm:text-6xl shadow-2xl shrink-0 border-2 border-white/20 select-none">
-                M
+              {/* Dynamic Restaurant Avatar Box (First letter of actual store name) */}
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 text-white flex items-center justify-center font-black text-5xl sm:text-6xl shadow-2xl shrink-0 border-2 border-white/20 select-none">
+                {storeFirstLetter}
               </div>
 
               {/* Text Info */}
@@ -503,11 +292,11 @@ export default function RestaurantMenu() {
                   <CheckCircleFilled className="text-emerald-400 text-xl sm:text-2xl" />
                 </div>
 
-                <p className="text-sm sm:text-base text-neutral-300 font-semibold">
+                <p className="text-sm sm:text-base text-slate-300 font-semibold">
                   {storeCuisine}
                 </p>
 
-                <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-neutral-300 font-semibold pt-1">
+                <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-slate-300 font-semibold pt-1">
                   <span className="flex items-center gap-1.5 text-white">
                     <StarFilled className="text-amber-400 text-sm" />
                     <span>{storeRating} (12K+ ratings)</span>
@@ -528,51 +317,47 @@ export default function RestaurantMenu() {
               </div>
 
             </div>
-
-            <div className="hidden lg:flex flex-col items-end pr-8">
-              <span className="font-serif italic font-bold text-4xl sm:text-5xl tracking-wide text-white drop-shadow-xl">
-                i'm lovin' it®
-              </span>
-            </div>
           </div>
         </div>
       </div>
 
-      {/* ── 2. CATEGORY PILL NAVIGATION & SEARCH BAR ── */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-2">
-        
-        {/* Horizontal Category Pills without Emojis */}
-        <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-none">
-          {categoryPills.map((pill) => {
-            const isActive = activeCategory === pill.label;
-            return (
-              <button
-                key={pill.label}
-                onClick={() => setActiveCategory(pill.label)}
-                className={`px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all shrink-0 ${
-                  isActive
-                    ? 'bg-[#FF521C] text-white shadow-md shadow-orange-500/20'
-                    : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200/90'
-                }`}
-              >
-                <span>{pill.label}</span>
-              </button>
-            );
-          })}
-        </div>
+      {/* ── 2. DYNAMIC CATEGORY PILL NAVIGATION & SEARCH BAR ── */}
+      {categoryPills.length > 1 && (
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-2">
+          
+          {/* Dynamic Category Pills */}
+          <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-none">
+            {categoryPills.map((pill) => {
+              const isActive = activeCategory === pill.label;
+              return (
+                <button
+                  key={pill.label}
+                  onClick={() => setActiveCategory(pill.label)}
+                  className={`px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all shrink-0 ${
+                    isActive
+                      ? 'bg-[#FF521C] text-white shadow-md shadow-orange-500/20'
+                      : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200/90'
+                  }`}
+                >
+                  <span>{pill.label}</span>
+                </button>
+              );
+            })}
+          </div>
 
-        {/* Search Bar Input */}
-        <div className="relative w-full md:w-80 shrink-0">
-          <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-base" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder={`Search in ${storeName}...`}
-            className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-full text-sm font-medium focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 shadow-xs"
-          />
+          {/* Search Bar Input */}
+          <div className="relative w-full md:w-80 shrink-0">
+            <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-base" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder={`Search in ${storeName}...`}
+              className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-full text-sm font-medium focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 shadow-xs"
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ── 3. MAIN CONTENT: 75% MENU (9 COLS) vs 25% SIDEBAR (3 COLS) ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 pt-4 items-start">
@@ -585,20 +370,16 @@ export default function RestaurantMenu() {
               return (
                 <section key={category.id || category.name} className="space-y-5">
                   
-                  {/* Category Header (No Emojis) */}
+                  {/* Category Header */}
                   <div className="flex items-center justify-between border-b border-slate-200 pb-3">
                     <div>
                       <h2 className="text-2xl font-black text-slate-900 tracking-tight">
                         {category.name}
                       </h2>
                       <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
-                        {category.subtitle || 'Delicious items handcrafted fresh for your order.'}
+                        {category.subtitle || 'Freshly prepared items from our kitchen.'}
                       </p>
                     </div>
-                    <button className="text-xs sm:text-sm font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1">
-                      <span>See All</span>
-                      <RightOutlined className="text-xs" />
-                    </button>
                   </div>
 
                   {/* 4 FOOD CARDS PER ROW GRID ON DESKTOP */}
@@ -616,13 +397,13 @@ export default function RestaurantMenu() {
                           {/* Top Image Container */}
                           <div className="relative h-36 sm:h-40 w-full overflow-hidden bg-slate-100">
                             <img
-                              src={item.image_url || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600'}
+                              src={item.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600'}
                               alt={item.name}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             />
 
                             {/* Bestseller Badge */}
-                            {(item.is_bestseller || category.name === 'Popular Items') && (
+                            {item.is_bestseller && (
                               <span className="absolute top-2.5 left-2.5 bg-[#FF521C] text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md shadow-sm">
                                 Bestseller
                               </span>
@@ -702,10 +483,12 @@ export default function RestaurantMenu() {
               );
             })
           ) : (
-            <EmptyState
-              title="No Items Found"
-              description="No menu items matched your selected category or search query."
-            />
+            <div className="bg-white rounded-2xl p-12 text-center border border-slate-200 shadow-xs">
+              <EmptyState
+                title="No Menu Items Found"
+                description="This restaurant has not added any menu items matching your selection."
+              />
+            </div>
           )}
         </div>
 
@@ -789,12 +572,12 @@ export default function RestaurantMenu() {
             {/* Promo Discount Banner */}
             <div className="bg-orange-50/80 border border-orange-200/80 rounded-xl p-3.5 flex items-center justify-between text-xs cursor-pointer hover:bg-orange-100/70 transition-colors">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#DA291C] text-[#FFC72C] flex items-center justify-center font-black text-sm shrink-0 select-none shadow-xs">
-                  M
+                <div className="w-8 h-8 rounded-lg bg-orange-500 text-white flex items-center justify-center font-black text-sm shrink-0 select-none shadow-xs">
+                  {storeFirstLetter}
                 </div>
                 <div>
-                  <p className="font-extrabold text-slate-900 text-xs">Free Fries on orders above ₹299</p>
-                  <p className="text-[11px] text-orange-700 font-bold">Use code: FRIES</p>
+                  <p className="font-extrabold text-slate-900 text-xs">Special Discount Offer</p>
+                  <p className="text-[11px] text-orange-700 font-bold">15% OFF on first order</p>
                 </div>
               </div>
               <RightOutlined className="text-slate-400 text-xs" />
@@ -818,9 +601,9 @@ export default function RestaurantMenu() {
             </div>
 
             {/* Cart Items List */}
-            {activeCartDisplay.length > 0 ? (
+            {cartItems.length > 0 ? (
               <div className="space-y-3.5 max-h-72 overflow-y-auto pr-1">
-                {activeCartDisplay.map((cItem) => (
+                {cartItems.map((cItem) => (
                   <div key={cItem.id} className="flex items-center justify-between text-xs sm:text-sm">
                     <div className="flex items-center gap-2.5 max-w-[190px]">
                       <img
