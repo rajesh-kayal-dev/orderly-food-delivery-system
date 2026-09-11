@@ -79,6 +79,12 @@ io.on('connection', (socket) => {
         console.log(`Socket.io: Driver ${driverId} (User: ${userId}) joined room driver_${driverId}`);
     });
 
+    // Driver online/offline status broadcast
+    socket.on('DRIVER_STATUS_UPDATED', (data) => {
+        console.log('Socket.io: Broadcasting DRIVER_STATUS_UPDATED:', data);
+        io.emit('DRIVER_STATUS_UPDATED', data);
+    });
+
     // Driver location update event
     socket.on('DRIVER_UPDATE_LOCATION', async (data) => {
         try {

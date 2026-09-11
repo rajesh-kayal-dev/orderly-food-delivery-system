@@ -57,11 +57,19 @@ export default function Partners() {
     // Listen for real-time driver status updates
     socket.on('DRIVER_STATUS_UPDATED', (data) => {
       setPartnersList(prev => prev.map(p => {
-        if (String(p.id) === String(data.driverId || data.userId)) {
+        const matchesUser = String(p.id) === String(data.userId);
+        const matchesDriverId = String(p.id) === String(data.driverId) || (p.driverId && String(p.driverId) === String(data.driverId));
+
+        if (matchesUser || matchesDriverId) {
+          const isOnlineNow = Boolean(
+            data.is_online !== undefined ? data.is_online : 
+            (data.is_available !== undefined ? data.is_available : data.status === 'Online' || data.status === 'available')
+          );
           return {
             ...p,
-            status: data.is_online ? 'Online' : 'Offline',
-            is_online: data.is_online
+            status: isOnlineNow ? 'Online' : 'Offline',
+            is_online: isOnlineNow,
+            is_available: isOnlineNow
           };
         }
         return p;

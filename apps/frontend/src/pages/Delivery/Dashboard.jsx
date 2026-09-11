@@ -43,9 +43,20 @@ export default function DeliveryDashboard() {
   }, [profile?.is_available]);
 
   useEffect(() => {
-    const fetchHistory = async () => {
+    const fetchProfileAndHistory = async () => {
       try {
         setLoading(true);
+        const { data: profData } = await axios.get('/delivery-partner/my-profile');
+        if (profData?.success && profData?.data) {
+          const freshProfile = profData.data;
+          setIsOnline(Boolean(freshProfile.is_available));
+          dispatch(loginSuccess({ user, profile: freshProfile, token }));
+        }
+      } catch (profErr) {
+        console.warn('Failed to fetch fresh delivery profile:', profErr);
+      }
+
+      try {
         const { data } = await axios.get('/orders/driver/me/history');
         if (data?.success) {
           setHistory(data.data || []);
@@ -58,12 +69,12 @@ export default function DeliveryDashboard() {
       }
     };
 
-    if (profile?.id && token) {
-      fetchHistory();
+    if (token) {
+      fetchProfileAndHistory();
     } else {
       setLoading(false);
     }
-  }, [profile, token]);
+  }, [token]);
 
   const handleToggleOnline = async () => {
     if (updatingStatus) return;

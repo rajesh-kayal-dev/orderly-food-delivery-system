@@ -85,8 +85,7 @@ class AuthService {
     try {
       const users = await User.findAll({
         where: {
-          role: 'delivery_partner',
-          is_active: true
+          role: 'delivery_partner'
         },
         include: [{ model: DeliveryPartner }]
       });
@@ -103,10 +102,11 @@ class AuthService {
         'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&q=80&w=400'
       ];
 
-      return users.map((user, idx) => {
-        const dp = user.DeliveryPartner || user.deliveryPartner || {};
-        
-        // Determine online status strictly based on dp.is_available or dp.status
+      return users.map((u, idx) => {
+        const userJson = u.toJSON ? u.toJSON() : u;
+        const dp = userJson.DeliveryPartner || userJson.deliveryPartner || {};
+
+        // Explicit check on is_available boolean
         let isOnline = false;
         if (dp.is_available !== undefined && dp.is_available !== null) {
           isOnline = Boolean(dp.is_available);
@@ -115,8 +115,9 @@ class AuthService {
         }
 
         return {
-          id: user.id,
-          name: user.full_name || 'Delivery Partner',
+          id: userJson.id,
+          driverId: dp.id,
+          name: userJson.full_name || 'Delivery Partner',
           status: isOnline ? 'Online' : 'Offline',
           is_online: isOnline,
           is_available: isOnline,
@@ -128,7 +129,7 @@ class AuthService {
           avatar: sampleAvatars[idx % sampleAvatars.length],
           vehicle: `${dp.vehicle_type || 'Scooter'} (${dp.vehicle_license || dp.vehicle_number || 'WB-02-AK-9821'})`,
           joinDate: 'Jan 2024',
-          phone: user.phone_number || '+91 98301 23456'
+          phone: userJson.phone_number || '+91 98301 23456'
         };
       });
     } catch (error) {

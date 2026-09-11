@@ -348,6 +348,7 @@ export const getApprovedDeliveryPartners = async () => {
 
     return {
       id: user.id,
+      driverId: dp.id,
       name: user.full_name || 'Delivery Partner',
       status: isOnline ? 'Online' : 'Offline',
       is_online: isOnline,
