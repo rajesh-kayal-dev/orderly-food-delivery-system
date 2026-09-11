@@ -1,9 +1,18 @@
-﻿import * as menuService from '../services/menuService.js';
+import * as menuService from '../services/menuService.js';
 
 export const getCategories = async (req, res, next) => {
   try {
     const categories = await menuService.getCategoriesByRestaurantId(req.params.restaurantId);
     return res.json({ success: true, data: categories });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createCategory = async (req, res, next) => {
+  try {
+    const category = await menuService.createCategory(req.user.id, req.body);
+    return res.status(201).json({ success: true, data: category });
   } catch (error) {
     next(error);
   }

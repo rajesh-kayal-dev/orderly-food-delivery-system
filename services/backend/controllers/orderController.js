@@ -115,8 +115,8 @@ export const getAvailableDeliveries = async (req, res) => {
 
 export const acceptDelivery = async (req, res) => {
     try {
-        const { driver_id } = req.body;
-        const order = await deliveryMgmtService.acceptByDriver(req.params.id, driver_id, req.io);
+        // Use the authenticated user's ID — the service will look up the driver profile by user_id
+        const order = await deliveryMgmtService.acceptByDriver(req.params.id, req.user.id, req.io);
         res.json({ success: true, data: order });
     } catch (error) {
         console.error(error);

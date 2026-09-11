@@ -1,4 +1,4 @@
-﻿import env from '../config/env.js';
+import env from '../config/env.js';
 import * as authService from '../services/authService.js';
 
 export const registerUser = async (req, res, next) => {
@@ -117,3 +117,13 @@ export const updateProfile = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getApprovedDeliveryPartners = async (req, res, next) => {
+  try {
+    const partners = await authService.getApprovedDeliveryPartners();
+    return res.json({ success: true, data: partners });
+  } catch (error) {
+    next(error);
+  }
+};
+

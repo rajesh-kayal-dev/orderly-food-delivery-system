@@ -23,16 +23,15 @@ export default function DeliveryLayout() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useSelector(state => state.auth);
-  const activeCount = useSelector(state => state.order.activeCount);
+  const { user, profile } = useSelector(state => state.auth);
+  const activeCount = useSelector(state => state.order?.activeCount);
+
+  // Track online status from redux profile in real time
+  const isOnline = Boolean(profile?.is_available);
 
   const [currentDateString, setCurrentDateString] = useState('10-09-2026');
   const [showNotifications, setShowNotifications] = useState(false);
-  const [notificationsList, setNotificationsList] = useState([
-    { id: 1, title: 'New delivery offer: Order #DEL-491', time: '2 mins ago', read: false },
-    { id: 2, title: 'Bonus ₹100 credited for 5 deliveries!', time: '40 mins ago', read: false },
-    { id: 3, title: 'Weekly earnings report ready', time: '2 hours ago', read: true }
-  ]);
+  const [notificationsList, setNotificationsList] = useState([]);
   const notificationRef = useRef(null);
 
   useEffect(() => {
@@ -51,29 +50,77 @@ export default function DeliveryLayout() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Socket notification listener
+  // Socket notification listener — re-runs when online status changes
   useEffect(() => {
-    if (user?.id) {
-      socket.connect();
-      socket.emit('join', user.id);
+    if (!user?.id) return;
+
+    socket.connect();
+    socket.emit('join', user.id);
+
+    // Only broadcast-subscribe to available deliveries when online
+    if (isOnline) {
       socket.emit('join_deliveries');
-
-      const handleDeliveryOffer = (data) => {
-        const notif = {
-          id: Date.now(),
-          title: `New Delivery Available! #${data.orderId ? data.orderId.slice(0, 8).toUpperCase() : 'ORD'}`,
-          time: 'Just now',
-          read: false
-        };
-        setNotificationsList(prev => [notif, ...prev]);
-      };
-
-      socket.on('AVAILABLE_DELIVERY', handleDeliveryOffer);
-      return () => {
-        socket.off('AVAILABLE_DELIVERY', handleDeliveryOffer);
-      };
     }
-  }, [user]);
+
+    const handleDeliveryOffer = (data) => {
+      if (!isOnline) return;
+      const orderNum = data.orderId ? data.orderId.slice(0, 8).toUpperCase() : 'ORD';
+      const notif = {
+        id: Date.now(),
+        title: `New Delivery Available! #${orderNum}`,
+        time: 'Just now',
+        read: false,
+        link: '/delivery/orders',
+        orderId: data.orderId
+      };
+      setNotificationsList(prev => [notif, ...prev]);
+    };
+
+    const handleReadyForPickup = (data) => {
+      if (!isOnline) return;
+      const orderNum = data.orderId ? data.orderId.slice(0, 8).toUpperCase() : 'ORD';
+      const notif = {
+        id: Date.now(),
+        title: `Order #${orderNum} Ready for Pickup!`,
+        time: 'Just now',
+        read: false,
+        link: '/delivery/orders',
+        orderId: data.orderId
+      };
+      setNotificationsList(prev => [notif, ...prev]);
+    };
+
+    const handleDriverAssigned = (data) => {
+      const orderNum = data.orderId ? data.orderId.slice(0, 8).toUpperCase() : 'ORD';
+      const notif = {
+        id: Date.now(),
+        title: `Order #${orderNum} assigned to you!`,
+        time: 'Just now',
+        read: false,
+        link: '/delivery/orders',
+        orderId: data.orderId
+      };
+      setNotificationsList(prev => [notif, ...prev]);
+    };
+
+    const handleOrderAccepted = (data) => {
+      // Remove this order from notifications — another driver took it
+      setNotificationsList(prev => prev.filter(n => n.orderId !== data.orderId));
+    };
+
+    socket.on('AVAILABLE_DELIVERY', handleDeliveryOffer);
+    socket.on('ORDER_READY_FOR_PICKUP', handleReadyForPickup);
+    socket.on('DRIVER_ASSIGNED', handleDriverAssigned);
+    socket.on('ORDER_ACCEPTED', handleOrderAccepted);
+
+    return () => {
+      socket.off('AVAILABLE_DELIVERY', handleDeliveryOffer);
+      socket.off('ORDER_READY_FOR_PICKUP', handleReadyForPickup);
+      socket.off('DRIVER_ASSIGNED', handleDriverAssigned);
+      socket.off('ORDER_ACCEPTED', handleOrderAccepted);
+    };
+  }, [user, isOnline]);
+
 
   const handleLogout = () => {
     dispatch(logout());
@@ -209,6 +256,18 @@ export default function DeliveryLayout() {
               <span className="text-[9px] text-slate-400 ml-0.5">▼</span>
             </div>
 
+            {/* Online/Offline Status Badge */}
+            <div
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border ${
+                isOnline
+                  ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                  : 'bg-rose-50 border-rose-200 text-rose-600'
+              }`}
+            >
+              <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-400'}`} />
+              {isOnline ? 'Online' : 'Offline'}
+            </div>
+
             {/* Interactive Notification Bell Popover */}
             <div className="relative" ref={notificationRef}>
               <button
@@ -262,12 +321,20 @@ export default function DeliveryLayout() {
                       notificationsList.map(item => (
                         <div
                           key={item.id}
-                          className={`p-2.5 rounded-xl border transition-colors flex items-start justify-between gap-2 ${
+                          onClick={() => {
+                            setNotificationsList(prev => prev.map(n => n.id === item.id ? { ...n, read: true } : n));
+                            setShowNotifications(false);
+                            navigate(item.link || '/delivery/orders');
+                          }}
+                          className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-start justify-between gap-2 hover:border-orange-300 hover:shadow-xs group ${
                             item.read ? 'bg-slate-50/50 border-slate-100 text-slate-500' : 'bg-orange-50/40 border-orange-100/80 text-slate-800 font-semibold'
                           }`}
                         >
-                          <div className="space-y-0.5">
-                            <p className="text-xs font-bold leading-tight">{item.title}</p>
+                          <div className="space-y-0.5 flex-1">
+                            <div className="flex items-center justify-between">
+                              <p className="text-xs font-bold leading-tight group-hover:text-orange-600 transition-colors">{item.title}</p>
+                              <span className="text-[9px] text-orange-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity ml-1">View ➔</span>
+                            </div>
                             <p className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
                               <ClockCircleOutlined className="text-[9px]" /> {item.time}
                             </p>

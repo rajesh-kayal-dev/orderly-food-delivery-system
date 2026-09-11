@@ -219,9 +219,17 @@ export const updateOrderStatus = async (orderId, status, userId, userRole, io) =
   });
 
   if (io) {
-    const statusData = { orderId, status };
+    const statusData = {
+      orderId,
+      status,
+      restaurant: updatedOrder.restaurant,
+      deliveryPartner: updatedOrder.deliveryPartner
+    };
     if (updatedOrder.customer?.user_id) io.to(updatedOrder.customer.user_id).emit('ORDER_STATUS_UPDATED', statusData);
     if (updatedOrder.restaurant?.user_id) io.to(updatedOrder.restaurant.user_id).emit('ORDER_STATUS_UPDATED', statusData);
+    if (status === 'ready' || status === 'preparing') {
+      io.to('available_deliveries').emit('ORDER_READY_FOR_PICKUP', statusData);
+    }
   }
 
   return updatedOrder;

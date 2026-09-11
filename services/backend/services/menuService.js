@@ -123,6 +123,17 @@ class MenuService {
         });
     }
 
+    async createCategory(userId, data) {
+        const restaurant = await Restaurant.findOne({ where: { user_id: userId } });
+        if (!restaurant) {
+            throw new Error('Restaurant profile not found');
+        }
+        return await MenuCategory.create({
+            restaurant_id: restaurant.id,
+            name: data.name
+        });
+    }
+
     async getGlobalCategories() {
         const categories = await MenuCategory.findAll({
             attributes: [[sequelize.fn('DISTINCT', sequelize.col('name')), 'name']]

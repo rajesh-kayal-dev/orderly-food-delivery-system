@@ -119,3 +119,14 @@ export const getDriverHistory = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getRestaurantYearlySummary = async (req, res, next) => {
+  try {
+    const { year } = req.query;
+    const summary = await restaurantOpsService.getRestaurantYearlySummary(req.user.id, year);
+    return res.json({ success: true, data: summary });
+  } catch (error) {
+    next(error);
+  }
+};
+

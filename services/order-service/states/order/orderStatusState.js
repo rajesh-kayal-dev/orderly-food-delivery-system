@@ -22,6 +22,16 @@ class OrderState {
   }
 }
 
+class PlacedState extends OrderState {
+  constructor() {
+    super('placed');
+  }
+
+  allowedTransitions() {
+    return ['accepted', 'cancelled'];
+  }
+}
+
 class PendingState extends OrderState {
   constructor() {
     super('pending');
@@ -45,6 +55,26 @@ class AcceptedState extends OrderState {
 class PreparingState extends OrderState {
   constructor() {
     super('preparing');
+  }
+
+  allowedTransitions() {
+    return ['ready', 'picked_up', 'cancelled'];
+  }
+}
+
+class ReadyState extends OrderState {
+  constructor() {
+    super('ready');
+  }
+
+  allowedTransitions() {
+    return ['assigned', 'picked_up'];
+  }
+}
+
+class AssignedState extends OrderState {
+  constructor() {
+    super('assigned');
   }
 
   allowedTransitions() {
@@ -91,9 +121,12 @@ class RefundedState extends OrderState {
 }
 
 const STATE_FACTORIES = {
+  placed: () => new PlacedState(),
   pending: () => new PendingState(),
   accepted: () => new AcceptedState(),
   preparing: () => new PreparingState(),
+  ready: () => new ReadyState(),
+  assigned: () => new AssignedState(),
   picked_up: () => new PickedUpState(),
   delivered: () => new DeliveredState(),
   completed: () => new CompletedState(),
@@ -130,8 +163,9 @@ class OrderStatusContext {
 
 const ROLE_ALLOWED_TARGETS = {
   customer: ['completed'],
-  restaurant: ['accepted', 'preparing', 'cancelled'],
-  delivery_partner: ['delivered'],
+  restaurant: ['accepted', 'preparing', 'ready', 'cancelled'],
+  delivery_partner: ['assigned', 'picked_up', 'delivered'],
+  admin: ['placed', 'accepted', 'preparing', 'ready', 'assigned', 'picked_up', 'delivered', 'completed', 'cancelled', 'refunded'],
 };
 
 function assertRoleCanUpdateStatus({ role, targetStatus }) {
@@ -149,11 +183,11 @@ function assertRoleCanUpdateStatus({ role, targetStatus }) {
     }
 
     if (normalizedRole === 'delivery_partner') {
-      throw new Error('Drivers can only mark orders as delivered');
+      throw new Error('Drivers can move orders to assigned, picked_up, or delivered');
     }
 
     if (normalizedRole === 'restaurant') {
-      throw new Error('Restaurants can only move orders to accepted, preparing, or cancelled');
+      throw new Error('Restaurants can move orders to accepted, preparing, ready, or cancelled');
     }
 
     throw new Error('Not authorized to update this order');

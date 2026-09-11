@@ -16,6 +16,16 @@ export const getCategories = async (req, res) => {
     }
 };
 
+export const createCategory = async (req, res) => {
+    try {
+        const category = await menuService.createCategory(req.user.id, req.body);
+        res.status(201).json({ success: true, data: category });
+    } catch (error) {
+        console.error(error);
+        res.status(400).json({ success: false, message: error.message });
+    }
+};
+
 // @desc    Get menu items with pagination and filters
 // @route   GET /api/menu
 export const getMenuItems = async (req, res) => {

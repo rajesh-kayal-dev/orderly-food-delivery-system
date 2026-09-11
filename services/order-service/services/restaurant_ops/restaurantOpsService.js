@@ -1,4 +1,4 @@
-﻿import prisma from '../../config/prisma.js';
+import prisma from '../../config/prisma.js';
 import { AppError } from '../../middleware/errorHandler.js';
 
 export const getRestaurantOrders = async (userId, statusFilter, date) => {
@@ -21,7 +21,9 @@ export const getRestaurantOrders = async (userId, statusFilter, date) => {
   }
 
   if (statusFilter && statusFilter !== 'all') {
-    if (statusFilter === 'delivered') {
+    if (statusFilter === 'pending') {
+      where.status = { in: ['pending', 'placed'] };
+    } else if (statusFilter === 'delivered') {
       where.status = { in: ['delivered', 'completed'] };
     } else {
       where.status = statusFilter;
@@ -67,8 +69,11 @@ export const getRestaurantOrders = async (userId, statusFilter, date) => {
 
   const counts = {
     pending: 0,
+    placed: 0,
     accepted: 0,
     preparing: 0,
+    ready: 0,
+    assigned: 0,
     picked_up: 0,
     delivered: 0,
     cancelled: 0,
@@ -79,6 +84,9 @@ export const getRestaurantOrders = async (userId, statusFilter, date) => {
     const countVal = sc._count.status;
     if (sc.status === 'completed') {
       counts.delivered += countVal;
+    } else if (sc.status === 'placed') {
+      counts.pending += countVal;
+      counts.placed += countVal;
     } else if (Object.prototype.hasOwnProperty.call(counts, sc.status)) {
       counts[sc.status] += countVal;
     }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import axios from '../../api/axios';
 import { 
@@ -7,7 +7,10 @@ import {
     DeleteOutlined, 
     SearchOutlined,
     PoweroffOutlined,
-    FilterOutlined
+    FilterOutlined,
+    CheckOutlined,
+    CloseOutlined,
+    LoadingOutlined
 } from '@ant-design/icons';
 import { 
     notification, 
@@ -26,6 +29,124 @@ import {
 } from 'antd';
 
 const { Option } = Select;
+
+// ─── Inline "Add Category" widget ────────────────────────────────────────────
+function AddCategoryInline({ onCreated }) {
+    const [mode, setMode]         = useState('idle');   // 'idle' | 'input'
+    const [value, setValue]       = useState('');
+    const [saving, setSaving]     = useState(false);
+    const [error, setError]       = useState('');
+    const inputRef                = useRef(null);
+
+    const open = () => {
+        setMode('input');
+        setError('');
+        setValue('');
+        // auto-focus on next tick
+        setTimeout(() => inputRef.current?.focus(), 50);
+    };
+
+    const cancel = () => {
+        setMode('idle');
+        setValue('');
+        setError('');
+    };
+
+    const save = async () => {
+        const trimmed = value.trim();
+        if (!trimmed) {
+            setError('Category name cannot be empty.');
+            return;
+        }
+        setSaving(true);
+        setError('');
+        try {
+            const { data } = await axios.post('/menu/categories', { name: trimmed });
+            if (data.success && data.data) {
+                onCreated(data.data);          // lift the new category up
+                cancel();
+                notification.success({ message: `Category "${trimmed}" created!` });
+            } else {
+                setError(data.message || 'Failed to create category.');
+            }
+        } catch (err) {
+            setError(err.response?.data?.message || 'Server error. Please try again.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleKey = (e) => {
+        if (e.key === 'Enter') save();
+        if (e.key === 'Escape') cancel();
+    };
+
+    if (mode === 'idle') {
+        return (
+            <button
+                type="button"
+                onClick={open}
+                className="inline-flex items-center gap-1 text-[11px] font-bold text-orange-500 hover:text-orange-600 transition-colors ml-1.5 leading-none"
+                title="Add a new category"
+            >
+                <PlusOutlined style={{ fontSize: 10 }} />
+                Add Category
+            </button>
+        );
+    }
+
+    return (
+        <div className="mt-1.5 flex flex-col gap-1">
+            <div className="flex items-center gap-1.5">
+                <input
+                    ref={inputRef}
+                    type="text"
+                    value={value}
+                    onChange={e => { setValue(e.target.value); setError(''); }}
+                    onKeyDown={handleKey}
+                    placeholder="e.g. Starters, Beverages…"
+                    disabled={saving}
+                    className={`flex-1 text-xs px-2.5 py-1.5 border rounded-lg outline-none transition-all
+                        ${error
+                            ? 'border-red-400 bg-red-50 focus:border-red-500'
+                            : 'border-gray-300 bg-white focus:border-orange-400 focus:ring-1 focus:ring-orange-200'
+                        }`}
+                    style={{ minWidth: 0 }}
+                />
+
+                {/* Save */}
+                <button
+                    type="button"
+                    onClick={save}
+                    disabled={saving}
+                    className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white rounded-lg transition-colors shrink-0"
+                >
+                    {saving
+                        ? <LoadingOutlined style={{ fontSize: 11 }} spin />
+                        : <CheckOutlined style={{ fontSize: 11 }} />
+                    }
+                    {saving ? 'Saving…' : 'Save'}
+                </button>
+
+                {/* Cancel */}
+                <button
+                    type="button"
+                    onClick={cancel}
+                    disabled={saving}
+                    className="flex items-center justify-center w-7 h-7 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors shrink-0"
+                    title="Cancel"
+                >
+                    <CloseOutlined style={{ fontSize: 11 }} />
+                </button>
+            </div>
+
+            {error && (
+                <p className="text-[10px] text-red-500 font-medium leading-tight pl-0.5">{error}</p>
+            )}
+        </div>
+    );
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function MenuManagement() {
     const { profile, token } = useSelector(state => state.auth);
@@ -73,10 +194,16 @@ export default function MenuManagement() {
                 setTotal(response.data.totalItems || 0);
             } else {
                 setItems([]);
+                setTotal(0);
             }
         } catch (error) {
             console.error('Error fetching menu:', error);
+            const msg = error.response?.status === 404
+                ? 'Menu route not found — please check the backend is running.'
+                : error.message || 'Failed to load menu items.';
+            notification.error({ message: 'Could not load menu', description: msg, duration: 5 });
             setItems([]);
+            setTotal(0);
         } finally {
             setLoading(false);
         }
@@ -119,14 +246,29 @@ export default function MenuManagement() {
             const values = await form.validateFields();
             
             if (editingItem) {
-                await axios.put(`/menu/${editingItem.id}`, values);
+                const { data: res } = await axios.put(`/menu/${editingItem.id}`, values);
                 notification.success({ message: 'Item updated successfully' });
+                // Optimistically update item in list without waiting for refetch
+                if (res.success && res.data) {
+                    setItems(prev => prev.map(it => it.id === editingItem.id ? { ...it, ...res.data } : it));
+                }
             } else {
-                await axios.post('/menu', values);
-                notification.success({ message: 'Item created successfully' });
+                const { data: res } = await axios.post('/menu', values);
+                notification.success({ message: 'Item created successfully!' });
+                // Optimistically prepend the new item so it shows immediately
+                if (res.success && res.data) {
+                    const categoryInfo = categories.find(c => c.id === values.category_id);
+                    const newItem = {
+                        ...res.data,
+                        category: categoryInfo ? { name: categoryInfo.name } : null
+                    };
+                    setItems(prev => [newItem, ...prev]);
+                    setTotal(prev => prev + 1);
+                }
             }
             
             setIsModalVisible(false);
+            // Also re-fetch in background to stay in sync with server
             fetchMenu();
         } catch (error) {
             console.error('Error saving menu item:', error);
@@ -138,19 +280,33 @@ export default function MenuManagement() {
         try {
             await axios.delete(`/menu/${id}`);
             notification.success({ message: 'Item deleted' });
-            fetchMenu();
+            // Instantly remove from list without refetch
+            setItems(prev => prev.filter(it => it.id !== id));
+            setTotal(prev => Math.max(0, prev - 1));
         } catch (error) {
             notification.error({ message: 'Failed to delete item' });
         }
     };
 
     const toggleAvailability = async (id) => {
+        // Optimistic: flip is_available immediately in UI
+        setItems(prev => prev.map(it => it.id === id ? { ...it, is_available: !it.is_available } : it));
         try {
             await axios.patch(`/menu/${id}/toggle-availability`, {});
-            fetchMenu();
         } catch (error) {
+            // Revert on failure
+            setItems(prev => prev.map(it => it.id === id ? { ...it, is_available: !it.is_available } : it));
             notification.error({ message: 'Failed to update availability' });
         }
+    };
+
+    /**
+     * Called by AddCategoryInline when a new category is successfully created.
+     * Adds the category to the local list and auto-selects it in the form.
+     */
+    const handleCategoryCreated = (newCategory) => {
+        setCategories(prev => [...prev, newCategory]);
+        form.setFieldValue('category_id', newCategory.id);
     };
 
     return (
@@ -315,9 +471,15 @@ export default function MenuManagement() {
                             />
                         </Form.Item>
 
+                        {/* ── Category with inline "+ Add Category" ── */}
                         <Form.Item
                             name="category_id"
-                            label="Category"
+                            label={
+                                <span className="flex items-center gap-0.5 leading-none">
+                                    Category
+                                    <AddCategoryInline onCreated={handleCategoryCreated} />
+                                </span>
+                            }
                             rules={[{ required: true, message: 'Please select a category' }]}
                         >
                             <Select placeholder="Select category" size="large" className="rounded-xl border-gray-200">

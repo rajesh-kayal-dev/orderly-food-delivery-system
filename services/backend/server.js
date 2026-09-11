@@ -40,10 +40,24 @@ app.use((req, res, next) => {
 // Import routes
 import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import orderRoutes from './routes/orderRoutes.js';
+import menuRoutes from './routes/menuRoutes.js';
+import cartRoutes from './routes/cartRoutes.js';
+import customerAppRoutes from './routes/customerAppRoutes.js';
+import deliveryPartnerRoutes from './routes/deliveryPartnerRoutes.js';
+import restaurantRoutes from './routes/restaurantRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
 
 // Mount routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/menu', menuRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/customer', customerAppRoutes);
+app.use('/api/delivery-partner', deliveryPartnerRoutes);
+app.use('/api/restaurants', restaurantRoutes);
+app.use('/api/payments', paymentRoutes);
 
 import dispatchService from './services/dispatch/dispatchService.js';
 import { DeliveryPartner } from './models.js';

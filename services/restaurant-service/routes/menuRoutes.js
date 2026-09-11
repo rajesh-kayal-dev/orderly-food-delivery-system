@@ -1,6 +1,7 @@
-﻿import express from 'express';
+import express from 'express';
 import {
     getCategories,
+    createCategory,
     getMenuItems,
     getFullMenu,
     createMenuItem,
@@ -19,6 +20,7 @@ router.get('/categories/:restaurantId', getCategories);
 router.get('/full/:restaurantId', getFullMenu);
 
 // Protected routes (Restaurant owner only)
+router.post('/categories', protect, authorize('restaurant'), createCategory);
 router.post('/', protect, authorize('restaurant'), createMenuItem);
 router.put('/:id', protect, authorize('restaurant'), updateMenuItem);
 router.patch('/:id/toggle-availability', protect, authorize('restaurant'), toggleAvailability);

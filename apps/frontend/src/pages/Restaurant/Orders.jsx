@@ -180,8 +180,9 @@ export default function RestaurantOrders() {
     { key: 'pending', label: 'Pending', icon: <ClockCircleOutlined /> },
     { key: 'accepted', label: 'Accepted', icon: <CheckCircleOutlined /> },
     { key: 'preparing', label: 'Preparing', icon: <SyncOutlined /> },
+    { key: 'ready', label: 'Ready', icon: <CheckCircleOutlined /> },
     { key: 'picked_up', label: 'On the way', icon: <CarOutlined /> },
-    { key: 'delivered', label: 'Delivered', icon: <CheckCircleOutlined /> },
+    { key: 'delivered', label: 'Completed', icon: <CheckCircleOutlined /> },
     { key: 'cancelled', label: 'Cancelled', icon: <CloseCircleOutlined /> },
   ];
 
@@ -313,49 +314,71 @@ export default function RestaurantOrders() {
                   <td className="p-4">{getStatusBadge(order.status)}</td>
 
                   <td className="p-4 text-right">
-                    <div className="flex flex-col gap-2 items-end">
-                      {order.status === 'pending' && (
-                        <button
-                          onClick={() => updateStatus(order.id, 'accepted')}
-                          className="btn-primary py-1 px-4 text-[11px] uppercase tracking-wider"
-                        >
-                          Accept
-                        </button>
+                    <div className="flex items-center gap-2 justify-end">
+                      {(order.status === 'pending' || order.status === 'placed') && (
+                        <>
+                          <button
+                            onClick={() => updateStatus(order.id, 'cancelled')}
+                            className="px-3 py-1.5 border border-red-300 text-red-600 hover:bg-red-50 rounded-lg text-xs font-bold transition-all"
+                          >
+                            Reject
+                          </button>
+                          <button
+                            onClick={() => updateStatus(order.id, 'accepted')}
+                            className="bg-orange-500 hover:bg-orange-600 text-white py-1.5 px-4 rounded-lg text-xs font-bold shadow-sm transition-all"
+                          >
+                            Accept
+                          </button>
+                        </>
                       )}
 
                       {order.status === 'accepted' && (
                         <button
                           onClick={() => updateStatus(order.id, 'preparing')}
-                          className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wider shadow-sm transition-all hover:scale-105"
+                          className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm transition-all hover:scale-105"
                         >
-                          Start Prep
+                          Start Preparing
                         </button>
                       )}
 
-                      {order.status === 'preparing' && !order.delivery_partner_id && (
-                        <div className="flex items-center gap-1.5 text-[11px] text-orange-600 font-bold bg-orange-50 px-3 py-1 rounded-full border border-orange-100">
-                          <SyncOutlined spin /> Searching for Driver
+                      {order.status === 'preparing' && (
+                        <button
+                          onClick={() => updateStatus(order.id, 'ready')}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm transition-all hover:scale-105"
+                        >
+                          Mark Ready
+                        </button>
+                      )}
+
+                      {order.status === 'ready' && (
+                        <div className="flex items-center gap-1.5 text-xs text-emerald-700 font-bold bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200">
+                          <CheckCircleOutlined /> Ready for Pickup
+                        </div>
+                      )}
+
+                      {order.status === 'assigned' && (
+                        <div className="flex items-center gap-1.5 text-xs text-blue-700 font-bold bg-blue-50 px-3 py-1.5 rounded-full border border-blue-200">
+                          <CarOutlined /> Driver Assigned
                         </div>
                       )}
 
                       {order.status === 'picked_up' && (
-                        <div className="text-[11px] text-indigo-600 font-bold bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">
+                        <div className="text-xs text-indigo-600 font-bold bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">
                           Out for Delivery
                         </div>
                       )}
 
                       {(order.status === 'delivered' || order.status === 'completed') && (
-                        <div className="text-[11px] text-green-600 font-bold bg-green-50 px-3 py-1 rounded-full border border-green-100">
+                        <div className="text-xs text-green-600 font-bold bg-green-50 px-3 py-1 rounded-full border border-green-100">
                           Completed
                         </div>
                       )}
 
                       {order.status === 'cancelled' && (
-                        <div className="text-[11px] text-red-500 font-bold bg-red-50 px-3 py-1 rounded-full border border-red-100">
+                        <div className="text-xs text-red-500 font-bold bg-red-50 px-3 py-1 rounded-full border border-red-100">
                           Cancelled
                         </div>
                       )}
-
                     </div>
                   </td>
                 </tr>

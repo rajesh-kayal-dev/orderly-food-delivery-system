@@ -37,9 +37,9 @@ export default function RestaurantLayout() {
   // Notification Popover State
   const [showNotifications, setShowNotifications] = useState(false);
   const [notificationsList, setNotificationsList] = useState([
-    { id: 1, title: 'New Order #ORD-8821', time: '5 mins ago', read: false },
-    { id: 2, title: 'Table #4 requested bill', time: '18 mins ago', read: false },
-    { id: 3, title: 'Weekly payout ₹12,450 credited', time: '1 hour ago', read: true }
+    { id: 1, title: 'New Order #ORD-8821', time: '5 mins ago', read: false, link: '/restaurant/orders' },
+    { id: 2, title: 'Table #4 requested bill', time: '18 mins ago', read: false, link: '/restaurant/orders' },
+    { id: 3, title: 'Weekly payout ₹12,450 credited', time: '1 hour ago', read: true, link: '/restaurant/payouts' }
   ]);
   const notificationRef = useRef(null);
 
@@ -93,23 +93,40 @@ export default function RestaurantLayout() {
     if (user?.id) {
       socket.connect();
       socket.emit('join', user.id);
+      if (profile?.id) socket.emit('join', profile.id);
 
       const handleNewOrder = (data) => {
+        const orderNum = data.orderId ? data.orderId.slice(0, 8).toUpperCase() : 'REC';
         const newNotif = {
           id: Date.now(),
-          title: `New Order #${data.orderId ? data.orderId.slice(0, 8).toUpperCase() : 'REC'} received!`,
+          title: `New Order #${orderNum} received!`,
           time: 'Just now',
-          read: false
+          read: false,
+          link: '/restaurant/orders'
+        };
+        setNotificationsList(prev => [newNotif, ...prev]);
+      };
+
+      const handleStatusUpdate = (data) => {
+        const orderNum = data.orderId ? data.orderId.slice(0, 8).toUpperCase() : '';
+        const newNotif = {
+          id: Date.now(),
+          title: `Order #${orderNum} updated to ${data.status ? data.status.replace(/_/g, ' ') : 'new status'}`,
+          time: 'Just now',
+          read: false,
+          link: '/restaurant/orders'
         };
         setNotificationsList(prev => [newNotif, ...prev]);
       };
 
       socket.on('NEW_ORDER', handleNewOrder);
+      socket.on('ORDER_STATUS_UPDATED', handleStatusUpdate);
       return () => {
         socket.off('NEW_ORDER', handleNewOrder);
+        socket.off('ORDER_STATUS_UPDATED', handleStatusUpdate);
       };
     }
-  }, [user]);
+  }, [user, profile]);
 
   const handleStatusChange = async (newStatus) => {
     if (updatingStatus) return;
@@ -389,12 +406,20 @@ export default function RestaurantLayout() {
                       notificationsList.map(item => (
                         <div
                           key={item.id}
-                          className={`p-2.5 rounded-xl border transition-colors flex items-start justify-between gap-2 ${
+                          onClick={() => {
+                            setNotificationsList(prev => prev.map(n => n.id === item.id ? { ...n, read: true } : n));
+                            setShowNotifications(false);
+                            navigate(item.link || '/restaurant/orders');
+                          }}
+                          className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-start justify-between gap-2 hover:border-orange-300 hover:shadow-xs group ${
                             item.read ? 'bg-slate-50/50 border-slate-100 text-slate-500' : 'bg-orange-50/40 border-orange-100/80 text-slate-800 font-semibold'
                           }`}
                         >
-                          <div className="space-y-0.5">
-                            <p className="text-xs font-bold leading-tight">{item.title}</p>
+                          <div className="space-y-0.5 flex-1">
+                            <div className="flex items-center justify-between">
+                              <p className="text-xs font-bold leading-tight group-hover:text-orange-600 transition-colors">{item.title}</p>
+                              <span className="text-[9px] text-orange-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity ml-1">View ➔</span>
+                            </div>
                             <p className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
                               <ClockCircleOutlined className="text-[9px]" /> {item.time}
                             </p>

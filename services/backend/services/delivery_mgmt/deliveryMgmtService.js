@@ -1,6 +1,5 @@
 import { Order, Customer, Restaurant, DeliveryPartner, User, Address } from '../../models.js';
 import { Op } from 'sequelize';
-import { OrderStatusContext } from '../../states/order/orderStatusState.js';
 
 /**
  * Interface: IDeliveryMgmtAPI
@@ -9,7 +8,7 @@ class DeliveryMgmtService {
     async getAvailableDeliveries() {
         return await Order.findAll({
             where: {
-                status: 'preparing',
+                status: { [Op.in]: ['preparing', 'ready'] },
                 delivery_partner_id: null
             },
             include: [
@@ -21,21 +20,22 @@ class DeliveryMgmtService {
         });
     }
 
-    async acceptByDriver(orderId, driverId, io) {
+    async acceptByDriver(orderId, userId, io) {
+        // Look up the driver profile by the authenticated user's ID
+        const driver = await DeliveryPartner.findOne({ where: { user_id: userId } });
+        if (!driver) throw new Error('Delivery partner profile not found');
+
         const order = await Order.findByPk(orderId, {
             include: [{ model: Customer }, { model: Restaurant }]
         });
 
         if (!order) throw new Error('Order not found');
-        if (order.status !== 'preparing' || order.delivery_partner_id) {
+        if (!['preparing', 'ready'].includes(order.status) || order.delivery_partner_id) {
             throw new Error('Order is no longer available');
         }
 
-        const stateContext = new OrderStatusContext(order.status);
-        stateContext.transitionTo('picked_up');
-
-        order.delivery_partner_id = driverId;
-        order.status = stateContext.getCurrentStatus();
+        order.delivery_partner_id = driver.id;
+        order.status = 'assigned';
         await order.save();
 
         const fullOrder = await Order.findByPk(order.id, {
@@ -49,13 +49,19 @@ class DeliveryMgmtService {
 
         const statusData = { 
             orderId: order.id, 
-            status: order.status,
+            status: 'assigned',
             deliveryPartner: fullOrder.DeliveryPartner
         };
 
         if (io) {
+            // Tell all drivers in the available pool that this order is taken
             io.to('available_deliveries').emit('ORDER_ACCEPTED', { orderId: order.id });
+            // Notify assigned driver specifically
+            io.to(userId).emit('DRIVER_ASSIGNED', statusData);
+            // Notify customer
             if (order.Customer) io.to(order.Customer.user_id).emit('ORDER_STATUS_UPDATED', statusData);
+            if (order.Customer) io.to(order.Customer.user_id).emit('DRIVER_ASSIGNED', statusData);
+            // Notify restaurant
             if (order.Restaurant) io.to(order.Restaurant.user_id).emit('ORDER_STATUS_UPDATED', statusData);
         }
 

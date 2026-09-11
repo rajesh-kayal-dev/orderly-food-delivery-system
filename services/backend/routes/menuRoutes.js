@@ -7,7 +7,8 @@ import { getCategories,
     createMenuItem,
     updateMenuItem,
     deleteMenuItem,
-    toggleAvailability } from '../controllers/menuController.js';
+    toggleAvailability,
+    createCategory } from '../controllers/menuController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
 router.get('/global-categories', getGlobalCategories);
@@ -18,6 +19,7 @@ router.get('/full/:restaurantId', getFullMenu);
 
 // Restaurant specific management
 router.post('/', protect, createMenuItem);
+router.post('/categories', protect, createCategory);
 router.put('/:id', protect, updateMenuItem);
 router.patch('/:id/toggle-availability', protect, toggleAvailability);
 router.delete('/:id', protect, deleteMenuItem);

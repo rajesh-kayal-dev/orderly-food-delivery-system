@@ -1,4 +1,4 @@
-﻿import express from 'express';
+import express from 'express';
 import {
   registerUser,
   loginUser,
@@ -6,7 +6,8 @@ import {
   updateProfile,
   googleAuthRedirect,
   googleAuthCallback,
-  googleLogin
+  googleLogin,
+  getApprovedDeliveryPartners
 } from '../controllers/authController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
@@ -14,6 +15,7 @@ const router = express.Router();
 
 router.post('/register', registerUser);
 router.post('/login', loginUser);
+router.get('/approved-partners', getApprovedDeliveryPartners);
 
 // Google OAuth routes
 router.get('/google', googleAuthRedirect);
