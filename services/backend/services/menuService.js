@@ -113,13 +113,21 @@ class MenuService {
 
     async getFullMenu(restaurantId) {
         // Customers also see out-of-order items but they are marked
-        return await MenuCategory.findAll({
+        const categories = await MenuCategory.findAll({
             where: { restaurant_id: restaurantId },
             include: [{ 
                 model: MenuItem, 
                 required: false,
                 order: [['created_at', 'DESC']]
             }]
+        });
+
+        return categories.map((cat) => {
+            const plain = cat.get({ plain: true });
+            return {
+                ...plain,
+                items: plain.items || plain.MenuItems || plain.menuItems || []
+            };
         });
     }
 

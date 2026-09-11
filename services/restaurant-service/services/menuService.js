@@ -1,12 +1,17 @@
-﻿import prisma from '../config/prisma.js';
+import prisma from '../config/prisma.js';
 import { AppError } from '../middleware/errorHandler.js';
 
 export const getCategoriesByRestaurantId = async (restaurantId) => {
-  return await prisma.menuCategory.findMany({
+  const categories = await prisma.menuCategory.findMany({
     where: { restaurant_id: restaurantId },
     include: { menuItems: true },
     orderBy: { sort_order: 'asc' }
   });
+
+  return categories.map((cat) => ({
+    ...cat,
+    items: cat.menuItems || cat.items || []
+  }));
 };
 
 export const getMenuItems = async ({ restaurantId, categoryId } = {}) => {

@@ -239,15 +239,17 @@ export default function RestaurantMenu() {
         {/* Menu Items Column */}
         <div className="lg:col-span-2 space-y-10">
           {menu.length > 0 ? (
-            menu.map((category) => (
-              <section key={category.id} className="space-y-4">
-                <h2 className="text-2xl font-extrabold text-neutral-900 tracking-tight border-b border-neutral-200/80 pb-3">
-                  {category.name}
-                </h2>
+            menu.map((category) => {
+              const categoryItems = category.items || category.menuItems || category.MenuItems || [];
+              return (
+                <section key={category.id} className="space-y-4">
+                  <h2 className="text-2xl font-extrabold text-neutral-900 tracking-tight border-b border-neutral-200/80 pb-3">
+                    {category.name}
+                  </h2>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {category.items && category.items.length > 0 ? (
-                    category.items.map((item) => (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {categoryItems.length > 0 ? (
+                      categoryItems.map((item) => (
                       <div 
                         key={item.id} 
                         className={`bg-white rounded-2xl p-4 border border-neutral-200/80 shadow-sm hover:shadow-md transition-all flex gap-4 relative overflow-hidden group ${
@@ -302,7 +304,8 @@ export default function RestaurantMenu() {
                   )}
                 </div>
               </section>
-            ))
+            );
+          })
           ) : (
             <EmptyState
               title="Menu Empty"
