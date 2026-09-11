@@ -54,7 +54,7 @@ export default function RestaurantMenu() {
           const storeData = resResponse.data.data;
           setRestaurant(storeData);
           if (storeData?.name) {
-            document.title = `${storeData.name} - Menu | Orderly`;
+            document.title = `${storeData.name} - Menu`;
           }
           setRestaurantClosed(false);
 

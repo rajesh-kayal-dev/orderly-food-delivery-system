@@ -220,55 +220,55 @@ function App() {
   // Dynamic Browser Document Title Update
   useEffect(() => {
     const path = location.pathname;
-    let title = 'Orderly - Food Delivery & Pickup';
+    let title = 'Orderly';
 
     // Auth Routes
-    if (path === '/login') title = 'Login | Orderly';
-    else if (path === '/admin/login' || path === '/admin-login') title = 'Admin Portal Login | Orderly';
-    else if (path === '/register') title = 'Create Account | Orderly';
-    else if (path === '/auth/callback') title = 'Authenticating | Orderly';
+    if (path === '/login') title = 'Login';
+    else if (path === '/admin/login' || path === '/admin-login') title = 'Admin Portal Login';
+    else if (path === '/register') title = 'Create Account';
+    else if (path === '/auth/callback') title = 'Authenticating';
 
     // Customer Routes
-    else if (path === '/customer') title = 'Home | Orderly';
-    else if (path === '/customer/menu') title = 'Explore Menu | Orderly';
-    else if (path === '/customer/restaurants') title = 'Restaurants | Orderly';
-    else if (path.startsWith('/customer/restaurant/')) title = 'Restaurant Menu | Orderly';
-    else if (path === '/customer/partners') title = 'Delivery Partners | Orderly';
-    else if (path === '/customer/cart') title = 'Your Cart | Orderly';
-    else if (path === '/customer/checkout') title = 'Checkout | Orderly';
-    else if (path === '/customer/tracking') title = 'Order Tracking | Orderly';
-    else if (path === '/customer/orders') title = 'My Orders | Orderly';
-    else if (path === '/customer/profile') title = 'My Profile | Orderly';
+    else if (path === '/customer') title = 'Home';
+    else if (path === '/customer/menu') title = 'Explore Menu';
+    else if (path === '/customer/restaurants') title = 'Restaurants';
+    else if (path.startsWith('/customer/restaurant/')) title = 'Restaurant Menu';
+    else if (path === '/customer/partners') title = 'Delivery Partners';
+    else if (path === '/customer/cart') title = 'Your Cart';
+    else if (path === '/customer/checkout') title = 'Checkout';
+    else if (path === '/customer/tracking') title = 'Order Tracking';
+    else if (path === '/customer/orders') title = 'My Orders';
+    else if (path === '/customer/profile') title = 'My Profile';
 
     // Restaurant Routes
-    else if (path === '/restaurant') title = 'Restaurant Dashboard | Orderly';
-    else if (path === '/restaurant/menu') title = 'Menu Management | Orderly';
-    else if (path === '/restaurant/orders') title = 'Kitchen Orders | Orderly';
-    else if (path === '/restaurant/summary') title = 'Restaurant Reports | Orderly';
-    else if (path === '/restaurant/reviews') title = 'Customer Reviews | Orderly';
-    else if (path === '/restaurant/payouts') title = 'Restaurant Payouts | Orderly';
-    else if (path === '/restaurant/settings') title = 'Restaurant Settings | Orderly';
-    else if (path === '/restaurant/profile') title = 'Restaurant Profile | Orderly';
+    else if (path === '/restaurant') title = 'Restaurant Dashboard';
+    else if (path === '/restaurant/menu') title = 'Menu Management';
+    else if (path === '/restaurant/orders') title = 'Kitchen Orders';
+    else if (path === '/restaurant/summary') title = 'Restaurant Reports';
+    else if (path === '/restaurant/reviews') title = 'Customer Reviews';
+    else if (path === '/restaurant/payouts') title = 'Restaurant Payouts';
+    else if (path === '/restaurant/settings') title = 'Restaurant Settings';
+    else if (path === '/restaurant/profile') title = 'Restaurant Profile';
 
     // Delivery Routes
-    else if (path === '/delivery') title = 'Delivery Dashboard | Orderly';
-    else if (path === '/delivery/orders') title = 'Available Deliveries | Orderly';
-    else if (path === '/delivery/summary') title = 'Earnings Summary | Orderly';
-    else if (path === '/delivery/map') title = 'Live Map Tracking | Orderly';
-    else if (path === '/delivery/settings') title = 'Driver Settings | Orderly';
-    else if (path === '/delivery/profile') title = 'Driver Profile | Orderly';
+    else if (path === '/delivery') title = 'Delivery Dashboard';
+    else if (path === '/delivery/orders') title = 'Available Deliveries';
+    else if (path === '/delivery/summary') title = 'Earnings Summary';
+    else if (path === '/delivery/map') title = 'Live Map Tracking';
+    else if (path === '/delivery/settings') title = 'Driver Settings';
+    else if (path === '/delivery/profile') title = 'Driver Profile';
 
     // Admin Routes
-    else if (path === '/admin') title = 'Admin Dashboard | Orderly';
-    else if (path === '/admin/orders') title = 'Platform Orders | Orderly';
-    else if (path === '/admin/users') title = 'User Management | Orderly';
-    else if (path === '/admin/drivers') title = 'Driver Management | Orderly';
-    else if (path === '/admin/menu') title = 'Menu Catalog | Orderly';
-    else if (path === '/admin/payouts') title = 'Payout Management | Orderly';
-    else if (path === '/admin/analytics') title = 'Platform Analytics | Orderly';
-    else if (path === '/admin/settings') title = 'Platform Settings | Orderly';
-    else if (path === '/admin/pending-approvals') title = 'Partner Approvals | Orderly';
-    else if (path === '/admin/profile') title = 'Admin Profile | Orderly';
+    else if (path === '/admin') title = 'Admin Dashboard';
+    else if (path === '/admin/orders') title = 'Platform Orders';
+    else if (path === '/admin/users') title = 'User Management';
+    else if (path === '/admin/drivers') title = 'Driver Management';
+    else if (path === '/admin/menu') title = 'Menu Catalog';
+    else if (path === '/admin/payouts') title = 'Payout Management';
+    else if (path === '/admin/analytics') title = 'Platform Analytics';
+    else if (path === '/admin/settings') title = 'Platform Settings';
+    else if (path === '/admin/pending-approvals') title = 'Partner Approvals';
+    else if (path === '/admin/profile') title = 'Admin Profile';
 
     document.title = title;
   }, [location]);
