@@ -1,4 +1,4 @@
-﻿import express from 'express';
+import express from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import morgan from 'morgan';
@@ -48,7 +48,10 @@ app.use('/api/admin', createServiceProxy('identity-service', env.services.identi
 
 app.use(['/api/restaurants', '/api/menu'], createServiceProxy('restaurant-service', env.services.restaurant));
 
-app.use(['/api/orders', '/api/payments', '/api/cart'], createServiceProxy('order-service', env.services.order));
+// Payments → dedicated payment-service (Razorpay)
+app.use('/api/payments', createServiceProxy('payment-service', env.services.payment));
+
+app.use(['/api/orders', '/api/cart'], createServiceProxy('order-service', env.services.order));
 
 app.use('/api/notifications', createServiceProxy('notification-service', env.services.notification));
 

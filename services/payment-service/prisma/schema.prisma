@@ -1,0 +1,30 @@
+// This schema mirrors the order-service schema.prisma
+// The Payment model is defined here and also in order-service/prisma/schema.prisma
+// (where db push is run). Payment-service reads from the same shared Neon DB.
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Minimal mirror — only what payment-service actually queries
+model Payment {
+  id                  String   @id @default(uuid())
+  order_id            String
+  user_id             String
+  razorpay_order_id   String   @unique
+  razorpay_payment_id String?
+  razorpay_signature  String?
+  amount              Int
+  currency            String   @default("INR")
+  payment_method      String?
+  status              String   @default("CREATED")
+  failure_reason      String?
+  webhook_processed   Boolean  @default(false)
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+}

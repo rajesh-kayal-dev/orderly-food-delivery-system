@@ -1,4 +1,4 @@
-﻿import dotenv from 'dotenv';
+import dotenv from 'dotenv';
 dotenv.config();
 
 export const env = {
@@ -14,7 +14,8 @@ export const env = {
     order: process.env.ORDER_SERVICE_URL || 'http://localhost:5002',
     identity: process.env.IDENTITY_SERVICE_URL || 'http://localhost:5003',
     restaurant: process.env.RESTAURANT_SERVICE_URL || 'http://localhost:5004',
-    notification: process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:5005'
+    notification: process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:5005',
+    payment: process.env.PAYMENT_SERVICE_URL || 'http://localhost:5006'
   }
 };
 
