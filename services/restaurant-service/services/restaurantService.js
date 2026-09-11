@@ -1,11 +1,11 @@
-﻿import prisma from '../config/prisma.js';
+import prisma from '../config/prisma.js';
 import { AppError } from '../middleware/errorHandler.js';
 
 export const getAllRestaurants = async (query = {}) => {
-  const { search, activeOnly = true } = query;
+  const { search, activeOnly = false } = query;
   const where = {};
 
-  if (activeOnly) {
+  if (activeOnly === true || activeOnly === 'true') {
     where.is_active = true;
   }
 

@@ -356,6 +356,15 @@ export default function RestaurantList() {
                         <StarFilled className="text-amber-400 text-xs" />
                         <span>{restaurant.rating || '4.8'}</span>
                       </div>
+
+                      {/* Bottom-Left Store Status Badge */}
+                      <div className={`absolute bottom-3 left-3 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-sm border ${
+                        (restaurant.is_open ?? restaurant.is_active ?? true)
+                          ? 'bg-emerald-500/90 text-white border-emerald-400'
+                          : 'bg-rose-600/90 text-white border-rose-500'
+                      }`}>
+                        <span>{(restaurant.is_open ?? restaurant.is_active ?? true) ? '● OPEN' : '● CLOSED'}</span>
+                      </div>
                     </div>
 
                     {/* Content Info */}

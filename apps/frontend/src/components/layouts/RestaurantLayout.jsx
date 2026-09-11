@@ -31,7 +31,7 @@ export default function RestaurantLayout() {
   const { user, profile, token } = useSelector(state => state.auth);
   const activeCount = useSelector(state => state.order.activeCount);
 
-  const [isRestaurantOpen, setIsRestaurantOpen] = useState(Boolean(profile?.is_open));
+  const [isRestaurantOpen, setIsRestaurantOpen] = useState(Boolean(profile?.is_active ?? profile?.is_open ?? true));
   const [updatingStatus, setUpdatingStatus] = useState(false);
 
   // Notification Popover State
@@ -51,9 +51,33 @@ export default function RestaurantLayout() {
     setCurrentDateString(d.toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-'));
   }, []);
 
+  // Sync restaurant profile status on mount
   useEffect(() => {
-    setIsRestaurantOpen(Boolean(profile?.is_open));
-  }, [profile?.is_open]);
+    const fetchMyRestaurantStatus = async () => {
+      if (!token) return;
+      try {
+        const response = await axios.get('/restaurants/my-profile');
+        if (response.data?.success && response.data?.data) {
+          const fetchedProf = response.data.data;
+          const isOpen = Boolean(fetchedProf.is_active ?? fetchedProf.is_open ?? true);
+          setIsRestaurantOpen(isOpen);
+          dispatch(loginSuccess({
+            user,
+            profile: { ...profile, ...fetchedProf, is_open: isOpen, is_active: isOpen },
+            token
+          }));
+        }
+      } catch (err) {
+        console.error('Error fetching restaurant profile status:', err);
+      }
+    };
+
+    fetchMyRestaurantStatus();
+  }, [token]);
+
+  useEffect(() => {
+    setIsRestaurantOpen(Boolean(profile?.is_active ?? profile?.is_open ?? true));
+  }, [profile?.is_active, profile?.is_open]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -88,14 +112,34 @@ export default function RestaurantLayout() {
   }, [user]);
 
   const handleStatusChange = async (newStatus) => {
-    if (!profile?.id || updatingStatus) return;
+    if (updatingStatus) return;
     try {
       setUpdatingStatus(true);
-      const response = await axios.put('/restaurants/my-profile', { is_open: newStatus });
+      const response = await axios.put('/restaurants/my-profile', {
+        is_active: newStatus,
+        is_open: newStatus
+      });
       if (response.data?.success) {
         const updatedProfile = response.data.data;
-        dispatch(loginSuccess({ user, profile: updatedProfile, token }));
-        setIsRestaurantOpen(Boolean(updatedProfile?.is_open));
+        const isOpen = Boolean(updatedProfile?.is_active ?? updatedProfile?.is_open ?? newStatus);
+        
+        setIsRestaurantOpen(isOpen);
+        dispatch(loginSuccess({
+          user,
+          profile: { ...profile, ...updatedProfile, is_open: isOpen, is_active: isOpen },
+          token
+        }));
+
+        // Broadcast status update via socket so customer pages update in real-time
+        if (socket) {
+          socket.emit('RESTAURANT_STATUS_UPDATED', {
+            restaurantId: updatedProfile.id || profile?.id,
+            is_open: isOpen,
+            is_active: isOpen,
+            name: updatedProfile.name || profile?.name || 'Restaurant'
+          });
+        }
+
         notification.success({
           title: 'Restaurant Status Updated',
           description: newStatus ? 'Your restaurant is now OPEN for orders.' : 'Your restaurant is now CLOSED for orders.',
@@ -103,6 +147,7 @@ export default function RestaurantLayout() {
         });
       }
     } catch (error) {
+      console.error('Error updating status:', error);
       notification.error({
         title: 'Status Update Failed',
         description: error.response?.data?.message || 'Failed to update restaurant status.',
