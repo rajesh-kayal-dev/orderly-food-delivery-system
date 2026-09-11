@@ -94,7 +94,8 @@ class OrderService {
         const { count, rows } = await Order.findAndCountAll({
             where,
             include: [
-                { model: Restaurant, attributes: ['name'] },
+                { model: Restaurant, attributes: ['id', 'name', 'address', 'image_url', 'latitude', 'longitude'] },
+                { model: Address },
                 { model: OrderItem, include: [{ model: MenuItem }] },
                 { 
                     model: DeliveryPartner, 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from '../../api/axios';
 import socket from '../../socket';
 import { addToCartAsync } from '../../redux/slices/cartSlice';
@@ -19,10 +19,10 @@ import {
   CarOutlined,
   HomeOutlined,
   StarFilled,
-  CheckOutlined,
   CheckCircleFilled,
-  RadarChartOutlined,
-  CompassOutlined
+  CompassOutlined,
+  ShoppingOutlined,
+  SearchOutlined
 } from '@ant-design/icons';
 
 // Custom Leaflet Icons for Map
@@ -59,85 +59,13 @@ function MapRecenter({ bounds }) {
 
 const getStatusLevel = (statusStr) => {
   const st = (statusStr || 'placed').toLowerCase();
-  if (st === 'placed') return 1;
-  if (st === 'accepted') return 2;
+  if (st === 'placed' || st === 'pending') return 1;
+  if (st === 'accepted' || st === 'confirmed') return 2;
   if (st === 'preparing' || st === 'ready') return 3;
-  if (st === 'out_for_delivery' || st === 'picked_up') return 4;
+  if (st === 'out_for_delivery' || st === 'picked_up' || st === 'assigned') return 4;
   if (st === 'delivered' || st === 'completed') return 5;
+  if (st === 'cancelled') return 0;
   return 1;
-};
-
-const referenceOrderData = {
-  id: 'ord245678',
-  orderNumber: 'ORD245678',
-  status: 'preparing',
-  statusDisplay: 'Preparing',
-  estimatedTime: '25 – 35 minutes',
-  restaurant: {
-    name: "McDonald's",
-    location: "Salt Lake, Kolkata",
-    logo: "https://images.unsplash.com/photo-1550547660-d9450f859349?w=100&h=100&fit=crop",
-    phone: "+91 98765 00001"
-  },
-  driver: {
-    name: "Ravi Kumar",
-    role: "Your delivery partner",
-    rating: "4.8",
-    deliveries: "1.2K deliveries",
-    phone: "+91 98765 99999",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop",
-    distanceText: "Ravi is on the way • 2.5 km away"
-  },
-  mapData: {
-    restaurantCoords: [22.5726, 88.4149],
-    customerCoords: [22.5805, 88.3890],
-    route: [
-      [22.5726, 88.4149],
-      [22.5745, 88.4080],
-      [22.5765, 88.4020],
-      [22.5788, 88.3950],
-      [22.5805, 88.3890]
-    ]
-  },
-  items: [
-    {
-      id: 'mcd-1',
-      name: 'Orderly Classic Burger',
-      variant: 'Regular',
-      quantity: 1,
-      price: 129.00,
-      image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200'
-    },
-    {
-      id: 'mcd-2',
-      name: 'French Fries',
-      variant: 'Medium',
-      quantity: 1,
-      price: 89.00,
-      image: 'https://images.unsplash.com/photo-1573140247632-f8fd74997d5c?w=200'
-    },
-    {
-      id: 'mcd-3',
-      name: 'Coke (500ml)',
-      variant: 'Chilled',
-      quantity: 1,
-      price: 60.00,
-      image: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=200'
-    },
-    {
-      id: 'mcd-4',
-      name: 'Chocolate Brownie',
-      variant: 'Warm',
-      quantity: 1,
-      price: 79.00,
-      image: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=200'
-    }
-  ],
-  subtotal: 357.00,
-  deliveryFee: 30.00,
-  platformFee: 5.00,
-  gst: 19.60,
-  totalPaid: 411.60
 };
 
 // Generates smooth multi-waypoint road route between restaurant and customer
@@ -176,13 +104,15 @@ export default function OrderTracking() {
   const { token } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const urlOrderId = searchParams.get('orderId');
 
-  const [activeOrders, setActiveOrders] = useState([referenceOrderData]);
+  const [activeOrders, setActiveOrders] = useState([]);
   const [selectedOrderIndex, setSelectedOrderIndex] = useState(0);
   const [loading, setLoading] = useState(true);
 
   // Live Driver Real-time Movement & GPS state
-  const [trackProgress, setTrackProgress] = useState(0.35);
+  const [trackProgress, setTrackProgress] = useState(0.40);
   const [isLiveSimulating, setIsLiveSimulating] = useState(true);
   const [simSpeed, setSimSpeed] = useState(1);
   const [socketDriverPos, setSocketDriverPos] = useState(null);
@@ -197,14 +127,16 @@ export default function OrderTracking() {
       setLoading(true);
       const response = await axios.get('/orders/me');
       if (response.data.success && Array.isArray(response.data.data) && response.data.data.length > 0) {
-        const parsedOrders = response.data.data.map(foundActive => {
+        const rawOrders = response.data.data;
+        const parsedOrders = rawOrders.map(foundActive => {
+          const st = (foundActive.status || 'placed').toLowerCase();
           const itemsArr = foundActive.items || foundActive.OrderItems || [];
           const parsedItems = itemsArr.map((it, idx) => ({
             id: it.menuItem?.id || it.menu_item_id || it.id || `it-${idx}`,
-            name: it.menuItem?.name || it.name || 'Delicious Meal',
+            name: it.menuItem?.name || it.name || 'Food Item',
             variant: 'Regular',
             quantity: it.quantity || 1,
-            price: Number(it.price || it.unit_price || it.menuItem?.price || 129.00),
+            price: Number(it.price || it.unit_price || it.menuItem?.price || 120.00),
             image: it.menuItem?.image_url || it.image || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200'
           }));
 
@@ -216,66 +148,70 @@ export default function OrderTracking() {
 
           const addrObj = foundActive.deliveryAddress || foundActive.DeliveryAddress;
           const deliveryAddressText = addrObj
-            ? `${addrObj.address_line1}, ${addrObj.city}, ${addrObj.state}${addrObj.postal_code ? ` - ${addrObj.postal_code}` : ''}`
-            : '123 Flavor Street, Foodie City';
+            ? `${addrObj.address_line1 || addrObj.street || 'Address'}, ${addrObj.city || 'Kolkata'}, ${addrObj.state || 'WB'}${addrObj.postal_code ? ` - ${addrObj.postal_code}` : ''}`
+            : 'Delivery Address Specified at Checkout';
 
           const custCoords = (addrObj && addrObj.latitude && addrObj.longitude)
-            ? [addrObj.latitude, addrObj.longitude]
+            ? [parseFloat(addrObj.latitude), parseFloat(addrObj.longitude)]
             : [22.5805, 88.3890];
 
           const restCoords = (foundActive.restaurant?.latitude && foundActive.restaurant?.longitude)
-            ? [foundActive.restaurant.latitude, foundActive.restaurant.longitude]
+            ? [parseFloat(foundActive.restaurant.latitude), parseFloat(foundActive.restaurant.longitude)]
             : [22.5726, 88.4149];
+          
+          const driverUser = foundActive.deliveryPartner?.user || foundActive.DeliveryPartner?.User;
           
           return {
             id: foundActive.id,
             orderNumber: `ORD${String(foundActive.id).slice(0, 8).toUpperCase()}`,
             status: st,
-            statusDisplay: st.charAt(0).toUpperCase() + st.slice(1).replace(/_/g, ' '),
+            statusDisplay: st === 'out_for_delivery' ? 'Out for Delivery' : st.charAt(0).toUpperCase() + st.slice(1).replace(/_/g, ' '),
             created_at: foundActive.created_at || foundActive.createdAt,
-            estimatedTime: st === 'delivered' ? 'Delivered' : '25 – 35 minutes',
+            estimatedTime: st === 'delivered' || st === 'completed' ? 'Delivered' : st === 'cancelled' ? 'Cancelled' : '25 – 35 minutes',
             restaurant: {
               name: foundActive.restaurant?.name || foundActive.Restaurant?.name || "Orderly Restaurant",
-              location: foundActive.restaurant?.address || foundActive.restaurant?.location || "Local City",
+              location: foundActive.restaurant?.address || foundActive.restaurant?.location || "Kolkata",
               logo: foundActive.restaurant?.image_url || foundActive.Restaurant?.image_url || "https://images.unsplash.com/photo-1550547660-d9450f859349?w=100",
-              phone: foundActive.restaurant?.user?.phone_number || foundActive.restaurant?.phone_number || "+91 98765 00001"
+              phone: foundActive.restaurant?.phone_number || "+91 98301 00000"
             },
             driver: {
-              name: foundActive.deliveryPartner?.user?.full_name || foundActive.DeliveryPartner?.User?.full_name || "Ravi Kumar",
+              name: driverUser?.full_name || "Assigned Driver",
               role: foundActive.deliveryPartner ? "Your delivery partner" : "Searching partner...",
-              rating: "4.8",
-              deliveries: "1.2K deliveries",
-              phone: foundActive.deliveryPartner?.user?.phone_number || "+91 98765 99999",
+              rating: "4.9",
+              deliveries: "850+ deliveries",
+              phone: driverUser?.phone_number || "+91 98300 00000",
               avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100"
             },
             deliveryAddressText: deliveryAddressText,
             deliveryAddress: addrObj,
             mapData: {
               restaurantCoords: restCoords,
-              customerCoords: custCoords,
-              route: [
-                restCoords,
-                [restCoords[0] + (custCoords[0] - restCoords[0]) * 0.3, restCoords[1] + (custCoords[1] - restCoords[1]) * 0.3],
-                [restCoords[0] + (custCoords[0] - restCoords[0]) * 0.6, restCoords[1] + (custCoords[1] - restCoords[1]) * 0.6],
-                custCoords
-              ]
+              customerCoords: custCoords
             },
-            items: parsedItems.length > 0 ? parsedItems : referenceOrderData.items,
-            subtotal: subtotal || referenceOrderData.subtotal,
+            items: parsedItems,
+            subtotal: subtotal,
             deliveryFee: deliveryFee,
             platformFee: platformFee,
-            gst: gst || referenceOrderData.gst,
-            totalPaid: totalPaid || referenceOrderData.totalPaid
+            gst: gst,
+            totalPaid: totalPaid
           };
         });
 
         setActiveOrders(parsedOrders);
+
+        // If orderId is provided in URL, auto-select it
+        if (urlOrderId) {
+          const matchIdx = parsedOrders.findIndex(o => String(o.id) === String(urlOrderId) || o.orderNumber.toLowerCase().includes(String(urlOrderId).toLowerCase()));
+          if (matchIdx !== -1) {
+            setSelectedOrderIndex(matchIdx);
+          }
+        }
       } else {
-        setActiveOrders([referenceOrderData]);
+        setActiveOrders([]);
       }
     } catch (error) {
       console.error('Error fetching tracking data:', error);
-      setActiveOrders([referenceOrderData]);
+      setActiveOrders([]);
     } finally {
       setLoading(false);
     }
@@ -285,13 +221,15 @@ export default function OrderTracking() {
     fetchOrders();
 
     socket.on('ORDER_STATUS_UPDATED', (data) => {
-      message.info(`Order #${data.orderId ? data.orderId.slice(0, 8) : ''} status updated to ${data.status.replace(/_/g, ' ')}`);
+      if (data?.status) {
+        message.info(`Order status updated to ${String(data.status).replace(/_/g, ' ')}`);
+      }
       fetchOrders();
     });
 
     socket.on('DRIVER_LOCATION_UPDATED', (data) => {
       if (data && data.latitude && data.longitude) {
-        setSocketDriverPos([data.latitude, data.longitude]);
+        setSocketDriverPos([parseFloat(data.latitude), parseFloat(data.longitude)]);
       }
     });
 
@@ -299,7 +237,7 @@ export default function OrderTracking() {
       socket.off('ORDER_STATUS_UPDATED');
       socket.off('DRIVER_LOCATION_UPDATED');
     };
-  }, [token]);
+  }, [token, urlOrderId]);
 
   // Live Driver Real-Time Movement simulation ticker
   useEffect(() => {
@@ -310,7 +248,6 @@ export default function OrderTracking() {
         const next = prev + 0.004 * simSpeed;
         if (next >= 1.0) {
           setIsLiveSimulating(false);
-          message.success('🎉 Delivery partner has arrived at your destination!');
           return 1.0;
         }
         return next;
@@ -320,10 +257,52 @@ export default function OrderTracking() {
     return () => clearInterval(interval);
   }, [isLiveSimulating, simSpeed]);
 
-  const currentOrder = activeOrders[selectedOrderIndex] || activeOrders[0] || referenceOrderData;
-  const currentLevel = getStatusLevel(currentOrder.status);
+  const currentOrder = activeOrders[selectedOrderIndex] || activeOrders[0];
 
-  // Dynamic progress line percentage
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-32 space-y-4 min-h-[60vh]">
+        <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+        <p className="text-neutral-500 font-bold text-xs">Loading order tracking status...</p>
+      </div>
+    );
+  }
+
+  // EMPTY STATE: User has no orders in system
+  if (!currentOrder || activeOrders.length === 0) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-20 text-center space-y-6 animate-fade-in pb-24">
+        <div className="w-20 h-20 bg-orange-50 text-orange-600 rounded-full flex items-center justify-center text-3xl mx-auto border border-orange-100 shadow-xs">
+          <ShoppingOutlined />
+        </div>
+        
+        <div className="space-y-2">
+          <h2 className="text-2xl font-black text-neutral-900 tracking-tight">No Active Orders to Track</h2>
+          <p className="text-neutral-500 text-sm max-w-md mx-auto leading-relaxed">
+            You don't have any placed or active orders right now. Explore top local restaurants and place an order to track live delivery in real time!
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          <button
+            onClick={() => navigate('/customer/restaurants')}
+            className="px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-2"
+          >
+            <SearchOutlined /> Browse Restaurants
+          </button>
+
+          <button
+            onClick={() => navigate('/customer/menu')}
+            className="px-6 py-3 bg-white hover:bg-neutral-100 text-neutral-800 font-bold text-xs rounded-xl border border-neutral-200 transition-all cursor-pointer"
+          >
+            Explore Menu Catalog
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const currentLevel = getStatusLevel(currentOrder.status);
   const progressWidth = currentLevel === 1 ? '0%' : currentLevel === 2 ? '25%' : currentLevel === 3 ? '50%' : currentLevel === 4 ? '75%' : '100%';
 
   const handleCopyOrderNumber = (num) => {
@@ -337,7 +316,7 @@ export default function OrderTracking() {
       dispatch(addToCartAsync({
         menu_item_id: item.id,
         quantity: item.quantity || 1,
-        restaurant_id: 1,
+        restaurant_id: currentOrder.restaurant?.id || 1,
         item: {
           id: item.id,
           name: item.name,
@@ -347,12 +326,19 @@ export default function OrderTracking() {
         }
       }));
     });
-    message.success(`Readded ${currentOrder.items.length} items to cart!`);
+    message.success(`Added ${currentOrder.items.length} items to cart!`);
     navigate('/customer/cart');
   };
 
   // Dynamic status banner content
   const renderBannerContent = () => {
+    if (currentLevel === 0) {
+      return {
+        icon: '❌',
+        title: 'Order Cancelled',
+        desc: 'This order was cancelled. Contact support if you need assistance.'
+      };
+    }
     if (currentLevel === 1) {
       return {
         icon: '📋',
@@ -363,15 +349,15 @@ export default function OrderTracking() {
     if (currentLevel === 2) {
       return {
         icon: '👍',
-        title: 'Order Accepted by Restaurant',
+        title: 'Order Confirmed by Restaurant',
         desc: 'Restaurant confirmed your order and is preparing ingredients.'
       };
     }
     if (currentLevel === 3) {
       return {
         icon: '👨‍🍳',
-        title: 'Our chef is preparing your order',
-        desc: 'Delicious food is being cooked. We\'ll update you soon!'
+        title: 'Food is Being Prepared',
+        desc: 'Our chef is preparing your delicious meal with care.'
       };
     }
     if (currentLevel === 4) {
@@ -383,8 +369,8 @@ export default function OrderTracking() {
     }
     return {
       icon: '🎉',
-      title: 'Order Delivered Successfully!',
-      desc: 'Bon appétit! Your food has arrived. Thank you for choosing Orderly.'
+      title: 'Order Delivered!',
+      desc: 'Bon appétit! Your food has arrived. Thank you for using Orderly.'
     };
   };
 
@@ -396,7 +382,6 @@ export default function OrderTracking() {
   );
 
   const currentDriverPos = socketDriverPos || interpolatePosition(routeWaypoints, trackProgress);
-
   const distanceRemainingKm = Math.max(0, (2.8 * (1 - trackProgress))).toFixed(1);
   const etaMinutesRemaining = Math.max(1, Math.round(25 * (1 - trackProgress)));
 
@@ -411,35 +396,36 @@ export default function OrderTracking() {
   ];
 
   return (
-    <div className="pb-16 animate-fade-in -mt-16 bg-neutral-50/60 min-h-screen">
+    <div className="pb-20 animate-fade-in bg-neutral-50/60 min-h-screen">
 
       {/* ── HERO BANNER ── */}
-      <div className="relative bg-neutral-900 text-white pt-24 pb-14 border-b border-neutral-800 overflow-hidden">
+      <div className="relative bg-neutral-900 text-white pt-10 pb-12 border-b border-neutral-800 overflow-hidden">
         <img
           src="/food_banners/cooking-banner.jpg"
           alt="Tracking Hero Banner"
-          className="absolute inset-0 w-full h-full object-cover object-center opacity-60"
+          className="absolute inset-0 w-full h-full object-cover object-center opacity-40"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-neutral-950/95 via-neutral-900/70 to-neutral-950/40" />
+        <div className="absolute inset-0 bg-gradient-to-r from-neutral-950/95 via-neutral-900/80 to-neutral-950/50" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/20 text-orange-400 text-xs font-bold uppercase tracking-wider mb-2.5 border border-orange-500/30">
-              🟠 LIVE ORDER TRACKING
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/20 text-orange-400 text-xs font-bold uppercase tracking-wider mb-2 border border-orange-500/30">
+              🛵 Live Order Tracking
             </div>
-            <h1 className="text-3xl md:text-5xl font-black tracking-tight text-white">Your Order is on the way!</h1>
-            <p className="text-neutral-300 mt-2 max-w-xl text-sm md:text-base leading-relaxed">
-              Fresh food, faster to your doorstep.
+            <h1 className="text-2xl md:text-4xl font-black tracking-tight text-white">
+              {currentLevel === 5 ? 'Order Delivered' : currentLevel === 0 ? 'Order Cancelled' : 'Your Order is on the way!'}
+            </h1>
+            <p className="text-neutral-300 mt-1 max-w-xl text-xs md:text-sm leading-relaxed font-medium">
+              Real-time updates from {currentOrder.restaurant.name}.
             </p>
           </div>
 
-          <div className="hidden lg:block text-right bg-neutral-900/80 backdrop-blur-md p-4 rounded-2xl border border-neutral-700/60 max-w-sm shadow-xl">
-            <p className="text-xs font-serif italic text-amber-300 leading-snug">
-              "Good food is like music you can taste, color you can smell..."
-            </p>
-            <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-widest mt-1.5">
-              — GORDON RAMSAY
-            </p>
+          <div className="bg-neutral-900/80 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-neutral-700/60 shadow-lg text-xs font-bold text-neutral-200 flex items-center gap-3">
+            <span className="text-orange-400 font-mono">#{currentOrder.orderNumber}</span>
+            <span className="text-neutral-500">•</span>
+            <span className="px-2.5 py-0.5 rounded-full bg-orange-500/20 text-orange-400 uppercase text-[10px] font-black tracking-wider">
+              {currentOrder.statusDisplay}
+            </span>
           </div>
         </div>
       </div>
@@ -447,9 +433,9 @@ export default function OrderTracking() {
       {/* ── MAIN CONTENT CONTAINER (2-COLUMN GRID) ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
 
-        {/* Multi-Order Selector Tabs (if user has multiple active orders) */}
+        {/* Multi-Order Selector Tabs */}
         {activeOrders.length > 1 && (
-          <div className="flex items-center gap-2.5 overflow-x-auto pb-2">
+          <div className="flex items-center gap-2.5 overflow-x-auto pb-2 border-b border-neutral-200">
             <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider whitespace-nowrap">
               Active Orders:
             </span>
@@ -474,16 +460,16 @@ export default function OrderTracking() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-          {/* ── LEFT COLUMN (ORDER TRACKING & LIVE MAP) ── */}
+          {/* ── LEFT COLUMN (TRACKING STEPPER & LIVE MAP) ── */}
           <div className="lg:col-span-8 space-y-6">
 
-            {/* CARD 1: RESTAURANT & DYNAMIC STATUS STEPPER */}
+            {/* CARD 1: RESTAURANT INFO & DYNAMIC STEPPER */}
             <div className="bg-white rounded-3xl border border-neutral-200/90 p-6 md:p-8 shadow-2xs space-y-8">
               
               {/* Header: Restaurant Info & Call Actions */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-100 pb-6">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-red-600 overflow-hidden flex-shrink-0 border border-neutral-200/60 shadow-2xs">
+                  <div className="w-14 h-14 rounded-2xl bg-orange-50 overflow-hidden flex-shrink-0 border border-neutral-200/60 shadow-2xs">
                     <img
                       src={currentOrder.restaurant.logo}
                       alt={currentOrder.restaurant.name}
@@ -523,7 +509,7 @@ export default function OrderTracking() {
                     onClick={() => message.info("Opening Chat Support...")}
                     className="px-4 py-2 bg-white border border-orange-400 text-orange-600 font-bold text-xs rounded-xl hover:bg-orange-50 transition-colors flex items-center gap-2 shadow-2xs cursor-pointer"
                   >
-                    <MessageOutlined /> Chat Support
+                    <MessageOutlined /> Support
                   </button>
                 </div>
               </div>
@@ -578,28 +564,18 @@ export default function OrderTracking() {
                   <div className={`flex flex-col items-center text-center relative z-10 w-36 transition-opacity ${
                     currentLevel < 3 ? 'opacity-50' : 'opacity-100'
                   }`}>
-                    {currentLevel === 3 ? (
-                      <div className="relative">
-                        <div className="w-16 h-16 rounded-full bg-orange-50 p-1 flex items-center justify-center shadow-lg ring-4 ring-orange-200/70 animate-pulse overflow-hidden border border-orange-400">
-                          <img
-                            src="/brand_foods/purcell_orderly.png"
-                            alt="Orderly Brand Logo"
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-base transition-all ${
-                        currentLevel > 3
-                          ? 'bg-orange-500 text-white shadow-md'
-                          : 'bg-neutral-100 border-2 border-neutral-300 text-neutral-400'
-                      }`}>
-                        {currentLevel > 3 ? '✓' : '🍳'}
-                      </div>
-                    )}
+                    <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-base transition-all ${
+                      currentLevel > 3
+                        ? 'bg-orange-500 text-white shadow-md'
+                        : currentLevel === 3
+                        ? 'bg-orange-500 text-white ring-4 ring-orange-100 animate-pulse shadow-lg'
+                        : 'bg-neutral-100 border-2 border-neutral-300 text-neutral-400'
+                    }`}>
+                      {currentLevel > 3 ? '✓' : '🍳'}
+                    </div>
                     <p className="text-xs font-extrabold text-neutral-900 mt-2.5 leading-tight">Preparing</p>
-                    <p className="text-[10px] text-neutral-500 font-medium mt-0.5 max-w-[130px] leading-tight">
-                      {currentLevel === 3 ? 'Your food is being prepared with love ❤️' : currentLevel > 3 ? 'Prepared' : 'Pending'}
+                    <p className="text-[10px] text-neutral-500 font-medium mt-0.5 leading-tight">
+                      {currentLevel === 3 ? 'Food is being prepared' : currentLevel > 3 ? 'Prepared' : 'Pending'}
                     </p>
                   </div>
 
@@ -618,7 +594,7 @@ export default function OrderTracking() {
                     </div>
                     <p className="text-xs font-bold text-neutral-700 mt-2.5 leading-tight">Out for Delivery</p>
                     <p className="text-[11px] text-neutral-400 mt-0.5">
-                      {currentLevel >= 4 ? 'On the way' : 'Estimated 02:35 PM'}
+                      {currentLevel >= 4 ? 'On the way' : 'Pending'}
                     </p>
                   </div>
 
@@ -635,14 +611,14 @@ export default function OrderTracking() {
                     </div>
                     <p className="text-xs font-bold text-neutral-700 mt-2.5 leading-tight">Delivered</p>
                     <p className="text-[11px] text-neutral-400 mt-0.5">
-                      {currentLevel === 5 ? 'Delivered!' : 'Estimated 03:00 PM'}
+                      {currentLevel === 5 ? 'Delivered!' : 'Pending'}
                     </p>
                   </div>
 
                 </div>
               </div>
 
-              {/* Chef / Dynamic Status Banner Container */}
+              {/* Dynamic Status Banner Container */}
               <div className="bg-orange-50/70 border border-orange-200/70 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3.5">
                   <div className="w-12 h-12 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-xl flex-shrink-0 shadow-2xs">
@@ -659,7 +635,7 @@ export default function OrderTracking() {
                 </div>
 
                 <div className="pl-0 sm:pl-6 sm:border-l sm:border-orange-200 flex flex-col items-start sm:items-end">
-                  <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Estimated Delivery Time</span>
+                  <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Estimated Time</span>
                   <div className="flex items-center gap-1.5 text-orange-600 font-black text-sm md:text-base mt-0.5">
                     <ClockCircleOutlined /> <span>{currentOrder.estimatedTime}</span>
                   </div>
@@ -693,13 +669,12 @@ export default function OrderTracking() {
                         : 'bg-white text-neutral-700 hover:bg-neutral-200'
                     }`}
                   >
-                    {isLiveSimulating ? '⏸ Pause Driver' : '▶ Live Simulate'}
+                    {isLiveSimulating ? '⏸ Pause' : '▶ Live Simulate'}
                   </button>
 
                   <button
                     onClick={() => setSimSpeed(prev => (prev === 1 ? 2 : prev === 2 ? 4 : 1))}
                     className="px-2.5 py-1.5 bg-white hover:bg-neutral-200 rounded-lg font-extrabold text-neutral-700 border border-neutral-200 cursor-pointer"
-                    title="Change Live Speed"
                   >
                     {simSpeed}x Speed
                   </button>
@@ -710,7 +685,6 @@ export default function OrderTracking() {
                       setIsLiveSimulating(true);
                     }}
                     className="px-2 py-1.5 bg-white hover:bg-neutral-200 rounded-lg text-neutral-600 border border-neutral-200 cursor-pointer"
-                    title="Reset Route"
                   >
                     <ReloadOutlined />
                   </button>
@@ -776,7 +750,7 @@ export default function OrderTracking() {
                     weight={4}
                   />
 
-                  {/* Live Traveled Route Path (Orange Solid) */}
+                  {/* Live Traveled Route Path */}
                   <Polyline
                     positions={routeWaypoints.slice(0, Math.max(2, Math.ceil(trackProgress * routeWaypoints.length)))}
                     color="#FF5722"
@@ -788,10 +762,9 @@ export default function OrderTracking() {
 
             </div>
 
-            {/* BOTTOM FEATURE BANNER */}
-            <div className="bg-white rounded-3xl border border-neutral-200/80 p-5 shadow-2xs flex flex-col md:flex-row items-center justify-between gap-6">
-              
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full md:w-auto">
+            {/* TRUST BADGES FOOTER BAR */}
+            <div className="bg-white rounded-3xl border border-neutral-200/80 p-5 shadow-2xs flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center text-lg font-bold flex-shrink-0">
                     🌱
@@ -817,23 +790,16 @@ export default function OrderTracking() {
                     ❤️
                   </div>
                   <div>
-                    <h5 className="font-extrabold text-neutral-900 text-xs">Supporting local restaurants</h5>
-                    <p className="text-[11px] text-neutral-400 font-medium">Good food builds better communities</p>
+                    <h5 className="font-extrabold text-neutral-900 text-xs">Local Restaurants</h5>
+                    <p className="text-[11px] text-neutral-400 font-medium">Supporting your neighborhood</p>
                   </div>
                 </div>
               </div>
-
-              <div className="hidden xl:block text-right border-l border-neutral-100 pl-6 flex-shrink-0">
-                <span className="font-serif italic text-orange-600 font-bold text-lg leading-tight block">
-                  Good Food Better Days ♡
-                </span>
-              </div>
-
             </div>
 
           </div>
 
-          {/* ── RIGHT COLUMN (ORDER DETAILS SUMMARY) ── */}
+          {/* ── RIGHT COLUMN (REAL ORDER DETAILS SUMMARY) ── */}
           <div className="lg:col-span-4">
             <div className="bg-white rounded-3xl border border-neutral-200/90 p-6 shadow-2xs space-y-6 sticky top-24">
               
@@ -853,7 +819,7 @@ export default function OrderTracking() {
                   </div>
                 </div>
 
-                <span className="px-3.5 py-1 bg-orange-50 text-orange-700 font-bold text-xs rounded-full border border-orange-200 flex items-center gap-1.5 shadow-2xs">
+                <span className="px-3 py-1 bg-orange-50 text-orange-700 font-bold text-xs rounded-full border border-orange-200 flex items-center gap-1.5 shadow-2xs">
                   🍳 {currentOrder.statusDisplay}
                 </span>
               </div>
@@ -864,7 +830,7 @@ export default function OrderTracking() {
                 className="bg-neutral-50/70 hover:bg-neutral-100/80 border border-neutral-200/80 rounded-2xl p-3.5 flex items-center justify-between gap-3 cursor-pointer transition-colors group"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-red-600 overflow-hidden flex-shrink-0 border border-neutral-200/60 shadow-2xs">
+                  <div className="w-10 h-10 rounded-xl bg-orange-50 overflow-hidden flex-shrink-0 border border-neutral-200/60 shadow-2xs">
                     <img src={currentOrder.restaurant.logo} alt={currentOrder.restaurant.name} className="w-full h-full object-cover" />
                   </div>
                   <div>
@@ -885,12 +851,13 @@ export default function OrderTracking() {
                   <span>Delivery Address</span>
                 </div>
                 <p className="text-xs text-neutral-600 font-medium pl-6 leading-relaxed">
-                  {currentOrder.deliveryAddressText || '123 Flavor Street, Foodie City (Current Location)'}
+                  {currentOrder.deliveryAddressText}
                 </p>
               </div>
 
               {/* Ordered Items List */}
               <div className="space-y-3">
+                <h4 className="text-xs font-black text-neutral-800 uppercase tracking-wider">Ordered Items ({currentOrder.items.length})</h4>
                 <div className="divide-y divide-neutral-100">
                   {currentOrder.items.map((item, idx) => (
                     <div key={idx} className="py-3 flex items-center justify-between gap-3 first:pt-0 last:pb-0">
