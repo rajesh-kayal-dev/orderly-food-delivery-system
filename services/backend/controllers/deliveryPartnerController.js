@@ -6,13 +6,24 @@ import { DeliveryPartner, User } from '../models.js';
  */
 export const getMyProfile = async (req, res) => {
     try {
-        const driver = await DeliveryPartner.findOne({
+        let driver = await DeliveryPartner.findOne({
             where: { user_id: req.user.id },
             include: [{ model: User, attributes: ['id', 'full_name', 'email', 'phone_number', 'role'] }]
         });
 
         if (!driver) {
-            return res.status(404).json({ success: false, message: 'Delivery partner profile not found' });
+            driver = await DeliveryPartner.create({
+                user_id: req.user.id,
+                is_available: true,
+                status: 'available',
+                vehicle_type: 'Scooter',
+                operating_zone: 'Salt Lake'
+            });
+
+            driver = await DeliveryPartner.findOne({
+                where: { user_id: req.user.id },
+                include: [{ model: User, attributes: ['id', 'full_name', 'email', 'phone_number', 'role'] }]
+            });
         }
 
         res.json({ success: true, data: driver });
@@ -29,40 +40,60 @@ export const getMyProfile = async (req, res) => {
  */
 export const updateMyProfile = async (req, res) => {
     try {
-        const driver = await DeliveryPartner.findOne({ where: { user_id: req.user.id } });
+        let driver = await DeliveryPartner.findOne({ where: { user_id: req.user.id } });
 
         if (!driver) {
-            return res.status(404).json({ success: false, message: 'Delivery partner profile not found' });
+            driver = await DeliveryPartner.create({
+                user_id: req.user.id,
+                is_available: req.body.is_available !== undefined ? req.body.is_available : true,
+                status: req.body.is_available ? 'available' : 'offline',
+                vehicle_type: 'Scooter',
+                operating_zone: 'Salt Lake'
+            });
+        } else {
+            const allowedFields = [
+                'is_available',
+                'vehicle_license',
+                'vehicle_type',
+                'vehicle_name',
+                'address',
+                'operating_zone',
+                'delivery_category'
+            ];
+
+            const updates = {};
+            allowedFields.forEach(field => {
+                if (req.body[field] !== undefined) {
+                    updates[field] = req.body[field];
+                }
+            });
+
+            if (req.body.is_available !== undefined) {
+                updates.status = req.body.is_available ? 'available' : 'offline';
+            }
+
+            await driver.update(updates);
         }
 
-        const allowedFields = [
-            'is_available',
-            'vehicle_license',
-            'vehicle_type',
-            'vehicle_name',
-            'address',
-            'operating_zone',
-            'delivery_category'
-        ];
-
-        const updates = {};
-        allowedFields.forEach(field => {
-            if (req.body[field] !== undefined) {
-                updates[field] = req.body[field];
-            }
-        });
-
-        await driver.update(updates);
-
-        // Re-fetch to return fresh data
         const updatedDriver = await DeliveryPartner.findOne({
             where: { user_id: req.user.id },
             include: [{ model: User, attributes: ['id', 'full_name', 'email', 'phone_number', 'role'] }]
         });
 
-        res.json({ success: true, data: updatedDriver });
+        // Real-time socket broadcast
+        if (req.io) {
+            req.io.emit('DRIVER_STATUS_UPDATED', {
+                driverId: updatedDriver ? updatedDriver.id : req.user.id,
+                userId: req.user.id,
+                is_online: req.body.is_available,
+                status: req.body.is_available ? 'Online' : 'Offline'
+            });
+        }
+
+        res.json({ success: true, data: updatedDriver || { is_available: req.body.is_available } });
     } catch (error) {
         console.error('updateMyProfile error:', error);
         res.status(500).json({ success: false, message: 'Server Error' });
     }
 };
+
