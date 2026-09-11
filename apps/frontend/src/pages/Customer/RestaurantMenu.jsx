@@ -27,12 +27,11 @@ import {
   ShoppingOutlined
 } from '@ant-design/icons';
 
-// Rich 4-card catalog per category matching reference layout perfectly
+// Clean catalog without emojis
 const FULL_CATALOG = [
   {
     id: 'cat-popular',
     name: 'Popular Items',
-    icon: '🔥',
     subtitle: 'Most loved items by our customers',
     items: [
       {
@@ -76,7 +75,6 @@ const FULL_CATALOG = [
   {
     id: 'cat-burgers',
     name: 'Gourmet Burgers',
-    icon: '🍔',
     subtitle: 'Handcrafted gourmet burgers made with fresh farm ingredients.',
     items: [
       {
@@ -120,7 +118,6 @@ const FULL_CATALOG = [
   {
     id: 'cat-veg',
     name: 'Veg Specialties',
-    icon: '🌱',
     subtitle: '100% vegetarian delights packed with rich flavor.',
     items: [
       {
@@ -164,7 +161,6 @@ const FULL_CATALOG = [
   {
     id: 'cat-nonveg',
     name: 'Non-Veg Delights',
-    icon: '🍗',
     subtitle: 'Succulent chicken and meat options cooked to perfection.',
     items: [
       {
@@ -219,7 +215,7 @@ export default function RestaurantMenu() {
   const [restaurantClosed, setRestaurantClosed] = useState(false);
   const [closedMessage, setClosedMessage] = useState('This restaurant is currently closed.');
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeCategory, setActiveCategory] = useState('Popular');
+  const [activeCategory, setActiveCategory] = useState('All Items');
   const [favorites, setFavorites] = useState({});
 
   useEffect(() => {
@@ -238,7 +234,6 @@ export default function RestaurantMenu() {
           if (menuResponse.data?.success && menuResponse.data.data?.length > 0) {
             const rawCategories = menuResponse.data.data;
             
-            // Enrich categories to guarantee 4 food cards per row
             let enriched = rawCategories.map(cat => {
               const raw = cat.items || cat.menuItems || cat.MenuItems || [];
               const isNonVegCategory = cat.name.toLowerCase().includes('non');
@@ -257,7 +252,6 @@ export default function RestaurantMenu() {
               };
             });
 
-            // Ensure catalog length spans full page
             if (enriched.length < 3) {
               enriched = [FULL_CATALOG[0], FULL_CATALOG[1], ...enriched];
             }
@@ -382,10 +376,29 @@ export default function RestaurantMenu() {
     }));
   };
 
+  // Category filtering logic: All Items shows all categories, otherwise only the selected category
   const displayMenu = useMemo(() => {
     let sourceMenu = menu.length > 0 ? menu : FULL_CATALOG;
+    let filteredCategories = sourceMenu;
 
-    return sourceMenu.map(category => {
+    if (activeCategory !== 'All' && activeCategory !== 'All Items') {
+      filteredCategories = sourceMenu.filter(category => {
+        const catName = (category.name || '').toLowerCase();
+        const actName = (activeCategory || '').toLowerCase();
+
+        if (actName.includes('popular') && catName.includes('popular')) return true;
+        if (actName.includes('burger') && catName.includes('burger')) return true;
+        if (actName.includes('veg') && !actName.includes('non') && catName.includes('veg') && !catName.includes('non')) return true;
+        if (actName.includes('non') && catName.includes('non')) return true;
+        if (actName.includes('fries') && (catName.includes('fries') || catName.includes('side'))) return true;
+        if (actName.includes('beverage') && catName.includes('beverage')) return true;
+        if (actName.includes('dessert') && catName.includes('dessert')) return true;
+
+        return catName.includes(actName) || actName.includes(catName);
+      });
+    }
+
+    return filteredCategories.map(category => {
       const rawItems = category.items || category.menuItems || category.MenuItems || [];
       const filteredItems = rawItems.filter(item => {
         const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -398,9 +411,8 @@ export default function RestaurantMenu() {
         items: filteredItems
       };
     }).filter(category => category.items.length > 0);
-  }, [menu, searchTerm]);
+  }, [menu, searchTerm, activeCategory]);
 
-  // Demo fallback cart matching reference screenshot exactly
   const activeCartDisplay = useMemo(() => {
     if (cartItems.length > 0) return cartItems;
     return [
@@ -413,15 +425,16 @@ export default function RestaurantMenu() {
   const cartSubtotal = activeCartDisplay.reduce((acc, curr) => acc + (Number(curr.price || curr.unit_price || 0) * (curr.quantity || 1)), 0);
   const cartTotalItems = activeCartDisplay.reduce((acc, curr) => acc + (curr.quantity || 1), 0);
 
+  // Clean category pills without emojis
   const categoryPills = [
-    { label: 'Popular', icon: '🔥' },
-    { label: 'Burgers', icon: '🍔' },
-    { label: 'Veg Specialties', icon: '🌱' },
-    { label: 'Non-Veg Delights', icon: '🍗' },
-    { label: 'Fries & Sides', icon: '🍟' },
-    { label: 'Beverages', icon: '🥤' },
-    { label: 'Desserts', icon: '🍦' },
-    { label: 'All Items', icon: '㗊' }
+    { label: 'All Items' },
+    { label: 'Popular' },
+    { label: 'Burgers' },
+    { label: 'Veg Specialties' },
+    { label: 'Non-Veg Delights' },
+    { label: 'Fries & Sides' },
+    { label: 'Beverages' },
+    { label: 'Desserts' }
   ];
 
   if (loading) return (
@@ -463,7 +476,7 @@ export default function RestaurantMenu() {
         </button>
       </div>
 
-      {/* ── 1. RESTAURANT HERO BANNER (Full 1500px Container Width) ── */}
+      {/* ── 1. RESTAURANT HERO BANNER ── */}
       <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-black text-white border border-neutral-900">
         <div className="h-64 sm:h-72 w-full relative">
           <img
@@ -473,7 +486,6 @@ export default function RestaurantMenu() {
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black via-black/85 to-transparent" />
 
-          {/* Banner Content Container */}
           <div className="absolute inset-0 flex items-center justify-between p-6 sm:p-10">
             <div className="flex items-center gap-6 max-w-3xl">
               
@@ -495,7 +507,6 @@ export default function RestaurantMenu() {
                   {storeCuisine}
                 </p>
 
-                {/* Badges line */}
                 <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-neutral-300 font-semibold pt-1">
                   <span className="flex items-center gap-1.5 text-white">
                     <StarFilled className="text-amber-400 text-sm" />
@@ -518,7 +529,6 @@ export default function RestaurantMenu() {
 
             </div>
 
-            {/* Right Tagline Banner Text */}
             <div className="hidden lg:flex flex-col items-end pr-8">
               <span className="font-serif italic font-bold text-4xl sm:text-5xl tracking-wide text-white drop-shadow-xl">
                 i'm lovin' it®
@@ -531,21 +541,20 @@ export default function RestaurantMenu() {
       {/* ── 2. CATEGORY PILL NAVIGATION & SEARCH BAR ── */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-2">
         
-        {/* Horizontal Category Pills */}
-        <div className="flex items-center gap-2.5 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-none">
+        {/* Horizontal Category Pills without Emojis */}
+        <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-none">
           {categoryPills.map((pill) => {
             const isActive = activeCategory === pill.label;
             return (
               <button
                 key={pill.label}
                 onClick={() => setActiveCategory(pill.label)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-xs sm:text-sm font-bold transition-all shrink-0 ${
+                className={`px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all shrink-0 ${
                   isActive
-                    ? 'bg-[#FF521C] text-white shadow-md shadow-orange-500/25 scale-105'
+                    ? 'bg-[#FF521C] text-white shadow-md shadow-orange-500/20'
                     : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200/90'
                 }`}
               >
-                <span>{pill.icon}</span>
                 <span>{pill.label}</span>
               </button>
             );
@@ -568,7 +577,7 @@ export default function RestaurantMenu() {
       {/* ── 3. MAIN CONTENT: 75% MENU (9 COLS) vs 25% SIDEBAR (3 COLS) ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 pt-4 items-start">
         
-        {/* LEFT COLUMN: 75% WIDTH MENU (9 out of 12 columns) */}
+        {/* LEFT COLUMN: 75% WIDTH MENU */}
         <div className="lg:col-span-9 space-y-12">
           {displayMenu.length > 0 ? (
             displayMenu.map((category) => {
@@ -576,12 +585,11 @@ export default function RestaurantMenu() {
               return (
                 <section key={category.id || category.name} className="space-y-5">
                   
-                  {/* Category Header */}
+                  {/* Category Header (No Emojis) */}
                   <div className="flex items-center justify-between border-b border-slate-200 pb-3">
                     <div>
-                      <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
-                        <span>{category.icon || (category.name.includes('Veg') ? '🌱' : '🍔')}</span>
-                        <span>{category.name}</span>
+                      <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+                        {category.name}
                       </h2>
                       <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
                         {category.subtitle || 'Delicious items handcrafted fresh for your order.'}
@@ -593,7 +601,7 @@ export default function RestaurantMenu() {
                     </button>
                   </div>
 
-                  {/* 4 FOOD CARDS PER ROW GRID ON DESKTOP (lg:grid-cols-4) */}
+                  {/* 4 FOOD CARDS PER ROW GRID ON DESKTOP */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {categoryItems.map((item) => {
                       const qty = getItemQuantity(item.id);
@@ -605,7 +613,7 @@ export default function RestaurantMenu() {
                           key={item.id}
                           className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-xl transition-all duration-200 flex flex-col justify-between group"
                         >
-                          {/* Top Image Container (Fixed landscape aspect height) */}
+                          {/* Top Image Container */}
                           <div className="relative h-36 sm:h-40 w-full overflow-hidden bg-slate-100">
                             <img
                               src={item.image_url || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600'}
@@ -696,12 +704,12 @@ export default function RestaurantMenu() {
           ) : (
             <EmptyState
               title="No Items Found"
-              description="No menu items matched your search query."
+              description="No menu items matched your selected category or search query."
             />
           )}
         </div>
 
-        {/* RIGHT COLUMN: 25% WIDTH SIDEBAR (3 out of 12 columns) */}
+        {/* RIGHT COLUMN: 25% WIDTH SIDEBAR */}
         <div className="lg:col-span-3 space-y-6">
           
           {/* Card 1: Restaurant Details Card */}
